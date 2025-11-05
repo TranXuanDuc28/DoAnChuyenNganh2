@@ -24,3 +24,13 @@ Các bước cài đặt: (chế độ development)
 2. cài đặt thư viện: npm i
 3. Update file .env (nếu cần thiết)
 4. Chạy dự án:  npm start | hoặc | npm run dev 
+
+## Nhận diện tư thế (Pose)
+
+- Mở tab `Pose` trong app.
+- Nhấn "Đánh giá tư thế" để chụp hình và gửi lên server.
+- Server sẽ trả về điểm số và đánh giá đúng/sai theo bài tập (mặc định: squat).
+
+Lưu ý phát triển:
+- Nếu chạy Android emulator: API base URL tự động dùng `10.0.2.2` (được cấu hình trong `services/api.js`).
+- Máy thật cần đặt biến môi trường `REACT_NATIVE_API_HOST` bằng IP máy chạy backend, hoặc sửa trực tiếp trong `services/api.js`.

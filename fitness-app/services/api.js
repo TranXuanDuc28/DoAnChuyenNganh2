@@ -14,9 +14,12 @@ const BASE_URL = __DEV__
   ? `http://${DEV_API_HOST}:5000/api`
   : 'https://your-production-api.com/api';
 
+// Export BASE_URL for use in other files
+export const API_BASE_URL = BASE_URL;
+
 const api = axios.create({
   baseURL: BASE_URL,
-  timeout: 10000,
+  timeout: 60000, // Increased timeout for pose evaluation (images can take longer)
   headers: {
     'Content-Type': 'application/json',
   },
@@ -161,6 +164,13 @@ export const aiAPI = {
   getDailySummary: () => api.get('/ai/daily-summary'),
   generateWorkoutPlan: (preferences) => api.post('/ai/generate-workout-plan', preferences),
   generateMealPlan: (preferences) => api.post('/ai/generate-meal-plan', preferences),
+};
+
+// Pose API
+export const poseAPI = {
+  evaluate: ({ userId, exerciseName, imageBase64, keypoints }) =>
+    api.post('/pose/evaluate', { userId, exerciseName, imageBase64, keypoints }),
+  history: ({ userId, limit }) => api.get('/pose/history', { params: { userId, limit } }),
 };
 
 // Notification API

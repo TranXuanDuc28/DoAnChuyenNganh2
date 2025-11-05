@@ -1,3 +1,4 @@
+import 'react-native-gesture-handler';
 import React, { useState, useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
@@ -17,7 +18,9 @@ import HealthScreen from './screens/HealthScreen';
 import SocialScreen from './screens/SocialScreen';
 import ProfileScreen from './screens/ProfileScreen';
 import AssistantScreen from './screens/AssistantScreen';
-import StatisticsScreen from './screens/StatisticsScreen';
+import StatisticsScreen from './screens/StatisticsScreen'; 
+import PoseScreen from './screens/PoseScreen';
+import ExerciseSelectionScreen from './screens/ExerciseSelectionScreen';
 
 // Import context
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -48,9 +51,11 @@ const TabNavigator = () => {
             iconName = focused ? 'chatbubbles' : 'chatbubbles-outline';
           } else if (route.name === 'Statistics') {
             iconName = focused ? 'stats-chart' : 'stats-chart-outline';
+          } else if (route.name === 'AIWorkout') {
+            iconName = focused ? 'body' : 'body-outline';
           }
 
-          return <Icon name={iconName} size={size} color={color} />;
+          return <Icon name={iconName as any} size={size} color={color} />;
         },
         tabBarActiveTintColor: '#007AFF',
         tabBarInactiveTintColor: 'gray',
@@ -85,6 +90,11 @@ const TabNavigator = () => {
         name="Workout" 
         component={WorkoutScreen}
         options={{ title: 'Workouts' }}
+      />
+      <Tab.Screen 
+        name="AIWorkout" 
+        component={ExerciseSelectionScreen}
+        options={{ title: 'AI Workout', headerShown: false }}
       />
       <Tab.Screen 
         name="Statistics"
@@ -156,7 +166,23 @@ const AppNavigator = () => {
 
   return (
     <NavigationContainer>
-      {user ? <TabNavigator /> : <AuthNavigator />}
+      {user ? (
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="MainTabs" component={TabNavigator} />
+          <Stack.Screen 
+            name="Pose" 
+            component={PoseScreen}
+            options={{ 
+              headerShown: true,
+              headerStyle: { backgroundColor: '#007AFF' },
+              headerTintColor: '#fff',
+              headerTitleStyle: { fontWeight: 'bold' },
+            }}
+          />
+        </Stack.Navigator>
+      ) : (
+        <AuthNavigator />
+      )}
     </NavigationContainer>
   );
 };

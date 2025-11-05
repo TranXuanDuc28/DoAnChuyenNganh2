@@ -58,7 +58,8 @@ router.get('/metrics', auth, async (req, res) => {
           userId: req.user.id,
           date: { [Op.between]: [startDate, endDate] }
         }
-      })])
+      })
+    ]);
 
     res.json({
       sleep,
@@ -280,26 +281,6 @@ router.get('/activity', auth, async (req, res) => {
     res.json(activityRecords);
   } catch (error) {
     console.error('Get activity records error:', error);
-    res.status(500).json({ message: 'Server error' });
-  }
-});
-
-router.post('/activity', auth, async (req, res) => {
-  try {
-    const { activityType, duration, caloriesBurned, steps, date } = req.body;
-    
-    const newActivity = await ActivityRecord.create({
-      userId: req.user.id,
-      activityType,
-      duration,
-      caloriesBurned,
-      steps,
-      date: date ? new Date(date) : new Date()
-    });
-
-    res.json(newActivity);
-  } catch (error) {
-    console.error('Add activity record error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
