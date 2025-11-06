@@ -7,11 +7,13 @@ import {
   TouchableOpacity,
   Dimensions,
   RefreshControl,
+  ImageBackground,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons as Icon } from '@expo/vector-icons';
 import { LineChart, BarChart } from 'react-native-chart-kit';
 import { useAuth } from '../context/AuthContext';
+import colors from '../theme/colors';
 
 const { width } = Dimensions.get('window');
 
@@ -39,7 +41,7 @@ const DashboardScreen = () => {
       title: 'Try a 20-minute HIIT workout',
       description: 'Based on your activity level, a high-intensity workout would be perfect today.',
       icon: 'fitness',
-      color: '#FF6B6B',
+      color: colors.primary,
     },
     {
       id: 2,
@@ -47,7 +49,7 @@ const DashboardScreen = () => {
       title: 'Increase protein intake',
       description: 'Your protein consumption is below your goal. Try adding a protein shake.',
       icon: 'restaurant',
-      color: '#4ECDC4',
+      color: colors.iconSuccess,
     },
     {
       id: 3,
@@ -55,7 +57,7 @@ const DashboardScreen = () => {
       title: 'Improve sleep quality',
       description: 'Your sleep score is 7.5/10. Try going to bed 30 minutes earlier.',
       icon: 'bed',
-      color: '#45B7D1',
+      color: colors.iconWarning,
     },
   ]);
 
@@ -82,14 +84,14 @@ const DashboardScreen = () => {
   };
 
   const getBMIStatus = (bmi) => {
-    if (bmi < 18.5) return { status: 'Underweight', color: '#4ECDC4' };
-    if (bmi < 25) return { status: 'Normal', color: '#4CAF50' };
-    if (bmi < 30) return { status: 'Overweight', color: '#FF9800' };
-    return { status: 'Obese', color: '#F44336' };
+    if (bmi < 18.5) return { status: 'Underweight', color: colors.info };
+    if (bmi < 25) return { status: 'Normal', color: colors.success };
+    if (bmi < 30) return { status: 'Overweight', color: colors.warning };
+    return { status: 'Obese', color: colors.danger };
   };
 
-  const StatCard = ({ title, value, unit, icon, color, progress = null }) => (
-    <View style={[styles.statCard, { borderLeftColor: color }]}>
+  const StatCard = ({ title, value, unit, icon, color, progress = null, bgColor }) => (
+    <View style={[styles.statCard, { borderLeftColor: color, backgroundColor: bgColor }]}>
       <View style={styles.statHeader}>
         <Icon name={icon} size={24} color={color} />
         <Text style={styles.statTitle}>{title}</Text>
@@ -114,24 +116,24 @@ const DashboardScreen = () => {
         <Text style={styles.recommendationTitle}>{recommendation.title}</Text>
         <Text style={styles.recommendationDescription}>{recommendation.description}</Text>
       </View>
-      <Icon name="chevron-forward" size={20} color="#666" />
+      <Icon name="chevron-forward" size={20} color={colors.textSecondary} />
     </TouchableOpacity>
   );
 
   const chartConfig = {
-    backgroundColor: '#fff',
-    backgroundGradientFrom: '#fff',
-    backgroundGradientTo: '#fff',
+    backgroundColor: colors.card,
+    backgroundGradientFrom: colors.card,
+    backgroundGradientTo: colors.cardDarkLight,
     decimalPlaces: 0,
-    color: (opacity = 1) => `rgba(0, 122, 255, ${opacity})`,
-    labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+    color: (opacity = 1) => `rgba(255, 107, 53, ${opacity})`, // Orange with opacity
+    labelColor: (opacity = 1) => `rgba(224, 224, 224, ${opacity})`, // Light gray text
     style: {
       borderRadius: 16,
     },
     propsForDots: {
       r: '6',
       strokeWidth: '2',
-      stroke: '#007AFF',
+      stroke: colors.primary,
     },
   };
 
@@ -146,10 +148,10 @@ const DashboardScreen = () => {
       }
     >
       {/* Header */}
-      <LinearGradient
-        colors={['#007AFF', '#0056CC']}
-        style={styles.header}
-      >
+     <ImageBackground
+    source={require('../image/banner2.jpg')}
+    style={styles.header}
+     >
         <View style={styles.headerContent}>
           <View>
             <Text style={styles.greeting}>{getGreeting()}</Text>
@@ -158,11 +160,11 @@ const DashboardScreen = () => {
             </Text>
           </View>
           <TouchableOpacity style={styles.notificationButton}>
-            <Icon name="notifications" size={24} color="#fff" />
+            <Icon name="notifications" size={24} color={colors.white} />
             <View style={styles.notificationBadge} />
           </TouchableOpacity>
         </View>
-      </LinearGradient>
+      </ImageBackground>
 
       {/* Today's Stats */}
       <View style={styles.section}>
@@ -172,7 +174,8 @@ const DashboardScreen = () => {
             title="Steps"
             value={todayStats.steps.toLocaleString()}
             icon="walk"
-            color="#FF6B6B"
+            color={colors.primary}
+            bgColor={colors.card}
             progress={(todayStats.steps / 10000) * 100}
           />
           <StatCard
@@ -180,7 +183,8 @@ const DashboardScreen = () => {
             value={todayStats.calories}
             unit=" kcal"
             icon="flame"
-            color="#FF9800"
+            color={colors.primary}
+            bgColor={colors.card}
             progress={(todayStats.calories / 500) * 100}
           />
           <StatCard
@@ -188,7 +192,8 @@ const DashboardScreen = () => {
             value={todayStats.activeMinutes}
             unit=" min"
             icon="time"
-            color="#4CAF50"
+            color={colors.primary}
+            bgColor={colors.card}
             progress={(todayStats.activeMinutes / 60) * 100}
           />
           <StatCard
@@ -196,7 +201,8 @@ const DashboardScreen = () => {
             value={todayStats.water}
             unit=" glasses"
             icon="water"
-            color="#2196F3"
+            color={colors.primary}
+            bgColor={colors.card}
             progress={(todayStats.water / 8) * 100}
           />
         </View>
@@ -268,28 +274,7 @@ const DashboardScreen = () => {
         </View>
       </View>
 
-      {/* Quick Actions */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Quick Actions</Text>
-        <View style={styles.quickActions}>
-          <TouchableOpacity style={styles.quickActionButton}>
-            <Icon name="fitness" size={32} color="#FF6B6B" />
-            <Text style={styles.quickActionText}>Start Workout</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.quickActionButton}>
-            <Icon name="restaurant" size={32} color="#4ECDC4" />
-            <Text style={styles.quickActionText}>Log Meal</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.quickActionButton}>
-            <Icon name="water" size={32} color="#2196F3" />
-            <Text style={styles.quickActionText}>Log Water</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.quickActionButton}>
-            <Icon name="bed" size={32} color="#9C27B0" />
-            <Text style={styles.quickActionText}>Sleep Log</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+      
     </ScrollView>
   );
 };
@@ -297,27 +282,39 @@ const DashboardScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: colors.background,
   },
   header: {
     paddingTop: 20,
     paddingBottom: 30,
     paddingHorizontal: 20,
+    height: 180,
   },
+  headerImage: {
+    resizeMode: 'cover',
+  },
+  headerGradient: {
+    flex: 1,
+    paddingTop: 20,
+    paddingBottom: 30,
+    paddingHorizontal: 20,
+  },
+
   headerContent: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
+  
   greeting: {
     fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.8)',
+    color: colors.textSecondary,
     marginBottom: 4,
   },
   userName: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#fff',
+    color: colors.white,
   },
   notificationButton: {
     position: 'relative',
@@ -343,12 +340,12 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#333',
+    color: colors.white,
     marginBottom: 16,
   },
   seeAllText: {
     fontSize: 16,
-    color: '#007AFF',
+    color: colors.primary,
     fontWeight: '500',
   },
   statsGrid: {
@@ -357,18 +354,18 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   statCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 16,
     width: '48%',
     marginBottom: 12,
-    borderLeftWidth: 4,
-    shadowColor: '#000',
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    shadowColor: colors.primary,
     shadowOffset: {
       width: 0,
       height: 2,
     },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.3,
     shadowRadius: 4,
     elevation: 3,
   },
@@ -379,22 +376,23 @@ const styles = StyleSheet.create({
   },
   statTitle: {
     fontSize: 14,
-    color: '#666',
+    color: colors.textSecondary,
     marginLeft: 8,
+    fontWeight: '500',
   },
   statValue: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#333',
+    color: colors.white,
     marginBottom: 8,
   },
   statUnit: {
     fontSize: 16,
-    color: '#666',
+    color: colors.textTertiary,
   },
   progressBar: {
     height: 4,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: colors.cardDarkLight,
     borderRadius: 2,
     overflow: 'hidden',
   },
@@ -407,46 +405,51 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   healthCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
+    backgroundColor: colors.card,
+    borderRadius: 16,
     padding: 16,
     alignItems: 'center',
     flex: 1,
     marginHorizontal: 4,
-    shadowColor: '#000',
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    shadowColor: colors.primary,
     shadowOffset: {
       width: 0,
       height: 2,
     },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.2,
     shadowRadius: 4,
     elevation: 3,
   },
   healthLabel: {
     fontSize: 14,
-    color: '#666',
+    color: colors.textSecondary,
     marginBottom: 4,
+    fontWeight: '500',
   },
   healthValue: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#333',
+    color: colors.white,
     marginBottom: 2,
   },
   healthSubtext: {
     fontSize: 12,
-    color: '#666',
+    color: colors.textSecondary,
   },
   chartContainer: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
+    backgroundColor: colors.card,
+    borderRadius: 16,
     padding: 16,
-    shadowColor: '#000',
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    shadowColor: colors.primary,
     shadowOffset: {
       width: 0,
       height: 2,
     },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.2,
     shadowRadius: 4,
     elevation: 3,
   },
@@ -457,17 +460,19 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   recommendationCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
+    backgroundColor: colors.card,
+    borderRadius: 16,
     padding: 16,
     flexDirection: 'row',
     alignItems: 'center',
-    shadowColor: '#000',
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    shadowColor: colors.primary,
     shadowOffset: {
       width: 0,
       height: 2,
     },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.2,
     shadowRadius: 4,
     elevation: 3,
   },
@@ -485,12 +490,12 @@ const styles = StyleSheet.create({
   recommendationTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
+    color: colors.white,
     marginBottom: 4,
   },
   recommendationDescription: {
     fontSize: 14,
-    color: '#666',
+    color: colors.textSecondary,
     lineHeight: 20,
   },
   quickActions: {
@@ -498,23 +503,25 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   quickActionButton: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
+    backgroundColor: colors.card,
+    borderRadius: 16,
     padding: 20,
     alignItems: 'center',
     width: '23%',
-    shadowColor: '#000',
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    shadowColor: colors.primary,
     shadowOffset: {
       width: 0,
       height: 2,
     },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.2,
     shadowRadius: 4,
     elevation: 3,
   },
   quickActionText: {
     fontSize: 12,
-    color: '#666',
+    color: colors.white,
     marginTop: 8,
     textAlign: 'center',
   },

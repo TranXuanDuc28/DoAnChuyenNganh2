@@ -9,10 +9,12 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  ImageBackground,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons as Icon } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
+import colors from '../theme/colors';
 
 const LoginScreen = ({ navigation, route }) => {
   const { login } = useAuth();
@@ -50,26 +52,31 @@ const LoginScreen = ({ navigation, route }) => {
   };
 
   return (
-    <LinearGradient
-      colors={['#007AFF', '#0056CC']}
+    <ImageBackground
+      source={require('../image/banner1.jpg')}
       style={styles.container}
+      imageStyle={styles.backgroundImage}
     >
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.keyboardAvoidingView}
+      <LinearGradient
+        colors={['rgba(0,0,0,0.85)', 'rgba(0,0,0,0.65)']}
+        style={styles.gradient}
       >
-        <ScrollView contentContainerStyle={styles.scrollContainer}>
-          <View style={styles.header}>
-            <Icon name="fitness" size={60} color="#fff" style={styles.logo} />
-            <Text style={styles.title}>Welcome Back</Text>
-            <Text style={styles.subtitle}>Sign in to continue your fitness journey</Text>
-          </View>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.keyboardAvoidingView}
+        >
+          <ScrollView contentContainerStyle={styles.scrollContainer}>
+            <View style={styles.header}>
+              <Icon name="fitness" size={70} color={colors.primary} style={styles.logo} />
+              <Text style={styles.title}>Welcome Back</Text>
+              <Text style={styles.subtitle}>Sign in to continue your fitness journey</Text>
+            </View>
 
           <View style={styles.formContainer}>
             <View style={styles.inputContainer}>
               <Text style={styles.inputLabel}>Email</Text>
               <View style={styles.inputWrapper}>
-                <Icon name="mail" size={20} color="#666" style={styles.inputIcon} />
+                <Icon name="mail" size={20} color={colors.textSecondary} style={styles.inputIcon} />
                 <TextInput
                   style={styles.textInput}
                   value={email}
@@ -85,7 +92,7 @@ const LoginScreen = ({ navigation, route }) => {
             <View style={styles.inputContainer}>
               <Text style={styles.inputLabel}>Password</Text>
               <View style={styles.inputWrapper}>
-                <Icon name="lock-closed" size={20} color="#666" style={styles.inputIcon} />
+                <Icon name="lock-closed" size={20} color={colors.textSecondary} style={styles.inputIcon} />
                 <TextInput
                   style={[styles.textInput, styles.passwordInput]}
                   value={password}
@@ -101,7 +108,7 @@ const LoginScreen = ({ navigation, route }) => {
                   <Icon 
                     name={showPassword ? "eye-off" : "eye"} 
                     size={20} 
-                    color="#666" 
+                    color={colors.textSecondary} 
                   />
                 </TouchableOpacity>
               </View>
@@ -131,12 +138,12 @@ const LoginScreen = ({ navigation, route }) => {
             </View>
 
             <TouchableOpacity style={styles.socialButton}>
-              <Icon name="logo-google" size={24} color="#DB4437" />
+              <Icon name="logo-google" size={24} color={colors.danger} />
               <Text style={styles.socialButtonText}>Continue with Google</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.socialButton}>
-              <Icon name="logo-apple" size={24} color="#000" />
+              <Icon name="logo-apple" size={24} color={colors.black} />
               <Text style={styles.socialButtonText}>Continue with Apple</Text>
             </TouchableOpacity>
 
@@ -149,12 +156,19 @@ const LoginScreen = ({ navigation, route }) => {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
-    </LinearGradient>
+      </LinearGradient>
+    </ImageBackground>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+  },
+  backgroundImage: {
+    resizeMode: 'cover',
+  },
+  gradient: {
     flex: 1,
   },
   keyboardAvoidingView: {
@@ -164,6 +178,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     justifyContent: 'center',
     paddingHorizontal: 20,
+    paddingVertical: 40,
   },
   header: {
     alignItems: 'center',
@@ -173,28 +188,30 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   title: {
-    fontSize: 32,
+    fontSize: 36,
     fontWeight: 'bold',
-    color: '#fff',
+    color: colors.white,
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.8)',
+    color: colors.textSecondary,
     textAlign: 'center',
   },
   formContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    borderRadius: 20,
+    backgroundColor: colors.card,
+    borderRadius: 24,
     padding: 30,
-    shadowColor: '#000',
+    borderWidth: 1,
+    borderColor: colors.primary,
+    shadowColor: colors.primary,
     shadowOffset: {
       width: 0,
       height: 10,
     },
-    shadowOpacity: 0.25,
+    shadowOpacity: 0.5,
     shadowRadius: 20,
-    elevation: 10,
+    elevation: 15,
   },
   inputContainer: {
     marginBottom: 20,
@@ -202,16 +219,16 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
+    color: colors.text,
     marginBottom: 8,
   },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f8f9fa',
-    borderRadius: 12,
+    backgroundColor: colors.white,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#e9ecef',
+    borderColor: colors.borderLight,
   },
   inputIcon: {
     marginLeft: 16,
@@ -221,7 +238,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     paddingHorizontal: 12,
     fontSize: 16,
-    color: '#333',
+    color: colors.black,
   },
   passwordInput: {
     paddingRight: 50,
@@ -234,22 +251,30 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   forgotPasswordText: {
-    color: '#007AFF',
+    color: colors.primary,
     fontSize: 14,
     fontWeight: '500',
   },
   loginButton: {
-    backgroundColor: '#007AFF',
-    borderRadius: 12,
-    paddingVertical: 16,
+    backgroundColor: colors.primary,
+    borderRadius: 16,
+    paddingVertical: 18,
     alignItems: 'center',
     marginBottom: 20,
+    shadowColor: colors.primary,
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.5,
+    shadowRadius: 8,
+    elevation: 8,
   },
   loginButtonDisabled: {
-    backgroundColor: '#ccc',
+    backgroundColor: colors.borderDark,
   },
   loginButtonText: {
-    color: '#fff',
+    color: colors.textOnPrimary,
     fontSize: 18,
     fontWeight: 'bold',
   },
@@ -261,21 +286,21 @@ const styles = StyleSheet.create({
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: '#e9ecef',
+    backgroundColor: colors.border,
   },
   dividerText: {
     marginHorizontal: 16,
-    color: '#666',
+    color: colors.textSecondary,
     fontSize: 14,
   },
   socialButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: colors.backgroundLight,
     borderWidth: 1,
-    borderColor: '#e9ecef',
-    borderRadius: 12,
+    borderColor: colors.borderLight,
+    borderRadius: 16,
     paddingVertical: 14,
     marginBottom: 12,
   },
@@ -283,7 +308,7 @@ const styles = StyleSheet.create({
     marginLeft: 12,
     fontSize: 16,
     fontWeight: '500',
-    color: '#333',
+    color: colors.text,
   },
   signupContainer: {
     flexDirection: 'row',
@@ -291,11 +316,11 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   signupText: {
-    color: '#666',
+    color: colors.textSecondary,
     fontSize: 16,
   },
   signupLink: {
-    color: '#007AFF',
+    color: colors.primary,
     fontSize: 16,
     fontWeight: '600',
   },

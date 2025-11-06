@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { Ionicons as Icon } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
+import colors from '../theme/colors';
 
 const ProfileScreen = () => {
   const { user, logout } = useAuth();
@@ -227,7 +228,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     right: 0,
     backgroundColor: '#fff',
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 6,
     shadowColor: '#000',
     shadowOffset: {
@@ -289,7 +290,7 @@ const styles = StyleSheet.create({
   },
   statCard: {
     backgroundColor: '#fff',
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 16,
     alignItems: 'center',
     shadowColor: '#000',
@@ -325,7 +326,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
     backgroundColor: '#fff',
     marginHorizontal: 20,
-    borderRadius: 12,
+    borderRadius: 16,
     paddingVertical: 20,
     marginBottom: 20,
     shadowColor: '#000',
@@ -348,7 +349,7 @@ const styles = StyleSheet.create({
   menuSection: {
     backgroundColor: '#fff',
     marginHorizontal: 20,
-    borderRadius: 12,
+    borderRadius: 16,
     marginBottom: 20,
     shadowColor: '#000',
     shadowOffset: {
@@ -383,7 +384,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: '#fff',
     marginHorizontal: 20,
-    borderRadius: 12,
+    borderRadius: 16,
     paddingVertical: 16,
     marginBottom: 20,
     shadowColor: '#000',

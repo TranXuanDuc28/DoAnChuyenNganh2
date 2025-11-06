@@ -8,6 +8,7 @@ import {
   FlatList,
 } from 'react-native';
 import { Ionicons as Icon } from '@expo/vector-icons';
+import colors from '../theme/colors';
 
 const HealthScreen = () => {
   const [selectedTab, setSelectedTab] = useState('overview');
@@ -29,7 +30,7 @@ const HealthScreen = () => {
       value: '7.5 hours',
       time: 'Last night',
       icon: 'bed',
-      color: '#9C27B0',
+      color: colors.primary,
     },
     {
       id: 2,
@@ -38,7 +39,7 @@ const HealthScreen = () => {
       value: '72 bpm',
       time: '2 hours ago',
       icon: 'heart',
-      color: '#F44336',
+      color: colors.iconDanger,
     },
     {
       id: 3,
@@ -47,7 +48,7 @@ const HealthScreen = () => {
       value: 'Low',
       time: '1 hour ago',
       icon: 'leaf',
-      color: '#4CAF50',
+      color: colors.iconSuccess,
     },
   ];
 
@@ -57,15 +58,15 @@ const HealthScreen = () => {
     { id: 'insights', title: 'Insights', icon: 'bulb' },
   ];
 
-  const renderHealthMetric = (key, metric) => {
+  const renderHealthMetric = (key, metric, index) => {
     const percentage = Math.min((metric.value / metric.target) * 100, 100);
     const getStatusColor = (status) => {
       switch (status) {
-        case 'good': return '#4CAF50';
-        case 'normal': return '#2196F3';
-        case 'low': return '#4CAF50';
-        case 'progress': return '#FF9800';
-        default: return '#666';
+        case 'good': return colors.primary;
+        case 'normal': return colors.iconSuccess;
+        case 'low': return colors.iconSuccess;
+        case 'progress': return colors.iconWarning;
+        default: return colors.textSecondary;
       }
     };
 
@@ -106,7 +107,7 @@ const HealthScreen = () => {
       </View>
       <View style={styles.recordTime}>
         <Text style={styles.recordTimeText}>{item.time}</Text>
-        <Icon name="chevron-forward" size={16} color="#666" />
+        <Icon name="chevron-forward" size={16} color={colors.textSecondary} />
       </View>
     </TouchableOpacity>
   );
@@ -117,7 +118,7 @@ const HealthScreen = () => {
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Health</Text>
         <TouchableOpacity style={styles.headerButton}>
-          <Icon name="settings" size={24} color="#007AFF" />
+          <Icon name="settings" size={24} color={colors.primary} />
         </TouchableOpacity>
       </View>
 
@@ -132,7 +133,7 @@ const HealthScreen = () => {
             <Icon
               name={tab.icon}
               size={20}
-              color={selectedTab === tab.id ? '#007AFF' : '#666'}
+              color={selectedTab === tab.id ? colors.primary : colors.textSecondary}
             />
             <Text
               style={[
@@ -151,8 +152,8 @@ const HealthScreen = () => {
           <View>
             {/* Health Metrics Grid */}
             <View style={styles.metricsGrid}>
-              {Object.entries(healthMetrics).map(([key, metric]) =>
-                renderHealthMetric(key, metric)
+              {Object.entries(healthMetrics).map(([key, metric], index) =>
+                renderHealthMetric(key, metric, index)
               )}
             </View>
 
@@ -174,32 +175,32 @@ const HealthScreen = () => {
             <Text style={styles.sectionTitle}>Track Health Metrics</Text>
             
             <TouchableOpacity style={styles.trackButton}>
-              <Icon name="bed" size={24} color="#9C27B0" />
+              <Icon name="bed" size={22} color={colors.iconDefault} />
               <Text style={styles.trackButtonText}>Log Sleep</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.trackButton}>
-              <Icon name="heart" size={24} color="#F44336" />
+              <Icon name="heart" size={22} color={colors.iconDefault} />
               <Text style={styles.trackButtonText}>Log Heart Rate</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.trackButton}>
-              <Icon name="leaf" size={24} color="#4CAF50" />
+              <Icon name="leaf" size={22} color={colors.iconDefault} />
               <Text style={styles.trackButtonText}>Log Stress Level</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.trackButton}>
-              <Icon name="scale" size={24} color="#FF9800" />
+              <Icon name="scale" size={22} color={colors.iconDefault} />
               <Text style={styles.trackButtonText}>Log Weight</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.trackButton}>
-              <Icon name="water" size={24} color="#2196F3" />
+              <Icon name="water" size={22} color={colors.iconDefault} />
               <Text style={styles.trackButtonText}>Log Water Intake</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.trackButton}>
-              <Icon name="fitness" size={24} color="#607D8B" />
+              <Icon name="fitness" size={22} color={colors.iconDefault} />
               <Text style={styles.trackButtonText}>Breathing Exercise</Text>
             </TouchableOpacity>
           </View>
@@ -210,7 +211,7 @@ const HealthScreen = () => {
             <Text style={styles.sectionTitle}>Health Insights</Text>
             
             <View style={styles.insightCard}>
-              <Icon name="trending-up" size={32} color="#4CAF50" />
+              <Icon name="trending-up" size={32} color={colors.success} />
               <Text style={styles.insightTitle}>Sleep Improvement</Text>
               <Text style={styles.insightDescription}>
                 Your sleep quality has improved by 15% this week compared to last week.
@@ -218,7 +219,7 @@ const HealthScreen = () => {
             </View>
 
             <View style={styles.insightCard}>
-              <Icon name="heart" size={32} color="#F44336" />
+              <Icon name="heart" size={32} color={colors.danger} />
               <Text style={styles.insightTitle}>Heart Rate Stability</Text>
               <Text style={styles.insightDescription}>
                 Your resting heart rate has been consistent at 72 bpm, which is excellent.
@@ -226,7 +227,7 @@ const HealthScreen = () => {
             </View>
 
             <View style={styles.insightCard}>
-              <Icon name="bulb" size={32} color="#FF9800" />
+              <Icon name="bulb" size={32} color={colors.warning} />
               <Text style={styles.insightTitle}>Recommendation</Text>
               <Text style={styles.insightDescription}>
                 Try to increase your water intake to 8 glasses per day for better hydration.
@@ -242,7 +243,7 @@ const HealthScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: 'row',
@@ -250,25 +251,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 16,
-    backgroundColor: '#fff',
+    backgroundColor: colors.card,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    borderBottomColor: colors.borderLight,
   },
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#333',
+    color: colors.text,
   },
   headerButton: {
     padding: 8,
   },
   tabContainer: {
     flexDirection: 'row',
-    backgroundColor: '#fff',
+    backgroundColor: colors.card,
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    borderBottomColor: colors.borderLight,
   },
   tab: {
     flex: 1,
@@ -280,15 +281,15 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   activeTab: {
-    backgroundColor: '#f0f8ff',
+    backgroundColor: colors.cardDarkLight,
   },
   tabText: {
     fontSize: 14,
-    color: '#666',
+    color: colors.textSecondary,
     marginLeft: 6,
   },
   activeTabText: {
-    color: '#007AFF',
+    color: colors.primary,
     fontWeight: '600',
   },
   content: {
@@ -298,7 +299,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#333',
+    color: colors.text,
     marginTop: 20,
     marginBottom: 16,
   },
@@ -308,17 +309,19 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   metricCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
+    backgroundColor: colors.card,
+    borderRadius: 16,
     padding: 16,
     width: '48%',
     marginBottom: 12,
-    shadowColor: '#000',
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    shadowColor: colors.black,
     shadowOffset: {
       width: 0,
       height: 2,
     },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.3,
     shadowRadius: 4,
     elevation: 3,
   },
@@ -329,28 +332,30 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   metricTitle: {
-    fontSize: 14,
-    color: '#666',
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.textSecondary,
   },
   metricValue: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
-    color: '#333',
+    color: colors.text,
   },
   progressBar: {
-    height: 6,
-    backgroundColor: '#f0f0f0',
-    borderRadius: 3,
+    height: 8,
+    backgroundColor: colors.borderDark,
+    borderRadius: 4,
     overflow: 'hidden',
-    marginBottom: 8,
+    marginBottom: 10,
   },
   progressFill: {
     height: '100%',
     borderRadius: 3,
   },
   metricTarget: {
-    fontSize: 12,
-    color: '#666',
+    fontSize: 11,
+    color: colors.textSecondary,
+    fontWeight: '500',
   },
   recordsSection: {
     marginBottom: 20,
@@ -358,16 +363,18 @@ const styles = StyleSheet.create({
   recordCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
-    borderRadius: 12,
+    backgroundColor: colors.card,
+    borderRadius: 16,
     padding: 16,
     marginBottom: 8,
-    shadowColor: '#000',
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    shadowColor: colors.black,
     shadowOffset: {
       width: 0,
       height: 2,
     },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.3,
     shadowRadius: 4,
     elevation: 3,
   },
@@ -385,12 +392,12 @@ const styles = StyleSheet.create({
   recordTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
+    color: colors.text,
     marginBottom: 4,
   },
   recordValue: {
     fontSize: 14,
-    color: '#666',
+    color: colors.textSecondary,
   },
   recordTime: {
     flexDirection: 'row',
@@ -398,7 +405,7 @@ const styles = StyleSheet.create({
   },
   recordTimeText: {
     fontSize: 12,
-    color: '#666',
+    color: colors.textSecondary,
     marginRight: 4,
   },
   trackContainer: {
@@ -407,53 +414,57 @@ const styles = StyleSheet.create({
   trackButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: colors.card,
     borderRadius: 12,
-    padding: 20,
+    padding: 18,
     marginBottom: 12,
-    shadowColor: '#000',
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    shadowColor: colors.black,
     shadowOffset: {
       width: 0,
       height: 2,
     },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.3,
     shadowRadius: 4,
     elevation: 3,
   },
   trackButtonText: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#333',
-    marginLeft: 16,
+    fontSize: 15,
+    fontWeight: '600',
+    color: colors.text,
+    marginLeft: 14,
   },
   insightsContainer: {
     paddingVertical: 20,
   },
   insightCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
+    backgroundColor: colors.card,
+    borderRadius: 16,
     padding: 20,
     marginBottom: 16,
     alignItems: 'center',
-    shadowColor: '#000',
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    shadowColor: colors.black,
     shadowOffset: {
       width: 0,
       height: 2,
     },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.3,
     shadowRadius: 4,
     elevation: 3,
   },
   insightTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
+    color: colors.text,
     marginTop: 12,
     marginBottom: 8,
   },
   insightDescription: {
     fontSize: 14,
-    color: '#666',
+    color: colors.textSecondary,
     textAlign: 'center',
     lineHeight: 20,
   },

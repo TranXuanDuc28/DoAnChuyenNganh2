@@ -8,6 +8,7 @@ import {
   FlatList,
 } from 'react-native';
 import { Ionicons as Icon } from '@expo/vector-icons';
+import colors from '../theme/colors';
 
 const WorkoutScreen = () => {
   const [selectedTab, setSelectedTab] = useState('plans');
@@ -21,7 +22,7 @@ const WorkoutScreen = () => {
       exercises: 8,
       calories: 250,
       image: 'fitness',
-      color: '#FF6B6B',
+      color: colors.primary,
     },
     {
       id: 2,
@@ -31,7 +32,7 @@ const WorkoutScreen = () => {
       exercises: 6,
       calories: 400,
       image: 'flash',
-      color: '#4ECDC4',
+      color: colors.iconWarning,
     },
     {
       id: 3,
@@ -41,7 +42,7 @@ const WorkoutScreen = () => {
       exercises: 10,
       calories: 350,
       image: 'barbell',
-      color: '#45B7D1',
+      color: colors.iconSuccess,
     },
   ];
 
@@ -104,7 +105,7 @@ const WorkoutScreen = () => {
   const renderRecentWorkout = ({ item }) => (
     <View style={styles.historyItem}>
       <View style={styles.historyIcon}>
-        <Icon name="checkmark-circle" size={24} color="#4CAF50" />
+        <Icon name="checkmark-circle" size={24} color={colors.success} />
       </View>
       <View style={styles.historyInfo}>
         <Text style={styles.historyTitle}>{item.name}</Text>
@@ -123,7 +124,7 @@ const WorkoutScreen = () => {
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Workouts</Text>
         <TouchableOpacity style={styles.headerButton}>
-          <Icon name="add" size={24} color="#007AFF" />
+          <Icon name="add" size={24} color={colors.primary} />
         </TouchableOpacity>
       </View>
 
@@ -138,7 +139,7 @@ const WorkoutScreen = () => {
             <Icon
               name={tab.icon}
               size={20}
-              color={selectedTab === tab.id ? '#007AFF' : '#666'}
+              color={selectedTab === tab.id ? colors.primary : colors.textSecondary}
             />
             <Text
               style={[
@@ -198,7 +199,7 @@ const WorkoutScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: 'row',
@@ -206,25 +207,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 16,
-    backgroundColor: '#fff',
+    backgroundColor: colors.card,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    borderBottomColor: colors.border,
   },
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#333',
+    color: colors.text,
   },
   headerButton: {
     padding: 8,
   },
   tabContainer: {
     flexDirection: 'row',
-    backgroundColor: '#fff',
+    backgroundColor: colors.card,
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    borderBottomColor: colors.border,
   },
   tab: {
     flex: 1,
@@ -236,15 +237,15 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   activeTab: {
-    backgroundColor: '#f0f8ff',
+    backgroundColor: colors.cardDarkLight,
   },
   tabText: {
     fontSize: 14,
-    color: '#666',
+    color: colors.textSecondary,
     marginLeft: 6,
   },
   activeTabText: {
-    color: '#007AFF',
+    color: colors.primary,
     fontWeight: '600',
   },
   content: {
@@ -254,17 +255,19 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#333',
+    color: colors.text,
     marginTop: 20,
     marginBottom: 16,
   },
   workoutCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
+    backgroundColor: colors.card,
+    borderRadius: 16,
     padding: 16,
     marginBottom: 12,
-    borderLeftWidth: 4,
-    shadowColor: '#000',
+    borderLeftWidth: 0,
+    borderLeftWidth: 2, // độ dày viền (hoặc dùng borderWidth cho tất cả các cạnh)
+    borderColor: colors.borderLight,
+    shadowColor: colors.black,
     shadowOffset: {
       width: 0,
       height: 2,
@@ -292,12 +295,12 @@ const styles = StyleSheet.create({
   workoutTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
+    color: colors.text,
     marginBottom: 4,
   },
   workoutSubtitle: {
     fontSize: 14,
-    color: '#666',
+    color: colors.textSecondary,
   },
   workoutStats: {
     flexDirection: 'row',
@@ -309,20 +312,22 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#333',
+    color: colors.text,
   },
   statLabel: {
     fontSize: 12,
-    color: '#666',
+    color: colors.textSecondary,
   },
   historyItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
-    borderRadius: 12,
+    backgroundColor: colors.card,
+    borderRadius: 16,
+    borderLeftWidth: 2, // độ dày viền (hoặc dùng borderWidth cho tất cả các cạnh)
+    borderColor: colors.borderLight, 
     padding: 16,
     marginBottom: 8,
-    shadowColor: '#000',
+    shadowColor: colors.black,
     shadowOffset: {
       width: 0,
       height: 1,
@@ -340,12 +345,12 @@ const styles = StyleSheet.create({
   historyTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
+    color: colors.text,
     marginBottom: 4,
   },
   historySubtitle: {
     fontSize: 14,
-    color: '#666',
+    color: colors.textSecondary,
   },
   historyStats: {
     alignItems: 'flex-end',
@@ -353,12 +358,12 @@ const styles = StyleSheet.create({
   historyDuration: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#333',
+    color: colors.text,
     marginBottom: 2,
   },
   historyCalories: {
     fontSize: 12,
-    color: '#666',
+    color: colors.textSecondary,
   },
   exercisesContainer: {
     alignItems: 'center',
@@ -366,20 +371,20 @@ const styles = StyleSheet.create({
   },
   comingSoon: {
     fontSize: 16,
-    color: '#666',
+    color: colors.textSecondary,
     marginTop: 16,
   },
   quickStartButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#007AFF',
+    backgroundColor: colors.primary,
     margin: 20,
     paddingVertical: 16,
-    borderRadius: 12,
+    borderRadius: 16,
   },
   quickStartText: {
-    color: '#fff',
+    color: colors.text,
     fontSize: 18,
     fontWeight: 'bold',
     marginLeft: 8,

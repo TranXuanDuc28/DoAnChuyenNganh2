@@ -25,6 +25,9 @@ import ExerciseSelectionScreen from './screens/ExerciseSelectionScreen';
 // Import context
 import { AuthProvider, useAuth } from './context/AuthContext';
 
+// Import theme
+import colors from './theme/colors';
+
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 
@@ -57,20 +60,20 @@ const TabNavigator = () => {
 
           return <Icon name={iconName as any} size={size} color={color} />;
         },
-        tabBarActiveTintColor: '#007AFF',
-        tabBarInactiveTintColor: 'gray',
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.textSecondary,
         tabBarStyle: {
-          backgroundColor: '#fff',
+          backgroundColor: colors.white,
           borderTopWidth: 1,
-          borderTopColor: '#e0e0e0',
+          borderTopColor: colors.border,
           paddingBottom: 5,
           paddingTop: 5,
           height: 60,
         },
         headerStyle: {
-          backgroundColor: '#007AFF',
+          backgroundColor: colors.primary,
         },
-        headerTintColor: '#fff',
+        headerTintColor: colors.textWhite,
         headerTitleStyle: {
           fontWeight: 'bold',
         },
@@ -130,9 +133,9 @@ const AuthNavigator = () => {
     <Stack.Navigator
       screenOptions={{
         headerStyle: {
-          backgroundColor: '#007AFF',
+          backgroundColor: colors.primary,
         },
-        headerTintColor: '#fff',
+        headerTintColor: colors.textWhite,
         headerTitleStyle: {
           fontWeight: 'bold',
         },
@@ -174,8 +177,8 @@ const AppNavigator = () => {
             component={PoseScreen}
             options={{ 
               headerShown: true,
-              headerStyle: { backgroundColor: '#007AFF' },
-              headerTintColor: '#fff',
+              headerStyle: { backgroundColor: colors.primary },
+              headerTintColor: colors.textWhite,
               headerTitleStyle: { fontWeight: 'bold' },
             }}
           />
@@ -190,7 +193,7 @@ const AppNavigator = () => {
 const App = () => {
   return (
     <AuthProvider>
-      <StatusBar barStyle="light-content" backgroundColor="#007AFF" />
+      <StatusBar barStyle="dark-content" backgroundColor={colors.primary} />
       <AppNavigator />
     </AuthProvider>
   );

@@ -9,10 +9,12 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  ImageBackground,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons as Icon } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
+import { colors } from '../theme/colors';
 
 const RegisterScreen = ({ navigation, route }) => {
   const { register } = useAuth();
@@ -114,20 +116,25 @@ const RegisterScreen = ({ navigation, route }) => {
   };
 
   return (
-    <LinearGradient
-      colors={['#007AFF', '#0056CC']}
+    <ImageBackground
+      source={require('../image/banner.jpg')}
       style={styles.container}
+      imageStyle={styles.backgroundImage}
     >
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.keyboardAvoidingView}
+      <LinearGradient
+        colors={['rgba(0,0,0,0.85)', 'rgba(0,0,0,0.65)']}
+        style={styles.gradient}
       >
-        <ScrollView contentContainerStyle={styles.scrollContainer}>
-          <View style={styles.header}>
-            <Icon name="person-add" size={60} color="#fff" style={styles.logo} />
-            <Text style={styles.title}>Create Account</Text>
-            <Text style={styles.subtitle}>Join thousands of users on their fitness journey</Text>
-          </View>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.keyboardAvoidingView}
+        >
+          <ScrollView contentContainerStyle={styles.scrollContainer}>
+            <View style={styles.header}>
+              <Icon name="person-add" size={70} color={colors.primary} style={styles.logo} />
+              <Text style={styles.title}>Create Account</Text>
+              <Text style={styles.subtitle}>Join thousands on their fitness journey</Text>
+            </View>
 
           <View style={styles.formContainer}>
             <View style={styles.row}>
@@ -161,7 +168,7 @@ const RegisterScreen = ({ navigation, route }) => {
             <View style={styles.inputContainer}>
               <Text style={styles.inputLabel}>Email *</Text>
               <View style={styles.inputWrapper}>
-                <Icon name="mail" size={20} color="#666" style={styles.inputIcon} />
+                <Icon name="mail" size={20} color={colors.textSecondary} style={styles.inputIcon} />
                 <TextInput
                   style={styles.textInput}
                   value={formData.email}
@@ -177,7 +184,7 @@ const RegisterScreen = ({ navigation, route }) => {
             <View style={styles.inputContainer}>
               <Text style={styles.inputLabel}>Password *</Text>
               <View style={styles.inputWrapper}>
-                <Icon name="lock-closed" size={20} color="#666" style={styles.inputIcon} />
+                <Icon name="lock-closed" size={20} color={colors.textSecondary} style={styles.inputIcon} />
                 <TextInput
                   style={[styles.textInput, styles.passwordInput]}
                   value={formData.password}
@@ -193,7 +200,7 @@ const RegisterScreen = ({ navigation, route }) => {
                   <Icon 
                     name={showPassword ? "eye-off" : "eye"} 
                     size={20} 
-                    color="#666" 
+                    color={colors.textSecondary} 
                   />
                 </TouchableOpacity>
               </View>
@@ -202,7 +209,7 @@ const RegisterScreen = ({ navigation, route }) => {
             <View style={styles.inputContainer}>
               <Text style={styles.inputLabel}>Confirm Password *</Text>
               <View style={styles.inputWrapper}>
-                <Icon name="lock-closed" size={20} color="#666" style={styles.inputIcon} />
+                <Icon name="lock-closed" size={20} color={colors.textSecondary} style={styles.inputIcon} />
                 <TextInput
                   style={[styles.textInput, styles.passwordInput]}
                   value={formData.confirmPassword}
@@ -218,14 +225,14 @@ const RegisterScreen = ({ navigation, route }) => {
                   <Icon 
                     name={showConfirmPassword ? "eye-off" : "eye"} 
                     size={20} 
-                    color="#666" 
+                    color={colors.textSecondary} 
                   />
                 </TouchableOpacity>
               </View>
             </View>
 
             {formData.password && formData.confirmPassword && formData.password !== formData.confirmPassword && (
-              <Text style={styles.errorText}>Passwords do not match</Text>
+              <Text style={styles.errorText}>⚠️ Passwords do not match</Text>
             )}
 
             <TouchableOpacity
@@ -248,12 +255,12 @@ const RegisterScreen = ({ navigation, route }) => {
             </View>
 
             <TouchableOpacity style={styles.socialButton}>
-              <Icon name="logo-google" size={24} color="#DB4437" />
+              <Icon name="logo-google" size={22} color="#DB4437" />
               <Text style={styles.socialButtonText}>Continue with Google</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.socialButton}>
-              <Icon name="logo-apple" size={24} color="#000" />
+              <Icon name="logo-apple" size={22} color={colors.text} />
               <Text style={styles.socialButtonText}>Continue with Apple</Text>
             </TouchableOpacity>
 
@@ -270,12 +277,19 @@ const RegisterScreen = ({ navigation, route }) => {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
-    </LinearGradient>
+      </LinearGradient>
+    </ImageBackground>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+  },
+  backgroundImage: {
+    resizeMode: 'cover',
+  },
+  gradient: {
     flex: 1,
   },
   keyboardAvoidingView: {
@@ -295,29 +309,31 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   title: {
-    fontSize: 32,
+    fontSize: 36,
     fontWeight: 'bold',
-    color: '#fff',
+    color: colors.white,
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.8)',
+    color: colors.textSecondary,
     textAlign: 'center',
     paddingHorizontal: 20,
   },
   formContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    borderRadius: 20,
+    backgroundColor: colors.card,
+    borderRadius: 24,
     padding: 30,
-    shadowColor: '#000',
+    borderWidth: 1,
+    borderColor: colors.primary,
+    shadowColor: colors.primary,
     shadowOffset: {
       width: 0,
       height: 10,
     },
-    shadowOpacity: 0.25,
+    shadowOpacity: 0.5,
     shadowRadius: 20,
-    elevation: 10,
+    elevation: 15,
   },
   row: {
     flexDirection: 'row',
@@ -332,16 +348,16 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
+    color: colors.text,
     marginBottom: 8,
   },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f8f9fa',
-    borderRadius: 12,
+    backgroundColor: colors.white,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#e9ecef',
+    borderColor: colors.borderLight,
   },
   inputIcon: {
     marginLeft: 16,
@@ -351,7 +367,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     paddingHorizontal: 16,
     fontSize: 16,
-    color: '#333',
+    color: colors.black,
   },
   passwordInput: {
     paddingRight: 50,
@@ -360,23 +376,32 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   errorText: {
-    color: '#FF3B30',
+    color: colors.danger,
     fontSize: 14,
     marginTop: -15,
     marginBottom: 10,
+    fontWeight: '600',
   },
   registerButton: {
-    backgroundColor: '#007AFF',
-    borderRadius: 12,
-    paddingVertical: 16,
+    backgroundColor: colors.primary,
+    borderRadius: 16,
+    paddingVertical: 18,
     alignItems: 'center',
     marginBottom: 20,
+    shadowColor: colors.primary,
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.5,
+    shadowRadius: 8,
+    elevation: 8,
   },
   registerButtonDisabled: {
-    backgroundColor: '#ccc',
+    backgroundColor: colors.borderDark,
   },
   registerButtonText: {
-    color: '#fff',
+    color: colors.textOnPrimary,
     fontSize: 18,
     fontWeight: 'bold',
   },
@@ -388,29 +413,29 @@ const styles = StyleSheet.create({
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: '#e9ecef',
+    backgroundColor: colors.border,
   },
   dividerText: {
     marginHorizontal: 16,
-    color: '#666',
+    color: colors.textSecondary,
     fontSize: 14,
   },
   socialButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: colors.backgroundLight,
     borderWidth: 1,
-    borderColor: '#e9ecef',
+    borderColor: colors.borderLight,
     borderRadius: 12,
-    paddingVertical: 14,
-    marginBottom: 12,
+    paddingVertical: 12,
+    marginBottom: 10,
   },
   socialButtonText: {
-    marginLeft: 12,
-    fontSize: 16,
+    marginLeft: 10,
+    fontSize: 15,
     fontWeight: '500',
-    color: '#333',
+    color: colors.text,
   },
   loginContainer: {
     flexDirection: 'row',
@@ -418,20 +443,20 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   loginText: {
-    color: '#666',
+    color: colors.textSecondary,
     fontSize: 16,
   },
   loginLink: {
-    color: '#007AFF',
+    color: colors.primary,
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   termsText: {
-    color: '#666',
+    color: colors.textSecondary,
     fontSize: 12,
     textAlign: 'center',
     marginTop: 20,
-    lineHeight: 16,
+    lineHeight: 18,
   },
 });
 

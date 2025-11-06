@@ -4,6 +4,7 @@ import api, { aiAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import SuggestionCard from '../components/SuggestionCard'; // We will create this component next
 import CustomButton from '../components/CustomButton';
+import { colors } from '../theme/colors';
 
 const AssistantScreen = () => {
   const { user } = useAuth();
@@ -100,7 +101,7 @@ const AssistantScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f0f2f5',
+    backgroundColor: colors.background,
   },
   loader: {
     flex: 1,
@@ -113,15 +114,16 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingVertical: 20,
+    paddingHorizontal: 4,
   },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    color: '#1c1c1e',
+    color: colors.text,
   },
   subtitle: {
     fontSize: 16,
-    color: '#6c6c6e',
+    color: colors.textSecondary,
     marginTop: 4,
   },
   emptyContainer: {
@@ -129,16 +131,38 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 50,
+    backgroundColor: colors.card,
+    borderRadius: 16,
+    padding: 24,
+    marginHorizontal: 4,
   },
   emptyText: {
     fontSize: 16,
-    color: '#6c6c6e',
+    color: colors.textSecondary,
   },
   buttonContainer: {
     position: 'absolute',
     bottom: 20,
     left: 16,
     right: 16,
+    shadowColor: colors.black,
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  planMessage: {
+    marginTop: 12,
+    textAlign: 'center',
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.text,
+    backgroundColor: colors.card,
+    padding: 12,
+    borderRadius: 12,
   }
 });
 

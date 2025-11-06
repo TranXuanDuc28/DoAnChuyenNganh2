@@ -8,6 +8,7 @@ import {
   FlatList,
 } from 'react-native';
 import { Ionicons as Icon } from '@expo/vector-icons';
+import { colors } from '../theme/colors';
 
 const SocialScreen = () => {
   const [selectedTab, setSelectedTab] = useState('feed');
@@ -105,19 +106,19 @@ const SocialScreen = () => {
     <View style={styles.postCard}>
       <View style={styles.postHeader}>
         <View style={styles.userInfo}>
-          <Icon name={item.user.avatar} size={40} color="#007AFF" />
+          <Icon name={item.user.avatar} size={40} color={colors.iconDefault} />
           <View style={styles.userDetails}>
             <View style={styles.userNameContainer}>
               <Text style={styles.userName}>{item.user.name}</Text>
               {item.user.verified && (
-                <Icon name="checkmark-circle" size={16} color="#007AFF" />
+                <Icon name="checkmark-circle" size={16} color={colors.iconSuccess} />
               )}
             </View>
             <Text style={styles.postTime}>{item.timeAgo}</Text>
           </View>
         </View>
         <TouchableOpacity>
-          <Icon name="ellipsis-horizontal" size={20} color="#666" />
+          <Icon name="ellipsis-horizontal" size={20} color={colors.iconDefault} />
         </TouchableOpacity>
       </View>
 
@@ -125,15 +126,15 @@ const SocialScreen = () => {
 
       <View style={styles.postActions}>
         <TouchableOpacity style={styles.actionButton}>
-          <Icon name="heart-outline" size={20} color="#666" />
+          <Icon name="heart-outline" size={20} color={colors.iconDefault} />
           <Text style={styles.actionText}>{item.stats.likes}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.actionButton}>
-          <Icon name="chatbubble-outline" size={20} color="#666" />
+          <Icon name="chatbubble-outline" size={20} color={colors.iconDefault} />
           <Text style={styles.actionText}>{item.stats.comments}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.actionButton}>
-          <Icon name="share-outline" size={20} color="#666" />
+          <Icon name="share-outline" size={20} color={colors.iconDefault} />
           <Text style={styles.actionText}>{item.stats.shares}</Text>
         </TouchableOpacity>
       </View>
@@ -188,7 +189,7 @@ const SocialScreen = () => {
           <Text style={styles.rankText}>{item.rank}</Text>
         </View>
       </View>
-      <Icon name={item.avatar} size={40} color="#007AFF" />
+      <Icon name={item.avatar} size={40} color={colors.iconDefault} />
       <View style={styles.leaderboardInfo}>
         <Text style={[styles.leaderboardName, item.isCurrentUser && styles.currentUserName]}>
           {item.name}
@@ -214,10 +215,10 @@ const SocialScreen = () => {
         <Text style={styles.headerTitle}>Social</Text>
         <View style={styles.headerButtons}>
           <TouchableOpacity style={styles.headerButton}>
-            <Icon name="search" size={24} color="#007AFF" />
+            <Icon name="search" size={24} color={colors.iconDefault} />
           </TouchableOpacity>
           <TouchableOpacity style={styles.headerButton}>
-            <Icon name="add" size={24} color="#007AFF" />
+            <Icon name="add" size={24} color={colors.primary} />
           </TouchableOpacity>
         </View>
       </View>
@@ -233,7 +234,7 @@ const SocialScreen = () => {
             <Icon
               name={tab.icon}
               size={20}
-              color={selectedTab === tab.id ? '#007AFF' : '#666'}
+              color={selectedTab === tab.id ? colors.primary : colors.textSecondary}
             />
             <Text
               style={[
@@ -251,7 +252,7 @@ const SocialScreen = () => {
         {selectedTab === 'feed' && (
           <View>
             <TouchableOpacity style={styles.createPostButton}>
-              <Icon name="create" size={20} color="#007AFF" />
+              <Icon name="create" size={20} color={colors.iconDefault} />
               <Text style={styles.createPostText}>Share your progress</Text>
             </TouchableOpacity>
             <FlatList
@@ -296,7 +297,7 @@ const SocialScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: colors.background,
   },
   header: {
     flexDirection: 'row',
@@ -304,14 +305,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 16,
-    backgroundColor: '#fff',
+    backgroundColor: colors.card,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    borderBottomColor: colors.border,
   },
   headerTitle: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#333',
+    color: colors.text,
   },
   headerButtons: {
     flexDirection: 'row',
@@ -322,32 +323,33 @@ const styles = StyleSheet.create({
   },
   tabContainer: {
     flexDirection: 'row',
-    backgroundColor: '#fff',
+    backgroundColor: colors.card,
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    borderBottomColor: colors.border,
   },
   tab: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 8,
+    paddingVertical: 10,
     paddingHorizontal: 12,
-    borderRadius: 8,
+    borderRadius: 12,
   },
   activeTab: {
-    backgroundColor: '#f0f8ff',
+    backgroundColor: colors.cardDarkLight,
   },
   tabText: {
     fontSize: 14,
-    color: '#666',
+    color: colors.textSecondary,
     marginLeft: 6,
+    fontWeight: '500',
   },
   activeTabText: {
-    color: '#007AFF',
-    fontWeight: '600',
+    color: colors.primary,
+    fontWeight: '700',
   },
   content: {
     flex: 1,
@@ -356,7 +358,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#333',
+    color: colors.text,
     marginTop: 20,
     marginBottom: 16,
   },
@@ -364,33 +366,40 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: colors.card,
     borderRadius: 12,
     padding: 16,
     marginVertical: 16,
     borderWidth: 1,
-    borderColor: '#007AFF',
-    borderStyle: 'dashed',
+    borderColor: colors.border,
+    shadowColor: colors.black,
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
   },
   createPostText: {
-    color: '#007AFF',
-    fontSize: 16,
+    color: colors.textSecondary,
+    fontSize: 15,
     fontWeight: '500',
     marginLeft: 8,
   },
   postCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
+    backgroundColor: colors.card,
+    borderRadius: 16,
     padding: 16,
     marginBottom: 16,
-    shadowColor: '#000',
+    shadowColor: colors.black,
     shadowOffset: {
       width: 0,
       height: 2,
     },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowRadius: 6,
+    elevation: 4,
   },
   postHeader: {
     flexDirection: 'row',
@@ -414,17 +423,17 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
+    color: colors.text,
     marginRight: 4,
   },
   postTime: {
     fontSize: 12,
-    color: '#666',
+    color: colors.textSecondary,
     marginTop: 2,
   },
   postContent: {
     fontSize: 16,
-    color: '#333',
+    color: colors.text,
     lineHeight: 22,
     marginBottom: 16,
   },
@@ -433,7 +442,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: '#f0f0f0',
+    borderTopColor: colors.border,
   },
   actionButton: {
     flexDirection: 'row',
@@ -441,22 +450,22 @@ const styles = StyleSheet.create({
   },
   actionText: {
     fontSize: 14,
-    color: '#666',
+    color: colors.textSecondary,
     marginLeft: 4,
   },
   challengeCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
+    backgroundColor: colors.card,
+    borderRadius: 16,
     padding: 16,
     marginBottom: 16,
-    shadowColor: '#000',
+    shadowColor: colors.black,
     shadowOffset: {
       width: 0,
       height: 2,
     },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowRadius: 6,
+    elevation: 4,
   },
   challengeHeader: {
     flexDirection: 'row',
@@ -477,12 +486,12 @@ const styles = StyleSheet.create({
   challengeTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
+    color: colors.text,
     marginBottom: 4,
   },
   challengeDescription: {
     fontSize: 14,
-    color: '#666',
+    color: colors.textSecondary,
   },
   challengeStats: {
     flexDirection: 'row',
@@ -495,16 +504,16 @@ const styles = StyleSheet.create({
   challengeStatValue: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
+    color: colors.text,
   },
   challengeStatLabel: {
     fontSize: 12,
-    color: '#666',
+    color: colors.textSecondary,
   },
   progressBar: {
-    height: 8,
-    backgroundColor: '#f0f0f0',
-    borderRadius: 4,
+    height: 6,
+    backgroundColor: colors.border,
+    borderRadius: 3,
     overflow: 'hidden',
   },
   progressFill: {
@@ -512,28 +521,28 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   leaderboardContainer: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
+    backgroundColor: colors.card,
+    borderRadius: 16,
     padding: 16,
-    shadowColor: '#000',
+    shadowColor: colors.black,
     shadowOffset: {
       width: 0,
       height: 2,
     },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowRadius: 6,
+    elevation: 4,
   },
   leaderboardItem: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: colors.border,
   },
   currentUserItem: {
-    backgroundColor: '#f0f8ff',
-    borderRadius: 8,
+    backgroundColor: colors.primaryLight,
+    borderRadius: 12,
     marginHorizontal: -8,
     paddingHorizontal: 8,
   },
@@ -560,15 +569,15 @@ const styles = StyleSheet.create({
   leaderboardName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
+    color: colors.text,
     marginBottom: 2,
   },
   currentUserName: {
-    color: '#007AFF',
+    color: colors.primary,
   },
   leaderboardPoints: {
     fontSize: 14,
-    color: '#666',
+    color: colors.textSecondary,
   },
 });
 

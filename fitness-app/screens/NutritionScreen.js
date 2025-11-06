@@ -8,6 +8,7 @@ import {
   FlatList,
 } from 'react-native';
 import { Ionicons as Icon } from '@expo/vector-icons';
+import colors from '../theme/colors';
 
 const NutritionScreen = () => {
   const [selectedTab, setSelectedTab] = useState('today');
@@ -138,7 +139,7 @@ const NutritionScreen = () => {
             <Icon
               name={tab.icon}
               size={20}
-              color={selectedTab === tab.id ? '#007AFF' : '#666'}
+              color={selectedTab === tab.id ? '#458094' : '#666'}
             />
             <Text
               style={[
@@ -262,7 +263,7 @@ const styles = StyleSheet.create({
     marginLeft: 6,
   },
   activeTabText: {
-    color: '#007AFF',
+    color: '#458094',
     fontWeight: '600',
   },
   content: {
@@ -281,7 +282,7 @@ const styles = StyleSheet.create({
   },
   goalCard: {
     backgroundColor: '#fff',
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 16,
     marginBottom: 12,
     shadowColor: '#000',
@@ -323,7 +324,7 @@ const styles = StyleSheet.create({
   },
   mealCard: {
     backgroundColor: '#fff',
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 16,
     marginBottom: 12,
     shadowColor: '#000',
@@ -381,7 +382,7 @@ const styles = StyleSheet.create({
   },
   quickActionButton: {
     backgroundColor: '#fff',
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 20,
     alignItems: 'center',
     flex: 1,
@@ -408,7 +409,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#fff',
-    borderRadius: 12,
+    borderRadius: 16,
     paddingHorizontal: 16,
     paddingVertical: 16,
     marginBottom: 20,
@@ -433,7 +434,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#007AFF',
-    borderRadius: 12,
+    borderRadius: 16,
     paddingVertical: 16,
   },
   scanButtonText: {

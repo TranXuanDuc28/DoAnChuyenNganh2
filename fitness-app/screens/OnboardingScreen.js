@@ -8,10 +8,12 @@ import {
   TextInput,
   Alert,
   Dimensions,
+  ImageBackground,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons as Icon } from '@expo/vector-icons';
 import { Picker } from '@react-native-picker/picker';
+import { colors } from '../theme/colors';
 
 const { width, height } = Dimensions.get('window');
 
@@ -117,7 +119,7 @@ const OnboardingScreen = ({ navigation }) => {
 
   const WelcomeStep = () => (
     <View style={styles.stepContainer}>
-      <Icon name="fitness" size={80} color="#007AFF" style={styles.welcomeIcon} />
+      <Icon name="fitness" size={80} color={colors.textWhite} style={styles.welcomeIcon} />
       <Text style={styles.stepTitle}>{steps[currentStep].title}</Text>
       <Text style={styles.stepSubtitle}>{steps[currentStep].subtitle}</Text>
       <Text style={styles.stepDescription}>
@@ -276,7 +278,7 @@ const OnboardingScreen = ({ navigation }) => {
             <Icon 
               name={goal.icon} 
               size={30} 
-              color={formData.fitnessGoals.includes(goal.id) ? '#007AFF' : '#666'} 
+              color={formData.fitnessGoals.includes(goal.id) ? colors.primary : colors.textSecondary} 
             />
             <Text style={[
               styles.goalText,
@@ -352,7 +354,7 @@ const OnboardingScreen = ({ navigation }) => {
 
   const CompletionStep = () => (
     <View style={styles.stepContainer}>
-      <Icon name="checkmark-circle" size={80} color="#4CAF50" style={styles.completionIcon} />
+      <Icon name="checkmark-circle" size={80} color={colors.iconSuccess} style={styles.completionIcon} />
       <Text style={styles.stepTitle}>{steps[currentStep].title}</Text>
       <Text style={styles.stepSubtitle}>{steps[currentStep].subtitle}</Text>
       <Text style={styles.stepDescription}>
@@ -395,11 +397,16 @@ const OnboardingScreen = ({ navigation }) => {
   ];
 
   return (
-    <LinearGradient
-      colors={['#007AFF', '#0056CC']}
+    <ImageBackground
+      source={require('../image/banner3.jpg')}
       style={styles.container}
+      imageStyle={styles.backgroundImage}
     >
-      <View style={styles.content}>
+      <LinearGradient
+        colors={['rgba(0,0,0,0.85)', 'rgba(0,0,0,0.65)', 'rgba(0,0,0,0.75)']}
+        style={styles.gradient}
+      >
+        <View style={styles.content}>
         <View style={styles.progressContainer}>
           <View style={styles.progressBar}>
             <View 
@@ -434,7 +441,7 @@ const OnboardingScreen = ({ navigation }) => {
               onPress={handleNext}
             >
               <Text style={styles.nextButtonText}>Next</Text>
-              <Icon name="arrow-forward" size={20} color="#007AFF" />
+              <Icon name="arrow-forward" size={20} color={colors.textOnPrimary} />
             </TouchableOpacity>
           ) : (
             <TouchableOpacity 
@@ -446,12 +453,19 @@ const OnboardingScreen = ({ navigation }) => {
           )}
         </View>
       </View>
-    </LinearGradient>
+      </LinearGradient>
+    </ImageBackground>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+  },
+  backgroundImage: {
+    resizeMode: 'cover',
+  },
+  gradient: {
     flex: 1,
   },
   content: {
@@ -523,17 +537,21 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   textInput: {
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    borderRadius: 12,
+    backgroundColor: colors.white,
+    borderRadius: 16,
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 16,
-    color: '#333',
+    color: colors.text,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
   },
   pickerContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    borderRadius: 12,
+    backgroundColor: colors.white,
+    borderRadius: 16,
     overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: colors.borderLight,
   },
   picker: {
     height: 50,
@@ -546,27 +564,35 @@ const styles = StyleSheet.create({
   },
   goalCard: {
     width: (width - 60) / 2,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 12,
+    backgroundColor: colors.cardDark,
+    borderRadius: 16,
     padding: 20,
     alignItems: 'center',
     marginBottom: 15,
     borderWidth: 2,
-    borderColor: 'transparent',
+    borderColor: colors.borderLight,
   },
   goalCardSelected: {
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    borderColor: '#fff',
+    backgroundColor: colors.cardDarkLight,
+    borderColor: colors.primary,
+    shadowColor: colors.primary,
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.5,
+    shadowRadius: 8,
+    elevation: 8,
   },
   goalText: {
     fontSize: 14,
     fontWeight: '600',
-    color: 'rgba(255, 255, 255, 0.8)',
+    color: colors.textSecondary,
     marginTop: 8,
     textAlign: 'center',
   },
   goalTextSelected: {
-    color: '#fff',
+    color: colors.white,
   },
   buttonContainer: {
     flexDirection: 'row',
@@ -575,46 +601,64 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   previousButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: colors.cardDark,
     paddingHorizontal: 24,
-    paddingVertical: 12,
+    paddingVertical: 14,
     borderRadius: 25,
     flex: 1,
     marginRight: 10,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.borderLight,
   },
   previousButtonText: {
-    color: '#fff',
+    color: colors.textSecondary,
     fontSize: 16,
     fontWeight: '600',
   },
   nextButton: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.primary,
     paddingHorizontal: 24,
-    paddingVertical: 12,
+    paddingVertical: 14,
     borderRadius: 25,
     flex: 2,
     marginLeft: 10,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: colors.primary,
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.5,
+    shadowRadius: 8,
+    elevation: 8,
   },
   nextButtonText: {
-    color: '#007AFF',
+    color: colors.textOnPrimary,
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
     marginRight: 8,
   },
   completeButton: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: colors.primary,
     paddingHorizontal: 32,
-    paddingVertical: 14,
+    paddingVertical: 16,
     borderRadius: 25,
     flex: 1,
     alignItems: 'center',
+    shadowColor: colors.primary,
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.5,
+    shadowRadius: 8,
+    elevation: 8,
   },
   completeButtonText: {
-    color: '#fff',
+    color: colors.textOnPrimary,
     fontSize: 18,
     fontWeight: 'bold',
   },

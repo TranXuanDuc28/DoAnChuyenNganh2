@@ -8,6 +8,7 @@ import { poseAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import PoseVisualization from '../components/PoseVisualization';
 import VideoPlayer from '../components/VideoPlayer';
+import { colors } from '../theme/colors';
 
 const PoseScreen = () => {
   const route = useRoute();
@@ -537,7 +538,7 @@ const PoseScreen = () => {
         <CameraView ref={cameraRef} style={styles.camera} facing={facing} />
         <View style={styles.switchRow}>
           <TouchableOpacity style={styles.switchBtn} onPress={() => setFacing((p) => (p === 'back' ? 'front' : 'back'))}>
-            <Icon name="camera-reverse" size={18} color="#007AFF" />
+            <Icon name="camera-reverse" size={18} color={colors.iconDefault} />
             <Text style={styles.switchText}>Đổi camera</Text>
           </TouchableOpacity>
         </View>
@@ -577,7 +578,7 @@ const PoseScreen = () => {
                 <ActivityIndicator color="#fff" />
               ) : (
                 <>
-                  <Icon name="camera" size={22} color="#fff" />
+                  <Icon name="camera" size={22} color={colors.textOnPrimary} />
                   <Text style={styles.captureText}>Chụp ảnh đánh giá</Text>
                 </>
               )}
@@ -588,36 +589,36 @@ const PoseScreen = () => {
               onPress={startRealTimeEvaluation} 
               disabled={isProcessing || !permission?.granted}
             >
-              <Icon name="videocam" size={22} color="#fff" />
+              <Icon name="videocam" size={22} color={colors.textOnPrimary} />
               <Text style={styles.captureText}>Camera thời gian thực</Text>
             </TouchableOpacity>
 
             <TouchableOpacity 
-              style={[styles.captureBtn, { marginTop: 10, backgroundColor: '#34C759' }]} 
+              style={[styles.captureBtn, { marginTop: 10, backgroundColor: colors.iconSuccess }]} 
               onPress={pickAndEvaluate} 
               disabled={isProcessing}
             >
               {isProcessing ? (
-                <ActivityIndicator color="#fff" />
+                <ActivityIndicator color={colors.textOnPrimary} />
               ) : (
                 <>
-                  <Icon name="images" size={22} color="#fff" />
+                  <Icon name="images" size={22} color={colors.textOnPrimary} />
                   <Text style={styles.captureText}>Chọn ảnh từ thư viện</Text>
                 </>
               )}
             </TouchableOpacity>
 
             <TouchableOpacity 
-              style={[styles.captureBtn, { marginTop: 10, backgroundColor: '#9B59B6' }]} 
+              style={[styles.captureBtn, { marginTop: 10, backgroundColor: colors.textSecondary }]} 
               onPress={pickVideoAndEvaluate} 
               disabled={isProcessing}
             >
               {isProcessing ? (
-                <ActivityIndicator color="#fff" />
+                <ActivityIndicator color={colors.textWhite} />
               ) : (
                 <>
-                  <Icon name="film" size={22} color="#fff" />
-                  <Text style={styles.captureText}>Tải video lên đánh giá</Text>
+                  <Icon name="film" size={22} color={colors.textWhite} />
+                  <Text style={[styles.captureText, { color: colors.textWhite }]}>Tải video lên đánh giá</Text>
                 </>
               )}
             </TouchableOpacity>
@@ -627,8 +628,8 @@ const PoseScreen = () => {
             style={[styles.captureBtn, styles.stopBtn]} 
             onPress={stopRealTimeEvaluation}
           >
-            <Icon name="stop-circle" size={22} color="#fff" />
-            <Text style={styles.captureText}>Dừng nhận diện thời gian thực</Text>
+            <Icon name="stop-circle" size={22} color={colors.textWhite} />
+            <Text style={[styles.captureText, { color: colors.textWhite }]}>Dừng nhận diện thời gian thực</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -779,8 +780,8 @@ const COLORS = {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f8f9fa' },
-  cameraWrap: { height: 360, backgroundColor: '#000', position: 'relative' },
+  container: { flex: 1, backgroundColor: colors.background },
+  cameraWrap: { height: 360, backgroundColor: colors.black, position: 'relative' },
   camera: { flex: 1 },
   switchRow: { position: 'absolute', right: 12, bottom: 12, zIndex: 10 },
   statusOverlay: {
@@ -811,33 +812,35 @@ const styles = StyleSheet.create({
   statusIconPulse: {
     opacity: 0.8,
   },
-  switchBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#fff', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 20, borderWidth: 1, borderColor: '#e0e0e0' },
-  switchText: { color: '#007AFF', fontWeight: '700', marginLeft: 6 },
-  actions: { padding: 16, backgroundColor: '#fff', borderTopWidth: 1, borderTopColor: '#e0e0e0' },
-  captureBtn: { flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: '#007AFF', paddingVertical: 14, borderRadius: 12 },
-  realTimeBtn: { backgroundColor: '#FF6B35' },
-  stopBtn: { backgroundColor: '#DC2626' },
-  captureText: { color: '#fff', fontSize: 16, fontWeight: '700', marginLeft: 8 },
+  switchBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: colors.card, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20, borderWidth: 1, borderColor: colors.border },
+  switchText: { color: colors.text, fontWeight: '600', marginLeft: 6 },
+  actions: { padding: 16, backgroundColor: colors.card, borderTopWidth: 1, borderTopColor: colors.border },
+  captureBtn: { flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.primary, paddingVertical: 14, borderRadius: 12, shadowColor: colors.black, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 3 },
+  realTimeBtn: { backgroundColor: colors.iconWarning },
+  stopBtn: { backgroundColor: colors.iconDanger },
+  captureText: { color: colors.textOnPrimary, fontSize: 15, fontWeight: '600', marginLeft: 8 },
   realTimeIndicator: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#FF6B35',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+    backgroundColor: colors.card,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
     marginHorizontal: 16,
     marginTop: 10,
-    borderRadius: 8,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.iconWarning,
   },
   pulseDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: '#fff',
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: colors.iconWarning,
     marginRight: 8,
   },
   realTimeText: {
-    color: '#fff',
+    color: colors.text,
     fontSize: 14,
     fontWeight: '600',
   },
@@ -846,40 +849,40 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: 20,
     paddingHorizontal: 16,
-    backgroundColor: '#fff',
+    backgroundColor: colors.card,
     borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
+    borderTopColor: colors.border,
   },
   repCounterCircle: {
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: '#EC4899', // Màu hồng như trong ảnh
+    backgroundColor: colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#EC4899',
+    shadowColor: colors.black,
     shadowOffset: {
       width: 0,
-      height: 4,
+      height: 2,
     },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 4,
     marginBottom: 8,
   },
   repCounterNumber: {
     fontSize: 42,
     fontWeight: 'bold',
-    color: '#fff',
+    color: colors.textOnPrimary,
   },
   repCounterLabel: {
     fontSize: 16,
-    color: '#666',
+    color: colors.textSecondary,
     fontWeight: '600',
   },
   resultWrap: { padding: 16 },
   imageContainer: { position: 'relative', marginBottom: 12 },
-  preview: { width: '100%', height: 220, borderRadius: 12 },
+  preview: { width: '100%', height: 220, borderRadius: 16 },
   zoomHint: {
     position: 'absolute',
     bottom: 10,
@@ -892,20 +895,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center'
   },
-  resultBox: { backgroundColor: '#fff', borderRadius: 12, padding: 12, borderWidth: 1, borderColor: '#eee', marginBottom: 12 },
-  resultTitle: { fontSize: 16, fontWeight: '700', marginBottom: 6, color: '#333' },
-  resultLine: { fontSize: 14, color: '#333', marginBottom: 2 },
-  anglesContainer: { marginTop: 8, paddingTop: 8, borderTopWidth: 1, borderTopColor: '#eee' },
-  anglesTitle: { fontSize: 14, fontWeight: '600', color: '#666', marginBottom: 4 },
-  legendBox: { backgroundColor: '#fff', borderRadius: 12, padding: 12, borderWidth: 1, borderColor: '#eee' },
-  legendTitle: { fontSize: 14, fontWeight: '700', marginBottom: 8, color: '#333' },
+  resultBox: { backgroundColor: colors.card, borderRadius: 16, padding: 16, shadowColor: colors.black, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 3, marginBottom: 12 },
+  resultTitle: { fontSize: 16, fontWeight: '700', marginBottom: 8, color: colors.text },
+  resultLine: { fontSize: 14, color: colors.text, marginBottom: 4 },
+  anglesContainer: { marginTop: 8, paddingTop: 8, borderTopWidth: 1, borderTopColor: colors.border },
+  anglesTitle: { fontSize: 14, fontWeight: '600', color: colors.textSecondary, marginBottom: 4 },
+  legendBox: { backgroundColor: colors.card, borderRadius: 16, padding: 16, shadowColor: colors.black, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 3 },
+  legendTitle: { fontSize: 14, fontWeight: '700', marginBottom: 8, color: colors.text },
   legendItem: { flexDirection: 'row', alignItems: 'center', marginBottom: 6 },
   legendDot: { width: 16, height: 16, borderRadius: 8, marginRight: 8 },
-  legendText: { fontSize: 13, color: '#666' },
+  legendText: { fontSize: 13, color: colors.textSecondary },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
-  permissionText: { fontSize: 16, color: '#333', marginBottom: 12 },
-  primaryBtn: { backgroundColor: '#007AFF', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 10 },
-  primaryBtnText: { color: '#fff', fontWeight: '700' },
+  permissionText: { fontSize: 16, color: colors.text, marginBottom: 12 },
+  primaryBtn: { backgroundColor: colors.primary, paddingHorizontal: 20, paddingVertical: 12, borderRadius: 16, shadowColor: colors.black, shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.15, shadowRadius: 4, elevation: 3 },
+  primaryBtnText: { color: colors.textWhite, fontWeight: '700' },
   zoomContainer: { 
     flex: 1, 
     backgroundColor: 'rgba(0, 0, 0, 0.95)', 

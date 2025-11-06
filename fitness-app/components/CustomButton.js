@@ -109,7 +109,7 @@ const CustomButton = ({
 
 const styles = StyleSheet.create({
   button: {
-    borderRadius: 12,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
@@ -149,7 +149,7 @@ const styles = StyleSheet.create({
     width: '100%',
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 12,
+    borderRadius: 16,
   },
   content: {
     flexDirection: 'row',

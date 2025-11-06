@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, ScrollView } from 'react-native';
 import { healthAPI, workoutAPI } from '../services/api';
+import { colors } from '../theme/colors';
 
 const StatisticsScreen = () => {
   const [loading, setLoading] = useState(true);
@@ -55,15 +56,51 @@ const StatisticsScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
+  container: { flex: 1, backgroundColor: colors.background },
   content: { padding: 16, paddingBottom: 40 },
   loader: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  title: { fontSize: 22, fontWeight: 'bold', marginBottom: 12 },
-  sectionTitle: { fontSize: 18, fontWeight: '600', marginTop: 16, marginBottom: 8 },
-  card: { backgroundColor: '#f7f7f8', padding: 12, borderRadius: 8, marginBottom: 8 },
-  cardTitle: { fontSize: 16, fontWeight: '600' },
-  cardMeta: { fontSize: 14, color: '#666', marginTop: 4 },
-  empty: { color: '#666' }
+  title: { 
+    fontSize: 28, 
+    fontWeight: 'bold', 
+    marginBottom: 16,
+    color: colors.text,
+  },
+  sectionTitle: { 
+    fontSize: 20, 
+    fontWeight: '700', 
+    marginTop: 20, 
+    marginBottom: 12,
+    color: colors.text,
+  },
+  card: { 
+    backgroundColor: colors.card, 
+    padding: 16, 
+    borderRadius: 16, 
+    marginBottom: 12,
+    shadowColor: colors.black,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  cardTitle: { 
+    fontSize: 16, 
+    fontWeight: '700',
+    color: colors.text,
+  },
+  cardMeta: { 
+    fontSize: 14, 
+    color: colors.textSecondary, 
+    marginTop: 6,
+  },
+  empty: { 
+    color: colors.textSecondary,
+    fontSize: 15,
+    fontStyle: 'italic',
+  }
 });
 
 export default StatisticsScreen;
