@@ -1,0 +1,290 @@
+import { StyleSheet, Platform } from 'react-native';
+import colors from '../../theme/colors';
+
+const isWeb = Platform.OS === 'web';
+
+export const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
+    ...(isWeb && {
+      maxWidth: 1200,
+      marginHorizontal: 'auto',
+      width: '100%',
+    }),
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 60,
+    paddingBottom: 20,
+    backgroundColor: colors.card,
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
+    zIndex: 10,
+    ...(isWeb && {
+      paddingHorizontal: 24,
+      paddingVertical: 20,
+    }),
+  },
+  headerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  headerIcon: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: colors.primaryLight,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  headerText: {
+    flex: 1,
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: colors.text,
+    marginBottom: 4,
+    ...(isWeb && {
+      fontSize: 22,
+    }),
+  },
+  statusContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  onlineIndicator: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: colors.iconSuccess,
+    marginRight: 6,
+  },
+  statusText: {
+    fontSize: 14,
+    color: colors.iconSuccess,
+    fontWeight: '500',
+  },
+  messagesList: {
+    paddingHorizontal: 16,
+    paddingVertical: 20,
+    paddingBottom: 100,
+    ...(isWeb && {
+      paddingHorizontal: 24,
+      paddingVertical: 24,
+    }),
+  },
+  messageContainer: {
+    flexDirection: 'row',
+    marginBottom: 16,
+    alignItems: 'flex-end',
+  },
+  botMessageContainer: {
+    justifyContent: 'flex-start',
+  },
+  userMessageContainer: {
+    justifyContent: 'flex-end',
+  },
+  botAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 8,
+  },
+  userAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.iconSuccess,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 8,
+  },
+  messageBubble: {
+    maxWidth: '75%',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 20,
+    ...(isWeb && {
+      maxWidth: '60%',
+      paddingHorizontal: 20,
+      paddingVertical: 14,
+    }),
+  },
+  botBubble: {
+    backgroundColor: colors.card,
+    borderBottomLeftRadius: 4,
+    shadowColor: colors.black,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  userBubble: {
+    backgroundColor: colors.primary,
+    borderBottomRightRadius: 4,
+  },
+  messageText: {
+    fontSize: 16,
+    lineHeight: 22,
+    ...(isWeb && {
+      fontSize: 17,
+      lineHeight: 24,
+    }),
+  },
+  botText: {
+    color: colors.text,
+  },
+  userText: {
+    color: colors.textWhite,
+  },
+  timestamp: {
+    fontSize: 11,
+    marginTop: 6,
+  },
+  botTimestamp: {
+    color: colors.textSecondary,
+  },
+  userTimestamp: {
+    color: 'rgba(255, 255, 255, 0.7)',
+  },
+  quickQuestionsContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: colors.card,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    ...(isWeb && {
+      paddingHorizontal: 24,
+      paddingVertical: 16,
+    }),
+  },
+  quickQuestionsTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.textSecondary,
+    marginBottom: 12,
+    ...(isWeb && {
+      fontSize: 15,
+    }),
+  },
+  quickQuestionsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  quickQuestionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.card,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: colors.primary,
+    marginRight: 8,
+    marginBottom: 8,
+    ...(isWeb && {
+      cursor: 'pointer',
+      transition: 'all 0.2s ease',
+    }),
+  },
+  quickQuestionText: {
+    fontSize: 13,
+    color: colors.primary,
+    marginLeft: 6,
+    fontWeight: '500',
+    ...(isWeb && {
+      fontSize: 14,
+    }),
+  },
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    backgroundColor: colors.primaryLight,
+    marginHorizontal: 16,
+    marginBottom: 8,
+    borderRadius: 12,
+  },
+  loadingText: {
+    marginLeft: 8,
+    fontSize: 14,
+    color: colors.primary,
+    fontWeight: '500',
+  },
+  inputContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: colors.card,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    shadowColor: colors.black,
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 5,
+    ...(isWeb && {
+      paddingHorizontal: 24,
+      paddingVertical: 16,
+    }),
+  },
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+  },
+  input: {
+    flex: 1,
+    backgroundColor: colors.cardDarkLight,
+    borderRadius: 24,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 16,
+    maxHeight: 100,
+    marginRight: 8,
+    color: colors.text,
+    ...(isWeb && {
+      fontSize: 17,
+    }),
+  },
+  sendButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 3,
+    ...(isWeb && {
+      cursor: 'pointer',
+      transition: 'all 0.2s ease',
+    }),
+  },
+  sendButtonDisabled: {
+    backgroundColor: colors.cardDarkLight,
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+});
+

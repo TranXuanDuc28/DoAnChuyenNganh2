@@ -1,6 +1,6 @@
 import * as Notifications from 'expo-notifications';
 import Constants from 'expo-constants';
-import { notificationAPI } from './api';
+import { notificationAPI, API_BASE_URL } from './api';
 
 // Registers for push notifications and sends token to backend
 export const registerForPushNotificationsAsync = async (sendToServer = true) => {
@@ -26,7 +26,7 @@ export const registerForPushNotificationsAsync = async (sendToServer = true) => 
   if (sendToServer && token) {
     try {
       // send to backend via API
-      await fetch('http://localhost:5000/api/push/register', {
+      await fetch(`${API_BASE_URL}/push/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

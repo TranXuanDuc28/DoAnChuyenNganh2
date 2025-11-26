@@ -1,6 +1,8 @@
 const express = require('express');
 const { Food, NutritionEntry, NutritionGoal, MealPlan, WaterIntake } = require('../models/Nutrition');
 const { auth } = require('../middleware/auth');
+const { Op } = require('sequelize');
+const mealPlanService = require('../services/mealPlanService');
 const router = express.Router();
 
 // Get food database
@@ -8,13 +10,15 @@ router.get('/foods', auth, async (req, res) => {
   try {
     const { category, limit = 20, page = 1 } = req.query;
     
-    const filter = {};
-    if (category) filter.category = category;
+    const where = {};
+    if (category) where.category = category;
 
-    const foods = await Food.find(filter)
-      .limit(limit * 1)
-      .skip((page - 1) * limit)
-      .sort({ name: 1 });
+    const foods = await Food.findAll({
+      where,
+      limit: parseInt(limit),
+      offset: (page - 1) * limit,
+      order: [['name', 'ASC']]
+    });
 
     res.json(foods);
   } catch (error) {
@@ -32,14 +36,16 @@ router.get('/foods/search', auth, async (req, res) => {
       return res.status(400).json({ message: 'Search query is required' });
     }
 
-    const foods = await Food.find({
-      $or: [
-        { name: { $regex: q, $options: 'i' } },
-        { brand: { $regex: q, $options: 'i' } }
-      ]
-    })
-    .limit(limit * 1)
-    .sort({ name: 1 });
+    const foods = await Food.findAll({
+      where: {
+        [Op.or]: [
+          { name: { [Op.iLike]: `%${q}%` } },
+          { brand: { [Op.iLike]: `%${q}%` } }
+        ]
+      },
+      limit: parseInt(limit),
+      order: [['name', 'ASC']]
+    });
 
     res.json(foods);
   } catch (error) {
@@ -51,7 +57,7 @@ router.get('/foods/search', auth, async (req, res) => {
 // Get single food
 router.get('/foods/:id', auth, async (req, res) => {
   try {
-    const food = await Food.findById(req.params.id);
+    const food = await Food.findByPk(req.params.id);
     
     if (!food) {
       return res.status(404).json({ message: 'Food not found' });
@@ -69,12 +75,11 @@ router.post('/foods', auth, async (req, res) => {
   try {
     const foodData = {
       ...req.body,
-      createdBy: req.user._id,
+      createdBy: req.user.id,
       isCustom: true
     };
 
-    const food = new Food(foodData);
-    await food.save();
+    const food = await Food.create(foodData);
 
     res.status(201).json({
       message: 'Food created successfully',
@@ -91,19 +96,23 @@ router.get('/entries', auth, async (req, res) => {
   try {
     const { date, mealType, limit = 50 } = req.query;
     
-    const filter = { user: req.user._id };
+    const where = { userId: req.user.id };
     if (date) {
       const startDate = new Date(date);
       const endDate = new Date(date);
       endDate.setDate(endDate.getDate() + 1);
-      filter.date = { $gte: startDate, $lt: endDate };
+      where.date = {
+        [Op.between]: [startDate, endDate]
+      };
     }
-    if (mealType) filter.mealType = mealType;
+    if (mealType) where.mealType = mealType;
 
-    const entries = await NutritionEntry.find(filter)
-      .populate('food')
-      .sort({ loggedAt: -1 })
-      .limit(limit * 1);
+    const entries = await NutritionEntry.findAll({
+      where,
+      include: [Food],
+      order: [['loggedAt', 'DESC']],
+      limit: parseInt(limit)
+    });
 
     res.json(entries);
   } catch (error) {
@@ -117,18 +126,18 @@ router.post('/entries', auth, async (req, res) => {
   try {
     const entryData = {
       ...req.body,
-      user: req.user._id,
+      userId: req.user.id,
       date: req.body.date || new Date()
     };
 
-    const entry = new NutritionEntry(entryData);
-    await entry.save();
-
-    await entry.populate('food');
+    const entry = await NutritionEntry.create(entryData);
+    const entryWithFood = await NutritionEntry.findByPk(entry.id, {
+      include: [Food]
+    });
 
     res.status(201).json({
       message: 'Nutrition entry added successfully',
-      entry
+      entry: entryWithFood
     });
   } catch (error) {
     console.error('Add nutrition entry error:', error);
@@ -140,19 +149,20 @@ router.post('/entries', auth, async (req, res) => {
 router.put('/entries/:id', auth, async (req, res) => {
   try {
     const entry = await NutritionEntry.findOne({
-      _id: req.params.id,
-      user: req.user._id
+      where: {
+        id: req.params.id,
+        userId: req.user.id
+      }
     });
 
     if (!entry) {
       return res.status(404).json({ message: 'Nutrition entry not found' });
     }
 
-    const updatedEntry = await NutritionEntry.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true }
-    ).populate('food');
+    await entry.update(req.body);
+    const updatedEntry = await NutritionEntry.findByPk(entry.id, {
+      include: [Food]
+    });
 
     res.json({
       message: 'Nutrition entry updated successfully',
@@ -168,15 +178,17 @@ router.put('/entries/:id', auth, async (req, res) => {
 router.delete('/entries/:id', auth, async (req, res) => {
   try {
     const entry = await NutritionEntry.findOne({
-      _id: req.params.id,
-      user: req.user._id
+      where: {
+        id: req.params.id,
+        userId: req.user.id
+      }
     });
 
     if (!entry) {
       return res.status(404).json({ message: 'Nutrition entry not found' });
     }
 
-    await NutritionEntry.findByIdAndDelete(req.params.id);
+    await entry.destroy();
 
     res.json({ message: 'Nutrition entry deleted successfully' });
   } catch (error) {
@@ -189,8 +201,10 @@ router.delete('/entries/:id', auth, async (req, res) => {
 router.get('/goals', auth, async (req, res) => {
   try {
     const goals = await NutritionGoal.findOne({
-      user: req.user._id,
-      isActive: true
+      where: {
+        userId: req.user.id,
+        isActive: true
+      }
     });
 
     if (!goals) {
@@ -217,25 +231,24 @@ router.get('/goals', auth, async (req, res) => {
 // Update nutrition goals
 router.put('/goals', auth, async (req, res) => {
   try {
-    const goals = await NutritionGoal.findOne({
-      user: req.user._id,
-      isActive: true
+    const [goals] = await NutritionGoal.findOrCreate({
+      where: {
+        userId: req.user.id,
+        isActive: true
+      },
+      defaults: {
+        ...req.body,
+        userId: req.user.id
+      }
     });
 
     if (goals) {
-      Object.assign(goals, req.body);
-      await goals.save();
-    } else {
-      const newGoals = new NutritionGoal({
-        ...req.body,
-        user: req.user._id
-      });
-      await newGoals.save();
+      await goals.update(req.body);
     }
 
     res.json({
       message: 'Nutrition goals updated successfully',
-      goals: goals || await NutritionGoal.findOne({ user: req.user._id, isActive: true })
+      goals
     });
   } catch (error) {
     console.error('Update nutrition goals error:', error);
@@ -248,15 +261,20 @@ router.get('/water', auth, async (req, res) => {
   try {
     const { date } = req.query;
     
-    const filter = { user: req.user._id };
+    const where = { userId: req.user.id };
     if (date) {
       const startDate = new Date(date);
       const endDate = new Date(date);
       endDate.setDate(endDate.getDate() + 1);
-      filter.date = { $gte: startDate, $lt: endDate };
+      where.date = {
+        [Op.between]: [startDate, endDate]
+      };
     }
 
-    const waterEntries = await WaterIntake.find(filter).sort({ loggedAt: -1 });
+    const waterEntries = await WaterIntake.findAll({
+      where,
+      order: [['loggedAt', 'DESC']]
+    });
     
     const totalWater = waterEntries.reduce((sum, entry) => sum + entry.amount, 0);
 
@@ -275,13 +293,12 @@ router.get('/water', auth, async (req, res) => {
 router.post('/water', auth, async (req, res) => {
   try {
     const waterData = {
-      user: req.user._id,
+      userId: req.user.id,
       amount: req.body.amount,
       date: req.body.date || new Date()
     };
 
-    const waterEntry = new WaterIntake(waterData);
-    await waterEntry.save();
+    const waterEntry = await WaterIntake.create(waterData);
 
     res.status(201).json({
       message: 'Water intake logged successfully',
@@ -293,43 +310,84 @@ router.post('/water', auth, async (req, res) => {
   }
 });
 
-// Get meal plans
+// Get all meal plans
 router.get('/meal-plans', auth, async (req, res) => {
   try {
-    const mealPlans = await MealPlan.find({
-      user: req.user._id,
-      isActive: true
-    })
-    .populate('meals.meal')
-    .sort({ createdAt: -1 });
-
-    res.json(mealPlans);
+    const result = await mealPlanService.getAllMealPlans(req.user.id);
+    res.json(result);
   } catch (error) {
     console.error('Get meal plans error:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ 
+      success: false,
+      message: 'Failed to fetch meal plans',
+      error: error.message 
+    });
   }
 });
 
-// Create meal plan
-router.post('/meal-plans', auth, async (req, res) => {
+// Get active meal plan
+router.get('/meal-plans/active', auth, async (req, res) => {
   try {
-    const mealPlanData = {
-      ...req.body,
-      user: req.user._id
-    };
-
-    const mealPlan = new MealPlan(mealPlanData);
-    await mealPlan.save();
-
-    await mealPlan.populate('meals.meal');
-
-    res.status(201).json({
-      message: 'Meal plan created successfully',
-      mealPlan
-    });
+    const result = await mealPlanService.getActiveMealPlan(req.user.id);
+    res.json(result);
   } catch (error) {
-    console.error('Create meal plan error:', error);
-    res.status(500).json({ message: 'Server error' });
+    console.error('Get active meal plan error:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Failed to fetch active meal plan',
+      error: error.message 
+    });
+  }
+});
+
+// Generate AI meal plan
+router.post('/meal-plans/generate', auth, async (req, res) => {
+  try {
+    const {
+      duration,
+      mealsPerDay,
+      dietaryRestrictions,
+      cuisinePreferences,
+      allergies
+    } = req.body;
+
+    console.log('Generating meal plan for user:', req.user.id);
+    console.log('Options:', req.body);
+
+    const result = await mealPlanService.generateMealPlan(req.user.id, {
+      duration,
+      mealsPerDay,
+      dietaryRestrictions,
+      cuisinePreferences,
+      allergies
+    });
+
+    res.json(result);
+  } catch (error) {
+    console.error('Generate meal plan error:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Failed to generate meal plan',
+      error: error.message 
+    });
+  }
+});
+
+// Deactivate meal plan
+router.put('/meal-plans/:id/deactivate', auth, async (req, res) => {
+  try {
+    const result = await mealPlanService.deactivateMealPlan(
+      req.user.id,
+      parseInt(req.params.id)
+    );
+    res.json(result);
+  } catch (error) {
+    console.error('Deactivate meal plan error:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Failed to deactivate meal plan',
+      error: error.message 
+    });
   }
 });
 

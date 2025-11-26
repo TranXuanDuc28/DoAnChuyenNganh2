@@ -2,13 +2,14 @@ import React, { useState } from 'react';
 import {
   View,
   Text,
-  StyleSheet,
   ScrollView,
   TouchableOpacity,
   Alert,
 } from 'react-native';
 import { Ionicons as Icon } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
+import colors from '../theme/colors';
+import { styles } from './styles/ProfileScreen.styles';
 
 const ProfileScreen = () => {
   const { user, logout } = useAuth();
@@ -37,25 +38,25 @@ const ProfileScreen = () => {
       title: 'Workouts',
       value: '47',
       icon: 'fitness',
-      color: '#FF6B6B',
+      color: colors.primary,
     },
     {
       title: 'Streak',
       value: '12 days',
       icon: 'flame',
-      color: '#FF9800',
+      color: colors.warning,
     },
     {
       title: 'Calories Burned',
       value: '15,420',
       icon: 'flash',
-      color: '#4CAF50',
+      color: colors.danger,
     },
     {
       title: 'Distance',
       value: '125.6 km',
       icon: 'walk',
-      color: '#2196F3',
+      color: colors.info,
     },
   ];
 
@@ -127,10 +128,10 @@ const ProfileScreen = () => {
       onPress={item.onPress}
     >
       <View style={styles.menuItemLeft}>
-        <Icon name={item.icon} size={24} color="#666" />
+        <Icon name={item.icon} size={24} color={colors.textSecondary} />
         <Text style={styles.menuItemText}>{item.title}</Text>
       </View>
-      <Icon name="chevron-forward" size={20} color="#ccc" />
+      <Icon name="chevron-forward" size={20} color={colors.textTertiary} />
     </TouchableOpacity>
   );
 
@@ -141,16 +142,16 @@ const ProfileScreen = () => {
       {/* Profile Header */}
       <View style={styles.header}>
         <View style={styles.profileImageContainer}>
-          <Icon name="person-circle" size={80} color="#007AFF" />
+          <Icon name="person-circle" size={80} color={colors.textSecondary} />
           <TouchableOpacity style={styles.editImageButton}>
-            <Icon name="camera" size={16} color="#007AFF" />
+            <Icon name="camera" size={16} color={colors.white} />
           </TouchableOpacity>
         </View>
         <Text style={styles.userName}>
           {user?.profile?.firstName} {user?.profile?.lastName}
         </Text>
         <Text style={styles.userEmail}>{user?.email}</Text>
-        
+
         {bmi && (
           <View style={styles.bmiContainer}>
             <Text style={styles.bmiLabel}>BMI</Text>
@@ -174,15 +175,15 @@ const ProfileScreen = () => {
       {/* Quick Actions */}
       <View style={styles.quickActionsSection}>
         <TouchableOpacity style={styles.quickActionButton}>
-          <Icon name="settings" size={24} color="#007AFF" />
+          <Icon name="settings" size={24} color={colors.primary} />
           <Text style={styles.quickActionText}>Settings</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.quickActionButton}>
-          <Icon name="share" size={24} color="#4CAF50" />
+          <Icon name="share" size={24} color={colors.success} />
           <Text style={styles.quickActionText}>Share App</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.quickActionButton}>
-          <Icon name="star" size={24} color="#FF9800" />
+          <Icon name="star" size={24} color={colors.warning} />
           <Text style={styles.quickActionText}>Rate App</Text>
         </TouchableOpacity>
       </View>
@@ -194,7 +195,7 @@ const ProfileScreen = () => {
 
       {/* Logout Button */}
       <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-        <Icon name="log-out-outline" size={24} color="#FF3B30" />
+        <Icon name="log-out-outline" size={24} color={colors.danger} />
         <Text style={styles.logoutText}>Logout</Text>
       </TouchableOpacity>
 
@@ -205,210 +206,5 @@ const ProfileScreen = () => {
     </ScrollView>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f8f9fa',
-  },
-  header: {
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    paddingVertical: 30,
-    paddingHorizontal: 20,
-    marginBottom: 20,
-  },
-  profileImageContainer: {
-    position: 'relative',
-    marginBottom: 16,
-  },
-  editImageButton: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 6,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  userName: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 4,
-  },
-  userEmail: {
-    fontSize: 16,
-    color: '#666',
-    marginBottom: 16,
-  },
-  bmiContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#f0f8ff',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-  },
-  bmiLabel: {
-    fontSize: 14,
-    color: '#666',
-    marginRight: 8,
-  },
-  bmiValue: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#007AFF',
-  },
-  statsSection: {
-    marginBottom: 20,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
-    marginHorizontal: 20,
-    marginBottom: 16,
-  },
-  statsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    paddingHorizontal: 20,
-    justifyContent: 'space-between',
-  },
-  statCardContainer: {
-    width: '48%',
-    marginBottom: 12,
-  },
-  statCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  statIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 12,
-  },
-  statValue: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 4,
-  },
-  statTitle: {
-    fontSize: 14,
-    color: '#666',
-    textAlign: 'center',
-  },
-  quickActionsSection: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    backgroundColor: '#fff',
-    marginHorizontal: 20,
-    borderRadius: 12,
-    paddingVertical: 20,
-    marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  quickActionButton: {
-    alignItems: 'center',
-  },
-  quickActionText: {
-    fontSize: 12,
-    color: '#666',
-    marginTop: 8,
-  },
-  menuSection: {
-    backgroundColor: '#fff',
-    marginHorizontal: 20,
-    borderRadius: 12,
-    marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  menuItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-  },
-  menuItemLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  menuItemText: {
-    fontSize: 16,
-    color: '#333',
-    marginLeft: 16,
-  },
-  logoutButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#fff',
-    marginHorizontal: 20,
-    borderRadius: 12,
-    paddingVertical: 16,
-    marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  logoutText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#FF3B30',
-    marginLeft: 8,
-  },
-  versionContainer: {
-    alignItems: 'center',
-    paddingVertical: 20,
-  },
-  versionText: {
-    fontSize: 14,
-    color: '#999',
-  },
-});
 
 export default ProfileScreen;

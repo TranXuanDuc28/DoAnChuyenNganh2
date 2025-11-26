@@ -87,105 +87,6 @@ const User = sequelize.define('User', {
     type: DataTypes.FLOAT,
     allowNull: true
   },
-  muscleMass: {
-    type: DataTypes.FLOAT,
-    allowNull: true
-  },
-  restingHeartRate: {
-    type: DataTypes.INTEGER,
-    allowNull: true
-  },
-  bloodPressureSystolic: {
-    type: DataTypes.INTEGER,
-    allowNull: true
-  },
-  bloodPressureDiastolic: {
-    type: DataTypes.INTEGER,
-    allowNull: true
-  },
-  healthMetricsLastUpdated: {
-    type: DataTypes.DATE,
-    defaultValue: DataTypes.NOW
-  },
-  // Preferences
-  units: {
-    type: DataTypes.ENUM('metric', 'imperial'),
-    defaultValue: 'metric'
-  },
-  workoutReminders: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: true
-  },
-  nutritionReminders: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: true
-  },
-  progressUpdates: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: true
-  },
-  socialUpdates: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: true
-  },
-  profileVisibility: {
-    type: DataTypes.ENUM('public', 'friends', 'private'),
-    defaultValue: 'friends'
-  },
-  shareProgress: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: false
-  },
-  // Integrations
-  appleHealthEnabled: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: false
-  },
-  appleHealthConnectedAt: {
-    type: DataTypes.DATE,
-    allowNull: true
-  },
-  googleFitEnabled: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: false
-  },
-  googleFitConnectedAt: {
-    type: DataTypes.DATE,
-    allowNull: true
-  },
-  fitbitEnabled: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: false
-  },
-  fitbitConnectedAt: {
-    type: DataTypes.DATE,
-    allowNull: true
-  },
-  wearables: {
-    type: DataTypes.JSON,
-    defaultValue: [],
-    comment: 'Array of wearable devices'
-  },
-  // Social
-  friends: {
-    type: DataTypes.JSON,
-    defaultValue: [],
-    comment: 'Array of friend user IDs'
-  },
-  friendRequests: {
-    type: DataTypes.JSON,
-    defaultValue: [],
-    comment: 'Array of friend requests'
-  },
-  achievements: {
-    type: DataTypes.JSON,
-    defaultValue: [],
-    comment: 'Array of achievements'
-  },
-  workoutStreak: {
-    type: DataTypes.INTEGER,
-    defaultValue: 0
-  },
   nutritionStreak: {
     type: DataTypes.INTEGER,
     defaultValue: 0
@@ -194,24 +95,36 @@ const User = sequelize.define('User', {
     type: DataTypes.INTEGER,
     defaultValue: 0
   },
-  // Subscription
-  subscriptionPlan: {
-    type: DataTypes.ENUM('free', 'premium'),
-    defaultValue: 'free'
+  // Workout preferences
+  workout_duration: {
+    type: DataTypes.INTEGER,
+    defaultValue: 60,
+    comment: 'Workout duration in minutes per session',
+    validate: {
+      min: 15,
+      max: 180
+    }
   },
-  subscriptionStartDate: {
-    type: DataTypes.DATE,
-    allowNull: true
+  // Nutrition preferences
+  dailyMeals: {
+    type: DataTypes.INTEGER,
+    defaultValue: 3,
+    comment: 'Number of meals per day'
   },
-  subscriptionEndDate: {
-    type: DataTypes.DATE,
-    allowNull: true
+  budgetLevel: {
+    type: DataTypes.ENUM('low', 'medium', 'high'),
+    defaultValue: 'medium',
+    comment: 'Budget level for meal planning'
   },
-  // Push notifications token for device
-  pushToken: {
-    type: DataTypes.STRING,
-    allowNull: true,
-    comment: 'Device push token for push notifications'
+  foodPreferences: {
+    type: DataTypes.JSON,
+    defaultValue: [],
+    comment: 'Array of food preferences (e.g., healthy, high-protein)'
+  },
+  foodAllergies: {
+    type: DataTypes.JSON,
+    defaultValue: [],
+    comment: 'Array of food allergies (e.g., seafood, dairy)'
   },
   // Status
   isActive: {
@@ -225,6 +138,11 @@ const User = sequelize.define('User', {
   onboardingCompleted: {
     type: DataTypes.BOOLEAN,
     defaultValue: false
+  },
+  // Admin role
+  role: {
+    type: DataTypes.ENUM('user', 'admin'),
+    defaultValue: 'user'
   }
 }, {
   tableName: 'users',

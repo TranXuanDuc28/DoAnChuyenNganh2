@@ -1,3 +1,4 @@
+import 'react-native-gesture-handler';
 import React, { useState, useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
@@ -14,13 +15,20 @@ import DashboardScreen from './screens/DashboardScreen';
 import WorkoutScreen from './screens/WorkoutScreen';
 import NutritionScreen from './screens/NutritionScreen';
 import HealthScreen from './screens/HealthScreen';
-import SocialScreen from './screens/SocialScreen';
+import PoseScreen from './screens/PoseScreen';
 import ProfileScreen from './screens/ProfileScreen';
 import AssistantScreen from './screens/AssistantScreen';
-import StatisticsScreen from './screens/StatisticsScreen';
+import ExerciseSelectionScreen from './screens/ExerciseSelectionScreen';
+import CategoryExercisesScreen from './screens/CategoryExercisesScreen';
+import ExerciseDetailScreen from './screens/ExerciseDetailScreen';
+import WorkoutPlanDetailScreen from './screens/WorkoutPlanDetailScreen';
+import WorkoutExerciseDetailScreen from './screens/WorkoutExerciseDetailScreen';
 
 // Import context
 import { AuthProvider, useAuth } from './context/AuthContext';
+
+// Import theme
+import colors from './theme/colors';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -40,76 +48,73 @@ const TabNavigator = () => {
             iconName = focused ? 'restaurant' : 'restaurant-outline';
           } else if (route.name === 'Health') {
             iconName = focused ? 'heart' : 'heart-outline';
-          } else if (route.name === 'Social') {
-            iconName = focused ? 'people' : 'people-outline';
           } else if (route.name === 'Profile') {
             iconName = focused ? 'person' : 'person-outline';
           } else if (route.name === 'Assistant') {
             iconName = focused ? 'chatbubbles' : 'chatbubbles-outline';
-          } else if (route.name === 'Statistics') {
-            iconName = focused ? 'stats-chart' : 'stats-chart-outline';
+          } else if (route.name === 'AIWorkout') {
+            iconName = focused ? 'body' : 'body-outline';
           }
 
-          return <Icon name={iconName} size={size} color={color} />;
+          return <Icon name={iconName as any} size={size} color={color} />;
         },
-        tabBarActiveTintColor: '#007AFF',
-        tabBarInactiveTintColor: 'gray',
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: '#666666',
         tabBarStyle: {
-          backgroundColor: '#fff',
+          backgroundColor: colors.white,
           borderTopWidth: 1,
-          borderTopColor: '#e0e0e0',
+          borderTopColor: colors.border,
           paddingBottom: 5,
           paddingTop: 5,
           height: 60,
         },
-        headerStyle: {
-          backgroundColor: '#007AFF',
+        tabBarLabelStyle: {
+          fontSize: 12,
+          fontWeight: '600',
         },
-        headerTintColor: '#fff',
+        headerStyle: {
+          backgroundColor: colors.primary,
+        },
+        headerTintColor: colors.textWhite,
         headerTitleStyle: {
           fontWeight: 'bold',
         },
       })}
     >
-      <Tab.Screen 
-        name="Dashboard" 
+      <Tab.Screen
+        name="Dashboard"
         component={DashboardScreen}
-        options={{ title: 'Home' }}
+        options={{ title: 'Home', headerShown: false }}
       />
-      <Tab.Screen 
+      <Tab.Screen
         name="Assistant"
         component={AssistantScreen}
-        options={{ title: 'Assistant' }}
+        options={{ title: 'Assistant', headerShown: false }}
       />
-      <Tab.Screen 
-        name="Workout" 
+      <Tab.Screen
+        name="Workout"
         component={WorkoutScreen}
-        options={{ title: 'Workouts' }}
+        options={{ title: 'Workouts', headerShown: false }}
       />
-      <Tab.Screen 
-        name="Statistics"
-        component={StatisticsScreen}
-        options={{ title: 'Stats' }}
+      <Tab.Screen
+        name="AIWorkout"
+        component={ExerciseSelectionScreen}
+        options={{ title: 'AI Workout', headerShown: false }}
       />
-      <Tab.Screen 
-        name="Nutrition" 
+      <Tab.Screen
+        name="Nutrition"
         component={NutritionScreen}
-        options={{ title: 'Nutrition' }}
+        options={{ title: 'Nutrition', headerShown: false }}
       />
-      <Tab.Screen 
-        name="Health" 
+      <Tab.Screen
+        name="Health"
         component={HealthScreen}
-        options={{ title: 'Health' }}
+        options={{ title: 'Health', headerShown: false }}
       />
-      <Tab.Screen 
-        name="Social" 
-        component={SocialScreen}
-        options={{ title: 'Social' }}
-      />
-      <Tab.Screen 
-        name="Profile" 
+      <Tab.Screen
+        name="Profile"
         component={ProfileScreen}
-        options={{ title: 'Profile' }}
+        options={{ title: 'Profile', headerShown: false }}
       />
     </Tab.Navigator>
   );
@@ -118,30 +123,31 @@ const TabNavigator = () => {
 const AuthNavigator = () => {
   return (
     <Stack.Navigator
+      initialRouteName="Register"
       screenOptions={{
         headerStyle: {
-          backgroundColor: '#007AFF',
+          backgroundColor: colors.primary,
         },
-        headerTintColor: '#fff',
+        headerTintColor: colors.textWhite,
         headerTitleStyle: {
           fontWeight: 'bold',
         },
       }}
     >
-      <Stack.Screen 
-        name="Onboarding" 
-        component={OnboardingScreen}
+      <Stack.Screen
+        name="Register"
+        component={RegisterScreen}
         options={{ headerShown: false }}
       />
-      <Stack.Screen 
-        name="Login" 
+      <Stack.Screen
+        name="Login"
         component={LoginScreen}
-        options={{ title: 'Login' }}
+        options={{ headerShown: false }}
       />
-      <Stack.Screen 
-        name="Register" 
-        component={RegisterScreen}
-        options={{ title: 'Create Account' }}
+      <Stack.Screen
+        name="Onboarding"
+        component={OnboardingScreen}
+        options={{ headerShown: false }}
       />
     </Stack.Navigator>
   );
@@ -156,7 +162,51 @@ const AppNavigator = () => {
 
   return (
     <NavigationContainer>
-      {user ? <TabNavigator /> : <AuthNavigator />}
+      {user ? (
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="MainTabs" component={TabNavigator} />
+          <Stack.Screen
+            name="Pose"
+            component={PoseScreen}
+            options={{
+              headerShown: true,
+              headerStyle: { backgroundColor: colors.primary },
+              headerTintColor: colors.textWhite,
+              headerTitleStyle: { fontWeight: 'bold' },
+            }}
+          />
+          <Stack.Screen
+            name="CategoryExercises"
+            component={CategoryExercisesScreen}
+            options={{
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="ExerciseDetail"
+            component={ExerciseDetailScreen}
+            options={{
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="WorkoutPlanDetail"
+            component={WorkoutPlanDetailScreen}
+            options={{
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="WorkoutExerciseDetail"
+            component={WorkoutExerciseDetailScreen}
+            options={{
+              headerShown: false,
+            }}
+          />
+        </Stack.Navigator>
+      ) : (
+        <AuthNavigator />
+      )}
     </NavigationContainer>
   );
 };
@@ -164,7 +214,7 @@ const AppNavigator = () => {
 const App = () => {
   return (
     <AuthProvider>
-      <StatusBar barStyle="light-content" backgroundColor="#007AFF" />
+      <StatusBar barStyle="dark-content" backgroundColor={colors.primary} />
       <AppNavigator />
     </AuthProvider>
   );

@@ -2,12 +2,13 @@ import React, { useState } from 'react';
 import {
   View,
   Text,
-  StyleSheet,
   ScrollView,
   TouchableOpacity,
   FlatList,
 } from 'react-native';
 import { Ionicons as Icon } from '@expo/vector-icons';
+import colors from '../theme/colors';
+import { styles } from './styles/HealthScreen.styles';
 
 const HealthScreen = () => {
   const [selectedTab, setSelectedTab] = useState('overview');
@@ -29,7 +30,7 @@ const HealthScreen = () => {
       value: '7.5 hours',
       time: 'Last night',
       icon: 'bed',
-      color: '#9C27B0',
+      color: colors.primary,
     },
     {
       id: 2,
@@ -38,7 +39,7 @@ const HealthScreen = () => {
       value: '72 bpm',
       time: '2 hours ago',
       icon: 'heart',
-      color: '#F44336',
+      color: colors.iconDanger,
     },
     {
       id: 3,
@@ -47,7 +48,7 @@ const HealthScreen = () => {
       value: 'Low',
       time: '1 hour ago',
       icon: 'leaf',
-      color: '#4CAF50',
+      color: colors.iconSuccess,
     },
   ];
 
@@ -57,15 +58,15 @@ const HealthScreen = () => {
     { id: 'insights', title: 'Insights', icon: 'bulb' },
   ];
 
-  const renderHealthMetric = (key, metric) => {
+  const renderHealthMetric = (key, metric, index) => {
     const percentage = Math.min((metric.value / metric.target) * 100, 100);
     const getStatusColor = (status) => {
       switch (status) {
-        case 'good': return '#4CAF50';
-        case 'normal': return '#2196F3';
-        case 'low': return '#4CAF50';
-        case 'progress': return '#FF9800';
-        default: return '#666';
+        case 'good': return colors.primary;
+        case 'normal': return colors.iconSuccess;
+        case 'low': return colors.iconSuccess;
+        case 'progress': return colors.iconWarning;
+        default: return colors.textSecondary;
       }
     };
 
@@ -106,7 +107,7 @@ const HealthScreen = () => {
       </View>
       <View style={styles.recordTime}>
         <Text style={styles.recordTimeText}>{item.time}</Text>
-        <Icon name="chevron-forward" size={16} color="#666" />
+        <Icon name="chevron-forward" size={16} color={colors.textSecondary} />
       </View>
     </TouchableOpacity>
   );
@@ -117,7 +118,7 @@ const HealthScreen = () => {
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Health</Text>
         <TouchableOpacity style={styles.headerButton}>
-          <Icon name="settings" size={24} color="#007AFF" />
+          <Icon name="settings" size={24} color={colors.primary} />
         </TouchableOpacity>
       </View>
 
@@ -132,7 +133,7 @@ const HealthScreen = () => {
             <Icon
               name={tab.icon}
               size={20}
-              color={selectedTab === tab.id ? '#007AFF' : '#666'}
+              color={selectedTab === tab.id ? colors.textOnPrimary : colors.textSecondary}
             />
             <Text
               style={[
@@ -151,8 +152,8 @@ const HealthScreen = () => {
           <View>
             {/* Health Metrics Grid */}
             <View style={styles.metricsGrid}>
-              {Object.entries(healthMetrics).map(([key, metric]) =>
-                renderHealthMetric(key, metric)
+              {Object.entries(healthMetrics).map(([key, metric], index) =>
+                renderHealthMetric(key, metric, index)
               )}
             </View>
 
@@ -172,34 +173,34 @@ const HealthScreen = () => {
         {selectedTab === 'track' && (
           <View style={styles.trackContainer}>
             <Text style={styles.sectionTitle}>Track Health Metrics</Text>
-            
+
             <TouchableOpacity style={styles.trackButton}>
-              <Icon name="bed" size={24} color="#9C27B0" />
+              <Icon name="bed" size={22} color={colors.iconDefault} />
               <Text style={styles.trackButtonText}>Log Sleep</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.trackButton}>
-              <Icon name="heart" size={24} color="#F44336" />
+              <Icon name="heart" size={22} color={colors.iconDefault} />
               <Text style={styles.trackButtonText}>Log Heart Rate</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.trackButton}>
-              <Icon name="leaf" size={24} color="#4CAF50" />
+              <Icon name="leaf" size={22} color={colors.iconDefault} />
               <Text style={styles.trackButtonText}>Log Stress Level</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.trackButton}>
-              <Icon name="scale" size={24} color="#FF9800" />
+              <Icon name="scale" size={22} color={colors.iconDefault} />
               <Text style={styles.trackButtonText}>Log Weight</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.trackButton}>
-              <Icon name="water" size={24} color="#2196F3" />
+              <Icon name="water" size={22} color={colors.iconDefault} />
               <Text style={styles.trackButtonText}>Log Water Intake</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.trackButton}>
-              <Icon name="fitness" size={24} color="#607D8B" />
+              <Icon name="fitness" size={22} color={colors.iconDefault} />
               <Text style={styles.trackButtonText}>Breathing Exercise</Text>
             </TouchableOpacity>
           </View>
@@ -208,9 +209,9 @@ const HealthScreen = () => {
         {selectedTab === 'insights' && (
           <View style={styles.insightsContainer}>
             <Text style={styles.sectionTitle}>Health Insights</Text>
-            
+
             <View style={styles.insightCard}>
-              <Icon name="trending-up" size={32} color="#4CAF50" />
+              <Icon name="trending-up" size={32} color={colors.success} />
               <Text style={styles.insightTitle}>Sleep Improvement</Text>
               <Text style={styles.insightDescription}>
                 Your sleep quality has improved by 15% this week compared to last week.
@@ -218,7 +219,7 @@ const HealthScreen = () => {
             </View>
 
             <View style={styles.insightCard}>
-              <Icon name="heart" size={32} color="#F44336" />
+              <Icon name="heart" size={32} color={colors.danger} />
               <Text style={styles.insightTitle}>Heart Rate Stability</Text>
               <Text style={styles.insightDescription}>
                 Your resting heart rate has been consistent at 72 bpm, which is excellent.
@@ -226,7 +227,7 @@ const HealthScreen = () => {
             </View>
 
             <View style={styles.insightCard}>
-              <Icon name="bulb" size={32} color="#FF9800" />
+              <Icon name="bulb" size={32} color={colors.warning} />
               <Text style={styles.insightTitle}>Recommendation</Text>
               <Text style={styles.insightDescription}>
                 Try to increase your water intake to 8 glasses per day for better hydration.
@@ -238,225 +239,5 @@ const HealthScreen = () => {
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f8f9fa',
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  headerButton: {
-    padding: 8,
-  },
-  tabContainer: {
-    flexDirection: 'row',
-    backgroundColor: '#fff',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-  },
-  tab: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-  },
-  activeTab: {
-    backgroundColor: '#f0f8ff',
-  },
-  tabText: {
-    fontSize: 14,
-    color: '#666',
-    marginLeft: 6,
-  },
-  activeTabText: {
-    color: '#007AFF',
-    fontWeight: '600',
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: 20,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
-    marginTop: 20,
-    marginBottom: 16,
-  },
-  metricsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-  },
-  metricCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    width: '48%',
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  metricHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  metricTitle: {
-    fontSize: 14,
-    color: '#666',
-  },
-  metricValue: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  progressBar: {
-    height: 6,
-    backgroundColor: '#f0f0f0',
-    borderRadius: 3,
-    overflow: 'hidden',
-    marginBottom: 8,
-  },
-  progressFill: {
-    height: '100%',
-    borderRadius: 3,
-  },
-  metricTarget: {
-    fontSize: 12,
-    color: '#666',
-  },
-  recordsSection: {
-    marginBottom: 20,
-  },
-  recordCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 8,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  recordIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 16,
-  },
-  recordInfo: {
-    flex: 1,
-  },
-  recordTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 4,
-  },
-  recordValue: {
-    fontSize: 14,
-    color: '#666',
-  },
-  recordTime: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  recordTimeText: {
-    fontSize: 12,
-    color: '#666',
-    marginRight: 4,
-  },
-  trackContainer: {
-    paddingVertical: 20,
-  },
-  trackButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 20,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  trackButtonText: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#333',
-    marginLeft: 16,
-  },
-  insightsContainer: {
-    paddingVertical: 20,
-  },
-  insightCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 20,
-    marginBottom: 16,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  insightTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-    marginTop: 12,
-    marginBottom: 8,
-  },
-  insightDescription: {
-    fontSize: 14,
-    color: '#666',
-    textAlign: 'center',
-    lineHeight: 20,
-  },
-});
 
 export default HealthScreen;

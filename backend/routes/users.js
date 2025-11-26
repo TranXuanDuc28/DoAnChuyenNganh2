@@ -2,7 +2,16 @@ const express = require('express');
 const User = require('../models/User');
 const { auth } = require('../middleware/auth');
 const { Op } = require('sequelize');
+const { 
+  uploadToCloudinary, 
+  deleteFromCloudinary, 
+  createUploadMiddleware,
+  extractPublicId 
+} = require('../utils/cloudinary');
 const router = express.Router();
+
+// Create multer upload middleware
+const upload = createUploadMiddleware({ maxSize: 5 * 1024 * 1024 });
 
 // Get user profile
 router.get('/profile', auth, async (req, res) => {
@@ -34,6 +43,69 @@ router.put('/profile', auth, async (req, res) => {
     });
   } catch (error) {
     console.error('Update profile error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Upload profile image
+router.post('/profile/image', auth, upload.single('image'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: 'No image file provided' });
+    }
+
+    const user = await User.findByPk(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Delete old profile image from Cloudinary if exists
+    if (user.profileImage) {
+      const oldPublicId = extractPublicId(user.profileImage);
+      if (oldPublicId) {
+        await deleteFromCloudinary(oldPublicId);
+      }
+    }
+
+    // Upload new image to Cloudinary
+    const folder = `fitness-app/users/${user.id}`;
+    const result = await uploadToCloudinary(req.file.buffer, folder);
+
+    // Update user profile image
+    await user.update({ profileImage: result.url });
+
+    res.json({
+      message: 'Profile image uploaded successfully',
+      imageUrl: result.url
+    });
+  } catch (error) {
+    console.error('Upload profile image error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Delete profile image
+router.delete('/profile/image', auth, async (req, res) => {
+  try {
+    const user = await User.findByPk(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Delete image from Cloudinary if exists
+    if (user.profileImage) {
+      const publicId = extractPublicId(user.profileImage);
+      if (publicId) {
+        await deleteFromCloudinary(publicId);
+      }
+    }
+
+    // Remove image URL from user profile
+    await user.update({ profileImage: null });
+
+    res.json({ message: 'Profile image deleted successfully' });
+  } catch (error) {
+    console.error('Delete profile image error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });

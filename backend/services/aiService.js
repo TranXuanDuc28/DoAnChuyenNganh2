@@ -2,6 +2,7 @@ const User = require('../models/User');
 const { Workout, WorkoutPlan } = require('../models/Workout');
 const { MealPlan } = require('../models/Nutrition');
 const AISuggestion = require('../models/AISuggestion');
+const mealPlanService = require('./mealPlanService');
 
 // --- Helper Functions ---
 
@@ -174,29 +175,29 @@ const createWorkoutPlan = async (userId, options = {}) => {
 };
 
 /**
- * Generates a personalized meal plan.
+ * Generates a personalized meal plan using LLM (Gemini AI) directly.
  * @param {number} userId - The ID of the user.
+ * @param {Object} options - Options for meal plan generation
  * @returns {MealPlan} The newly created meal plan.
  */
-const createMealPlan = async (userId) => {
-  // Placeholder for a complex meal plan generator.
-  // This would consider calories, macros, dietary restrictions, etc.
-  const user = await User.findByPk(userId);
-  const targetCalories = getRecommendedCalories(user);
+const createMealPlan = async (userId, options = {}) => {
+  try {
+    console.log('Creating meal plan for user:', userId);
+    
+    // Use the new LLM-based meal plan service
+    const result = await mealPlanService.generateMealPlan(userId, {
+      duration: options.duration || 7,
+      mealsPerDay: options.mealsPerDay || 4,
+      dietaryRestrictions: options.dietaryRestrictions || [],
+      cuisinePreferences: options.cuisinePreferences || [],
+      allergies: options.allergies || []
+    });
 
-  const mealPlan = await MealPlan.create({
-      userId,
-      name: 'AI Weekly Meal Plan',
-      description: `A sample meal plan targeting approximately ${targetCalories} calories per day.`,
-      duration: 7, // days
-      startDate: new Date(),
-      endDate: new Date(new Date().setDate(new Date().getDate() + 7)),
-      meals: { /* In a real app, this would be a detailed structure of meals and foods */ },
-      totalCalories: targetCalories,
-      aiGenerated: true,
-  });
-
-  return mealPlan;
+    return result;
+  } catch (error) {
+    console.error('Error creating meal plan:', error);
+    throw error;
+  }
 };
 
 

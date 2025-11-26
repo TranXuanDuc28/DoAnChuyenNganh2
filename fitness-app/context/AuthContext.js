@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { authAPI } from '../services/api';
+import { authAPI, API_BASE_URL } from '../services/api';
 import pushService from '../services/pushService';
 
 const AuthContext = createContext();
@@ -41,7 +41,7 @@ export const AuthProvider = ({ children }) => {
             const token = await pushService.registerForPushNotificationsAsync(true);
             if (token) {
               // try sending to backend with auth token
-              await fetch('http://localhost:5000/api/push/register', {
+              await fetch(`${API_BASE_URL}/push/register`, {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json',
@@ -80,7 +80,7 @@ export const AuthProvider = ({ children }) => {
       try {
         const token = await pushService.registerForPushNotificationsAsync(true);
         if (token) {
-          await fetch('http://localhost:5000/api/push/register', {
+          await fetch(`${API_BASE_URL}/push/register`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -119,7 +119,7 @@ export const AuthProvider = ({ children }) => {
       try {
         const token = await pushService.registerForPushNotificationsAsync(true);
         if (token) {
-          await fetch('http://localhost:5000/api/push/register', {
+          await fetch(`${API_BASE_URL}/push/register`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',

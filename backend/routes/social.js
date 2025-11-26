@@ -1,7 +1,15 @@
 const express = require('express');
 const User = require('../models/User');
 const { auth } = require('../middleware/auth');
+const { 
+  uploadToCloudinary, 
+  deleteFromCloudinary, 
+  createUploadMiddleware 
+} = require('../utils/cloudinary');
 const router = express.Router();
+
+// Create multer upload middleware
+const upload = createUploadMiddleware({ maxSize: 10 * 1024 * 1024 }); // 10MB for posts
 
 // Get social feed
 router.get('/feed', auth, async (req, res) => {
@@ -64,13 +72,21 @@ router.get('/feed', auth, async (req, res) => {
 });
 
 // Create post
-router.post('/posts', auth, async (req, res) => {
+router.post('/posts', auth, upload.single('image'), async (req, res) => {
   try {
     const postData = {
       ...req.body,
       user: req.user._id,
       createdAt: new Date()
     };
+
+    // Upload image to Cloudinary if provided
+    if (req.file) {
+      const folder = `fitness-app/posts/${req.user.id}`;
+      const result = await uploadToCloudinary(req.file.buffer, folder);
+      postData.image = result.url;
+      postData.imageKey = result.publicId;
+    }
 
     // For now, just return success
     // In a real app, this would save to a posts collection

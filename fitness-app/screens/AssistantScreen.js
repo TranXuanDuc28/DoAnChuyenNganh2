@@ -1,145 +1,254 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, RefreshControl } from 'react-native';
-import api, { aiAPI } from '../services/api';
+import React, { useState, useEffect, useRef } from 'react';
+import {
+  View,
+  Text,
+  FlatList,
+  TextInput,
+  TouchableOpacity,
+  KeyboardAvoidingView,
+  Platform,
+  ActivityIndicator,
+  Alert,
+} from 'react-native';
+import { Ionicons as Icon } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
-import SuggestionCard from '../components/SuggestionCard'; // We will create this component next
-import CustomButton from '../components/CustomButton';
+import { colors } from '../theme/colors';
+import { aiAPI } from '../services/api';
+import { styles } from './styles/AssistantScreen.styles';
 
 const AssistantScreen = () => {
   const { user } = useAuth();
-  const [suggestions, setSuggestions] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+  const [messages, setMessages] = useState([
+    {
+      id: '1',
+      text: `Hi ${user?.firstName || 'there'}! 👋 I'm your AI Fitness Assistant. I can help you with:\n\n💪 Workout advice\n🥗 Nutrition tips\n🏃 Exercise form\n📊 Fitness goals\n💡 Training plans\n\nWhat would you like to know?`,
+      sender: 'bot',
+      timestamp: new Date(),
+    },
+  ]);
+  const [inputText, setInputText] = useState('');
+  const [loading, setLoading] = useState(false);
+  const flatListRef = useRef(null);
 
-  const fetchSuggestions = async () => {
+  // Scroll to bottom when new messages arrive
+  useEffect(() => {
+    if (messages.length > 0 && flatListRef.current) {
+      setTimeout(() => {
+        flatListRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+    }
+  }, [messages]);
+
+  const sendMessage = async () => {
+    if (!inputText.trim()) return;
+
+    const userMessage = {
+      id: Date.now().toString(),
+      text: inputText.trim(),
+      sender: 'user',
+      timestamp: new Date(),
+    };
+
+    setMessages((prev) => [...prev, userMessage]);
+    setInputText('');
+    setLoading(true);
+
     try {
-      const response = await api.get('/ai/daily-summary');
-      setSuggestions(response.data);
+      // Call backend AI chat API
+      const response = await aiAPI.chat(inputText.trim());
+      
+      if (response.data.success && response.data.response) {
+        const botResponse = {
+          id: (Date.now() + 1).toString(),
+          text: response.data.response,
+          sender: 'bot',
+          timestamp: new Date(),
+        };
+        setMessages((prev) => [...prev, botResponse]);
+      } else {
+        throw new Error(response.data.error || 'Failed to get response from AI');
+      }
     } catch (error) {
-      console.error('Failed to fetch suggestions:', error);
-      // Handle error gracefully in the UI
+      console.error('Chat error:', error);
+      console.error('Error details:', error.response?.data || error.message);
+      
+      let errorText = "Sorry, I'm having trouble connecting right now. Please try again! 🔄";
+      
+      // Provide more specific error messages
+      const errorMsg = error.response?.data?.error || error.message || '';
+      
+      if (errorMsg.includes('API key') || errorMsg.includes('not configured')) {
+        errorText = "AI service is not configured properly. Please contact support. 🔑";
+      } else if (errorMsg.includes('quota')) {
+        errorText = "AI service quota exceeded. Please try again later. ⏰";
+      } else if (errorMsg.includes('network') || error.message.includes('Network')) {
+        errorText = "Network error. Please check your internet connection. 📡";
+      } else if (errorMsg.includes('Unauthorized') || errorMsg.includes('401')) {
+        errorText = "Session expired. Please log in again. 🔐";
+      }
+      
+      const errorMessage = {
+        id: (Date.now() + 1).toString(),
+        text: errorText,
+        sender: 'bot',
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, errorMessage]);
     } finally {
       setLoading(false);
-      setRefreshing(false);
     }
   };
 
-  useEffect(() => {
-    fetchSuggestions();
-  }, []);
-
-  const onRefresh = () => {
-    setRefreshing(true);
-    fetchSuggestions();
+  const renderMessage = ({ item }) => {
+    const isBot = item.sender === 'bot';
+    return (
+      <View
+        style={[
+          styles.messageContainer,
+          isBot ? styles.botMessageContainer : styles.userMessageContainer,
+        ]}
+      >
+        {isBot && (
+          <View style={styles.botAvatar}>
+            <Icon name="fitness" size={20} color="#fff" />
+          </View>
+        )}
+        <View
+          style={[
+            styles.messageBubble,
+            isBot ? styles.botBubble : styles.userBubble,
+          ]}
+        >
+          <Text
+            style={[
+              styles.messageText,
+              isBot ? styles.botText : styles.userText,
+            ]}
+          >
+            {item.text}
+          </Text>
+          <Text
+            style={[
+              styles.timestamp,
+              isBot ? styles.botTimestamp : styles.userTimestamp,
+            ]}
+          >
+            {item.timestamp.toLocaleTimeString('en-US', {
+              hour: '2-digit',
+              minute: '2-digit',
+            })}
+          </Text>
+        </View>
+        {!isBot && (
+          <View style={styles.userAvatar}>
+            <Icon name="person" size={20} color="#fff" />
+          </View>
+        )}
+      </View>
+    );
   };
 
-  const [planLoading, setPlanLoading] = React.useState(false);
-  const [planMessage, setPlanMessage] = React.useState(null);
+  const quickQuestions = [
+    { id: '1', text: '💪 How to build muscle?', icon: 'barbell' },
+    { id: '2', text: '🏃 Best cardio exercises?', icon: 'bicycle' },
+    { id: '3', text: '🥗 Nutrition tips?', icon: 'nutrition' },
+    { id: '4', text: '📊 Create workout plan?', icon: 'calendar' },
+  ];
 
-  const renderHeader = () => (
-    <View style={styles.header}>
-      <Text style={styles.title}>Hello, {user?.firstName || 'User'}!</Text>
-      <Text style={styles.subtitle}>Here are your personalized suggestions for today:</Text>
-    </View>
-  );
-
-  if (loading) {
-    return <ActivityIndicator size="large" style={styles.loader} />;
-  }
+  const handleQuickQuestion = (question) => {
+    setInputText(question);
+  };
 
   return (
-    <View style={styles.container}>
-      <FlatList
-        data={suggestions}
-        renderItem={({ item }) => item ? <SuggestionCard suggestion={item} /> : null}
-        keyExtractor={(item, index) => {
-          // item.id may be undefined when coming from some backends; fall back safely
-          const key = item?.id ?? item?._id ?? item?.generatedAt ?? index;
-          try {
-            return typeof key === 'string' ? key : String(key);
-          } catch (e) {
-            return String(index);
-          }
-        }}
-        ListHeaderComponent={renderHeader}
-        ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>No suggestions for today. Check back tomorrow!</Text>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+    >
+      {/* Header */}
+      <View style={styles.header}>
+        <View style={styles.headerContent}>
+          <View style={styles.headerIcon}>
+            <Icon name="fitness" size={28} color="#ffffffff" />
           </View>
-        }
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-        contentContainerStyle={styles.listContainer}
-      />
-      <View style={styles.buttonContainer}>
-        <CustomButton
-          title={planLoading ? 'Generating...' : 'Generate New Workout Plan'}
-          onPress={async () => {
-            setPlanLoading(true);
-            setPlanMessage(null);
-            try {
-              const response = await aiAPI.generateWorkoutPlan({ duration: 4, frequency: 3 });
-              setPlanMessage('Workout plan created. Check Plans screen.');
-              // Optionally navigate to statistics or plans screen if you have one
-              // navigation.navigate('Statistics');
-            } catch (error) {
-              console.error('Failed to create workout plan:', error);
-              setPlanMessage('Failed to generate plan. Try again later.');
-            } finally {
-              setPlanLoading(false);
-            }
-          }}
-        />
-        {planMessage && <Text style={styles.planMessage}>{planMessage}</Text>}
+          <View style={styles.headerText}>
+            <Text style={styles.headerTitle}>AI Fitness Assistant</Text>
+            <View style={styles.statusContainer}>
+              <View style={styles.onlineIndicator} />
+              <Text style={styles.statusText}>Online</Text>
+            </View>
+          </View>
+        </View>
       </View>
-    </View>
+
+      {/* Messages */}
+      <FlatList
+        ref={flatListRef}
+        data={messages}
+        renderItem={renderMessage}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={styles.messagesList}
+        onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+      />
+
+      {/* Quick Questions */}
+      {messages.length <= 1 && (
+        <View style={styles.quickQuestionsContainer}>
+          <Text style={styles.quickQuestionsTitle}>Quick Questions:</Text>
+          <View style={styles.quickQuestionsGrid}>
+            {quickQuestions.map((q) => (
+              <TouchableOpacity
+                key={q.id}
+                style={styles.quickQuestionButton}
+                onPress={() => handleQuickQuestion(q.text)}
+              >
+                <Icon name={q.icon} size={20} color="#ffffffff" />
+                <Text style={styles.quickQuestionText}>{q.text}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+      )}
+
+      {/* Loading Indicator */}
+      {loading && (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="small" color="#ffffffff" />
+          <Text style={styles.loadingText}>AI is thinking...</Text>
+        </View>
+      )}
+
+      {/* Input */}
+      <View style={styles.inputContainer}>
+        <View style={styles.inputWrapper}>
+          <TextInput
+            style={styles.input}
+            placeholder="Ask about fitness, nutrition, workouts..."
+            placeholderTextColor="#999"
+            value={inputText}
+            onChangeText={setInputText}
+            multiline
+            maxLength={500}
+            editable={!loading}
+          />
+          <TouchableOpacity
+            style={[
+              styles.sendButton,
+              (!inputText.trim() || loading) && styles.sendButtonDisabled,
+            ]}
+            onPress={sendMessage}
+            disabled={!inputText.trim() || loading}
+          >
+            <Icon
+              name="send"
+              size={20}
+              color={!inputText.trim() || loading ? '#ccc' : '#fff'}
+            />
+          </TouchableOpacity>
+        </View>
+      </View>
+    </KeyboardAvoidingView>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f0f2f5',
-  },
-  loader: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  listContainer: {
-    paddingHorizontal: 16,
-    paddingBottom: 100, // Space for the button
-  },
-  header: {
-    paddingVertical: 20,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#1c1c1e',
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#6c6c6e',
-    marginTop: 4,
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 50,
-  },
-  emptyText: {
-    fontSize: 16,
-    color: '#6c6c6e',
-  },
-  buttonContainer: {
-    position: 'absolute',
-    bottom: 20,
-    left: 16,
-    right: 16,
-  }
-});
 
 export default AssistantScreen;

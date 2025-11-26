@@ -8,7 +8,7 @@ const router = express.Router();
 router.post('/register', async (req, res) => {
   console.log('Registration request body:', req.body);
   try {
-    const { email, password, profile, healthMetrics } = req.body;
+    const { email, password, profile, healthMetrics, nutritionPreferences } = req.body;
 
     // Check if user already exists
     const existingUser = await User.findOne({ where: { email } });
@@ -16,7 +16,25 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ message: 'User already exists' });
     }
 
-    // Create new user from nested profile and healthMetrics objects
+    // Parse nutrition preferences if they are strings
+    let foodPreferences = [];
+    let foodAllergies = [];
+    
+    if (nutritionPreferences) {
+      if (typeof nutritionPreferences.foodPreferences === 'string' && nutritionPreferences.foodPreferences.trim()) {
+        foodPreferences = nutritionPreferences.foodPreferences.split(',').map(item => item.trim()).filter(item => item);
+      } else if (Array.isArray(nutritionPreferences.foodPreferences)) {
+        foodPreferences = nutritionPreferences.foodPreferences;
+      }
+      
+      if (typeof nutritionPreferences.foodAllergies === 'string' && nutritionPreferences.foodAllergies.trim()) {
+        foodAllergies = nutritionPreferences.foodAllergies.split(',').map(item => item.trim()).filter(item => item);
+      } else if (Array.isArray(nutritionPreferences.foodAllergies)) {
+        foodAllergies = nutritionPreferences.foodAllergies;
+      }
+    }
+
+    // Create new user from nested profile, healthMetrics, and nutritionPreferences objects
     const user = await User.create({
       email,
       password,
@@ -32,6 +50,11 @@ router.post('/register', async (req, res) => {
       currentWeight: healthMetrics ? healthMetrics.currentWeight : null,
       bodyFatPercentage: healthMetrics ? healthMetrics.bodyFatPercentage : null,
       restingHeartRate: healthMetrics ? healthMetrics.restingHeartRate : null,
+      dailyMeals: nutritionPreferences ? nutritionPreferences.dailyMeals : 3,
+      budgetLevel: nutritionPreferences ? nutritionPreferences.budgetLevel : 'medium',
+      foodPreferences: foodPreferences,
+      foodAllergies: foodAllergies,
+      onboardingCompleted: true,
       lastLogin: new Date()
     });
 
@@ -64,15 +87,27 @@ router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Email and password are required' });
+    }
+
     // Find user by email
     const user = await User.findOne({ where: { email } });
     if (!user) {
+      console.log(`Login attempt failed: User not found for email: ${email}`);
       return res.status(400).json({ message: 'Invalid credentials' });
+    }
+
+    // Check if user is active
+    if (!user.isActive) {
+      console.log(`Login attempt failed: User ${email} is inactive`);
+      return res.status(403).json({ message: 'Account is inactive' });
     }
 
     // Check password
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
+      console.log(`Login attempt failed: Invalid password for email: ${email}`);
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
@@ -95,6 +130,7 @@ router.post('/login', async (req, res) => {
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
+        role: user.role || 'user',
         onboardingCompleted: user.onboardingCompleted,
       }
     });
@@ -174,6 +210,122 @@ router.put('/password', auth, async (req, res) => {
   } catch (error) {
     console.error('Change password error:', error);
     res.status(500).json({ message: 'Server error during password change' });
+  }
+});
+
+// Create admin account (only if no admin exists)
+router.post('/create-admin', async (req, res) => {
+  try {
+    const { email, password, firstName, lastName } = req.body;
+
+    // Validate required fields
+    if (!email || !password || !firstName || !lastName) {
+      return res.status(400).json({ 
+        message: 'Email, password, firstName, and lastName are required' 
+      });
+    }
+
+    // Check if any admin already exists
+    const existingAdmin = await User.findOne({ where: { role: 'admin' } });
+    if (existingAdmin) {
+      return res.status(403).json({ 
+        message: 'Admin account already exists. Please use admin authentication to create additional admins.' 
+      });
+    }
+
+    // Check if user with this email already exists
+    const existingUser = await User.findOne({ where: { email } });
+    if (existingUser) {
+      return res.status(400).json({ message: 'User with this email already exists' });
+    }
+
+    // Create admin user
+    const admin = await User.create({
+      email,
+      password,
+      firstName,
+      lastName,
+      role: 'admin',
+      isActive: true,
+      onboardingCompleted: true,
+      lastLogin: new Date()
+    });
+
+    // Generate JWT token
+    const token = jwt.sign(
+      { userId: admin.id },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRE || '7d' }
+    );
+
+    const adminResponse = admin.toJSON();
+    delete adminResponse.password;
+
+    res.status(201).json({
+      message: 'Admin account created successfully',
+      token,
+      user: adminResponse
+    });
+  } catch (error) {
+    console.error('Create admin error:', error);
+    res.status(500).json({ message: 'Server error during admin creation', error: error.message });
+  }
+});
+
+// Create admin account with secret key (more secure)
+router.post('/create-admin-secure', async (req, res) => {
+  try {
+    const { email, password, firstName, lastName, secretKey } = req.body;
+
+    // Validate required fields
+    if (!email || !password || !firstName || !lastName || !secretKey) {
+      return res.status(400).json({ 
+        message: 'Email, password, firstName, lastName, and secretKey are required' 
+      });
+    }
+
+    // Verify secret key
+    const validSecretKey = process.env.ADMIN_SECRET_KEY || 'change-this-secret-key-in-production';
+    if (secretKey !== validSecretKey) {
+      return res.status(403).json({ message: 'Invalid secret key' });
+    }
+
+    // Check if user with this email already exists
+    const existingUser = await User.findOne({ where: { email } });
+    if (existingUser) {
+      return res.status(400).json({ message: 'User with this email already exists' });
+    }
+
+    // Create admin user
+    const admin = await User.create({
+      email,
+      password,
+      firstName,
+      lastName,
+      role: 'admin',
+      isActive: true,
+      onboardingCompleted: true,
+      lastLogin: new Date()
+    });
+
+    // Generate JWT token
+    const token = jwt.sign(
+      { userId: admin.id },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRE || '7d' }
+    );
+
+    const adminResponse = admin.toJSON();
+    delete adminResponse.password;
+
+    res.status(201).json({
+      message: 'Admin account created successfully',
+      token,
+      user: adminResponse
+    });
+  } catch (error) {
+    console.error('Create admin error:', error);
+    res.status(500).json({ message: 'Server error during admin creation', error: error.message });
   }
 });
 

@@ -10,13 +10,19 @@ const DEV_API_HOST = typeof process !== 'undefined' && process.env && process.en
   ? process.env.REACT_NATIVE_API_HOST
   : (Platform.OS === 'android' ? '10.0.2.2' : 'localhost');
 
-const BASE_URL = __DEV__ 
-  ? `http://${DEV_API_HOST}:5000/api`
+// NGROK URL for mobile testing - update this when ngrok restarts
+const NGROK_URL = 'https://unpriggish-conductorial-lilah.ngrok-free.dev';
+
+const BASE_URL = __DEV__
+  ? `${NGROK_URL}/api`  // Using ngrok for mobile device testing
   : 'https://your-production-api.com/api';
+
+// Export BASE_URL for use in other files
+export const API_BASE_URL = BASE_URL;
 
 const api = axios.create({
   baseURL: BASE_URL,
-  timeout: 10000,
+  timeout: 60000, // Increased timeout for pose evaluation (images can take longer)
   headers: {
     'Content-Type': 'application/json',
   },
@@ -95,12 +101,21 @@ export const workoutAPI = {
   startWorkoutSession: (workoutId) => api.post(`/workouts/${workoutId}/start`),
   updateWorkoutSession: (sessionId, data) => api.put(`/workouts/sessions/${sessionId}`, data),
   completeWorkoutSession: (sessionId, data) => api.post(`/workouts/sessions/${sessionId}/complete`, data),
-  getWorkoutHistory: (params) => api.get('/workouts/history', { params }),
+  getWorkoutHistory: (params) => api.get('/workout-plans/history', { params }),
   getExercises: (params) => api.get('/workouts/exercises', { params }),
   createExercise: (exerciseData) => api.post('/workouts/exercises', exerciseData),
   getWorkoutPlans: () => api.get('/workouts/plans'),
   createWorkoutPlan: (planData) => api.post('/workouts/plans', planData),
   getAIWorkoutPlan: (preferences) => api.post('/ai/workout-plan', preferences),
+  getExerciseCategories: () => api.get('/workouts/exercise-categories'),
+  // AI Workout Plan APIs
+  generateAIWorkoutPlan: (preferences) => api.post('/workout-plans/generate', preferences),
+  getActiveWorkoutPlan: () => api.get('/workout-plans/active'),
+  getAllWorkoutPlans: () => api.get('/workout-plans'),
+  getWorkoutPlanDay: (dayId) => api.get(`/workout-plans/day/${dayId}`),
+  completeWorkoutDay: (dayId) => api.post(`/workout-plans/day/${dayId}/complete`),
+  completeExercise: (exerciseId) => api.post(`/workout-plans/exercise/${exerciseId}/complete`),
+  deactivateWorkoutPlan: (planId) => api.put(`/workout-plans/${planId}/deactivate`),
 };
 
 // Nutrition API
@@ -161,6 +176,17 @@ export const aiAPI = {
   getDailySummary: () => api.get('/ai/daily-summary'),
   generateWorkoutPlan: (preferences) => api.post('/ai/generate-workout-plan', preferences),
   generateMealPlan: (preferences) => api.post('/ai/generate-meal-plan', preferences),
+  getMealPlans: () => api.get('/ai/meal-plans'),
+  getMealPlan: (id) => api.get(`/ai/meal-plans/${id}`),
+  deleteMealPlan: (id) => api.delete(`/ai/meal-plans/${id}`),
+  chat: (message) => api.post('/ai/chat', { message }),
+};
+
+// Pose API
+export const poseAPI = {
+  evaluate: ({ userId, exerciseName, imageBase64, keypoints }) =>
+    api.post('/pose/evaluate', { userId, exerciseName, imageBase64, keypoints }),
+  history: ({ userId, limit }) => api.get('/pose/history', { params: { userId, limit } }),
 };
 
 // Notification API

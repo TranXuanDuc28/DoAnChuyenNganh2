@@ -2,16 +2,18 @@ import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
-  StyleSheet,
   ScrollView,
   TouchableOpacity,
   Dimensions,
   RefreshControl,
+  ImageBackground,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons as Icon } from '@expo/vector-icons';
 import { LineChart, BarChart } from 'react-native-chart-kit';
 import { useAuth } from '../context/AuthContext';
+import colors from '../theme/colors';
+import { styles } from './styles/DashboardScreen.styles';
 
 const { width } = Dimensions.get('window');
 
@@ -39,7 +41,7 @@ const DashboardScreen = () => {
       title: 'Try a 20-minute HIIT workout',
       description: 'Based on your activity level, a high-intensity workout would be perfect today.',
       icon: 'fitness',
-      color: '#FF6B6B',
+      color: colors.primary,
     },
     {
       id: 2,
@@ -47,7 +49,7 @@ const DashboardScreen = () => {
       title: 'Increase protein intake',
       description: 'Your protein consumption is below your goal. Try adding a protein shake.',
       icon: 'restaurant',
-      color: '#4ECDC4',
+      color: colors.success,
     },
     {
       id: 3,
@@ -55,7 +57,7 @@ const DashboardScreen = () => {
       title: 'Improve sleep quality',
       description: 'Your sleep score is 7.5/10. Try going to bed 30 minutes earlier.',
       icon: 'bed',
-      color: '#45B7D1',
+      color: colors.warning,
     },
   ]);
 
@@ -82,16 +84,16 @@ const DashboardScreen = () => {
   };
 
   const getBMIStatus = (bmi) => {
-    if (bmi < 18.5) return { status: 'Underweight', color: '#4ECDC4' };
-    if (bmi < 25) return { status: 'Normal', color: '#4CAF50' };
-    if (bmi < 30) return { status: 'Overweight', color: '#FF9800' };
-    return { status: 'Obese', color: '#F44336' };
+    if (bmi < 18.5) return { status: 'Underweight', color: colors.info };
+    if (bmi < 25) return { status: 'Normal', color: colors.success };
+    if (bmi < 30) return { status: 'Overweight', color: colors.warning };
+    return { status: 'Obese', color: colors.danger };
   };
 
-  const StatCard = ({ title, value, unit, icon, color, progress = null }) => (
-    <View style={[styles.statCard, { borderLeftColor: color }]}>
+  const StatCard = ({ title, value, unit, icon, color, progress = null, bgColor }) => (
+    <View style={[styles.statCard, { borderLeftColor: color, borderLeftWidth: 4 }]}>
       <View style={styles.statHeader}>
-        <Icon name={icon} size={24} color={color} />
+        <Icon name={icon} size={20} color={color} />
         <Text style={styles.statTitle}>{title}</Text>
       </View>
       <Text style={styles.statValue}>
@@ -114,24 +116,29 @@ const DashboardScreen = () => {
         <Text style={styles.recommendationTitle}>{recommendation.title}</Text>
         <Text style={styles.recommendationDescription}>{recommendation.description}</Text>
       </View>
-      <Icon name="chevron-forward" size={20} color="#666" />
+      <Icon name="chevron-forward" size={20} color={colors.textSecondary} />
     </TouchableOpacity>
   );
 
   const chartConfig = {
-    backgroundColor: '#fff',
-    backgroundGradientFrom: '#fff',
-    backgroundGradientTo: '#fff',
+    backgroundColor: colors.card,
+    backgroundGradientFrom: colors.card,
+    backgroundGradientTo: colors.card,
     decimalPlaces: 0,
-    color: (opacity = 1) => `rgba(0, 122, 255, ${opacity})`,
-    labelColor: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+    color: (opacity = 1) => `rgba(255, 107, 53, ${opacity})`, // Orange
+    labelColor: (opacity = 1) => `rgba(160, 160, 160, ${opacity})`, // Grey
     style: {
       borderRadius: 16,
     },
     propsForDots: {
-      r: '6',
+      r: '4',
       strokeWidth: '2',
-      stroke: '#007AFF',
+      stroke: colors.primary,
+    },
+    propsForBackgroundLines: {
+      strokeDasharray: '', // solid lines
+      stroke: colors.border,
+      strokeWidth: 1,
     },
   };
 
@@ -142,27 +149,30 @@ const DashboardScreen = () => {
     <ScrollView
       style={styles.container}
       refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
       }
     >
       {/* Header */}
-      <LinearGradient
-        colors={['#007AFF', '#0056CC']}
+      <ImageBackground
+        source={require('../image/banner2.jpg')}
         style={styles.header}
+        imageStyle={styles.headerImage}
       >
-        <View style={styles.headerContent}>
-          <View>
-            <Text style={styles.greeting}>{getGreeting()}</Text>
-            <Text style={styles.userName}>
-              {user?.profile?.firstName || 'User'}
-            </Text>
+      
+          <View style={styles.headerContent}>
+            <View>
+              <Text style={styles.greeting}>{getGreeting()},</Text>
+              <Text style={styles.userName}>
+                {user?.firstName || 'User'}
+              </Text>
+            </View>
+            <TouchableOpacity style={styles.notificationButton}>
+              <Icon name="notifications-outline" size={24} color={colors.white} />
+              <View style={styles.notificationBadge} />
+            </TouchableOpacity>
           </View>
-          <TouchableOpacity style={styles.notificationButton}>
-            <Icon name="notifications" size={24} color="#fff" />
-            <View style={styles.notificationBadge} />
-          </TouchableOpacity>
-        </View>
-      </LinearGradient>
+
+      </ImageBackground>
 
       {/* Today's Stats */}
       <View style={styles.section}>
@@ -172,7 +182,8 @@ const DashboardScreen = () => {
             title="Steps"
             value={todayStats.steps.toLocaleString()}
             icon="walk"
-            color="#FF6B6B"
+            color={colors.primary}
+            bgColor={colors.card}
             progress={(todayStats.steps / 10000) * 100}
           />
           <StatCard
@@ -180,23 +191,26 @@ const DashboardScreen = () => {
             value={todayStats.calories}
             unit=" kcal"
             icon="flame"
-            color="#FF9800"
+            color={colors.danger}
+            bgColor={colors.card}
             progress={(todayStats.calories / 500) * 100}
           />
           <StatCard
-            title="Active Minutes"
+            title="Active Min"
             value={todayStats.activeMinutes}
             unit=" min"
             icon="time"
-            color="#4CAF50"
+            color={colors.warning}
+            bgColor={colors.card}
             progress={(todayStats.activeMinutes / 60) * 100}
           />
           <StatCard
             title="Water"
             value={todayStats.water}
-            unit=" glasses"
+            unit=" gls"
             icon="water"
-            color="#2196F3"
+            color={colors.info}
+            bgColor={colors.card}
             progress={(todayStats.water / 8) * 100}
           />
         </View>
@@ -214,7 +228,7 @@ const DashboardScreen = () => {
           <View style={styles.healthCard}>
             <Text style={styles.healthLabel}>Heart Rate</Text>
             <Text style={styles.healthValue}>{todayStats.heartRate}</Text>
-            <Text style={styles.healthSubtext}>BPM (resting)</Text>
+            <Text style={styles.healthSubtext}>BPM</Text>
           </View>
           {bmi && (
             <View style={styles.healthCard}>
@@ -241,11 +255,16 @@ const DashboardScreen = () => {
                 },
               ],
             }}
-            width={width - 40}
-            height={200}
+            width={width - 80} // Adjusted for padding
+            height={220}
             chartConfig={chartConfig}
             bezier
             style={styles.chart}
+            withInnerLines={true}
+            withOuterLines={false}
+            withVerticalLines={false}
+            withHorizontalLines={true}
+            yAxisSuffix="k"
           />
         </View>
       </View>
@@ -267,257 +286,8 @@ const DashboardScreen = () => {
           ))}
         </View>
       </View>
-
-      {/* Quick Actions */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Quick Actions</Text>
-        <View style={styles.quickActions}>
-          <TouchableOpacity style={styles.quickActionButton}>
-            <Icon name="fitness" size={32} color="#FF6B6B" />
-            <Text style={styles.quickActionText}>Start Workout</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.quickActionButton}>
-            <Icon name="restaurant" size={32} color="#4ECDC4" />
-            <Text style={styles.quickActionText}>Log Meal</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.quickActionButton}>
-            <Icon name="water" size={32} color="#2196F3" />
-            <Text style={styles.quickActionText}>Log Water</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.quickActionButton}>
-            <Icon name="bed" size={32} color="#9C27B0" />
-            <Text style={styles.quickActionText}>Sleep Log</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
     </ScrollView>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f8f9fa',
-  },
-  header: {
-    paddingTop: 20,
-    paddingBottom: 30,
-    paddingHorizontal: 20,
-  },
-  headerContent: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  greeting: {
-    fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.8)',
-    marginBottom: 4,
-  },
-  userName: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#fff',
-  },
-  notificationButton: {
-    position: 'relative',
-  },
-  notificationBadge: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#FF3B30',
-  },
-  section: {
-    margin: 20,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 16,
-  },
-  seeAllText: {
-    fontSize: 16,
-    color: '#007AFF',
-    fontWeight: '500',
-  },
-  statsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-  },
-  statCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    width: '48%',
-    marginBottom: 12,
-    borderLeftWidth: 4,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  statHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  statTitle: {
-    fontSize: 14,
-    color: '#666',
-    marginLeft: 8,
-  },
-  statValue: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 8,
-  },
-  statUnit: {
-    fontSize: 16,
-    color: '#666',
-  },
-  progressBar: {
-    height: 4,
-    backgroundColor: '#f0f0f0',
-    borderRadius: 2,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    borderRadius: 2,
-  },
-  healthMetrics: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  healthCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
-    flex: 1,
-    marginHorizontal: 4,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  healthLabel: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 4,
-  },
-  healthValue: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 2,
-  },
-  healthSubtext: {
-    fontSize: 12,
-    color: '#666',
-  },
-  chartContainer: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  chart: {
-    borderRadius: 16,
-  },
-  recommendationsContainer: {
-    gap: 12,
-  },
-  recommendationCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  recommendationIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 16,
-  },
-  recommendationContent: {
-    flex: 1,
-  },
-  recommendationTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 4,
-  },
-  recommendationDescription: {
-    fontSize: 14,
-    color: '#666',
-    lineHeight: 20,
-  },
-  quickActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  quickActionButton: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 20,
-    alignItems: 'center',
-    width: '23%',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  quickActionText: {
-    fontSize: 12,
-    color: '#666',
-    marginTop: 8,
-    textAlign: 'center',
-  },
-});
 
 export default DashboardScreen;

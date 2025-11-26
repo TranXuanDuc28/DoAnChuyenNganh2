@@ -2,28 +2,36 @@ import React, { useState } from 'react';
 import {
   View,
   Text,
-  StyleSheet,
   ScrollView,
   TouchableOpacity,
   TextInput,
   Alert,
   Dimensions,
+  ImageBackground,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons as Icon } from '@expo/vector-icons';
 import { Picker } from '@react-native-picker/picker';
+import { useAuth } from '../context/AuthContext';
+import { colors } from '../theme/colors';
+import { styles } from './styles/OnboardingScreen.styles';
 
 const { width, height } = Dimensions.get('window');
 
-const OnboardingScreen = ({ navigation }) => {
+const OnboardingScreen = ({ navigation, route }) => {
+  const { register } = useAuth();
   const [currentStep, setCurrentStep] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+  
+  // Get registration data from RegisterScreen
+  const registrationData = route?.params?.registrationData || {};
+  
   const [formData, setFormData] = useState({
-    // Personal Info
-    firstName: '',
-    lastName: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
+    // Personal Info (from RegisterScreen)
+    firstName: registrationData.firstName || '',
+    lastName: registrationData.lastName || '',
+    email: registrationData.email || '',
+    password: registrationData.password || '',
     
     // Physical Info
     age: '',
@@ -40,6 +48,12 @@ const OnboardingScreen = ({ navigation }) => {
     currentWeight: '',
     bodyFatPercentage: '',
     restingHeartRate: '',
+    
+    // Nutrition Preferences
+    dailyMeals: '3',
+    budgetLevel: 'medium',
+    foodPreferences: '',
+    foodAllergies: '',
   });
 
   const fitnessGoals = [
@@ -50,7 +64,6 @@ const OnboardingScreen = ({ navigation }) => {
     { id: 'flexibility', label: 'Flexibility', icon: 'body' },
     { id: 'general_fitness', label: 'General Fitness', icon: 'heart' },
   ];
-  ;
 
   const handleNext = () => {
     if (currentStep < steps.length - 1) {
@@ -66,15 +79,56 @@ const OnboardingScreen = ({ navigation }) => {
 
   const handleComplete = async () => {
     try {
-      // Validate form data
-      // if (!validateForm()) {
-      //   return;
-      // }
+      // Validate required fields
+      if (!formData.age || !formData.height || !formData.weight) {
+        Alert.alert('Error', 'Please fill in your age, height, and weight');
+        return;
+      }
 
-      // Navigate to login or register
-      navigation.navigate('Register', { formData });
+      if (formData.fitnessGoals.length === 0) {
+        Alert.alert('Error', 'Please select at least one fitness goal');
+        return;
+      }
+
+      setIsLoading(true);
+
+      // Prepare user data for registration
+      const userData = {
+        email: formData.email,
+        password: formData.password,
+        profile: {
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          age: parseInt(formData.age) || 0,
+          gender: formData.gender,
+          height: parseInt(formData.height) || 0,
+          weight: parseInt(formData.weight) || 0,
+          fitnessLevel: formData.fitnessLevel,
+          fitnessGoals: formData.fitnessGoals,
+          activityLevel: formData.activityLevel,
+        },
+        healthMetrics: {
+          currentWeight: parseFloat(formData.currentWeight) || parseFloat(formData.weight) || null,
+          bodyFatPercentage: parseFloat(formData.bodyFatPercentage) || null,
+          restingHeartRate: parseInt(formData.restingHeartRate) || null,
+        },
+        nutritionPreferences: {
+          dailyMeals: parseInt(formData.dailyMeals) || 3,
+          budgetLevel: formData.budgetLevel,
+          foodPreferences: formData.foodPreferences,
+          foodAllergies: formData.foodAllergies,
+        }
+      };
+
+      const result = await register(userData);
+      if (!result.success) {
+        Alert.alert('Registration Failed', result.error);
+      }
+      // Navigation to home is handled automatically by AuthContext
     } catch (error) {
       Alert.alert('Error', 'Something went wrong. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -114,79 +168,6 @@ const OnboardingScreen = ({ navigation }) => {
         : [...prev.fitnessGoals, goalId]
     }));
   };
-
-  const WelcomeStep = () => (
-    <View style={styles.stepContainer}>
-      <Icon name="fitness" size={80} color="#007AFF" style={styles.welcomeIcon} />
-      <Text style={styles.stepTitle}>{steps[currentStep].title}</Text>
-      <Text style={styles.stepSubtitle}>{steps[currentStep].subtitle}</Text>
-      <Text style={styles.stepDescription}>
-        Get personalized workout plans, nutrition advice, and health insights powered by AI.
-        Let's create your perfect fitness journey!
-      </Text>
-    </View>
-  );
-
-  const PersonalInfoStep = () => (
-    <ScrollView style={styles.stepContainer} showsVerticalScrollIndicator={false}>
-      <Text style={styles.stepTitle}>{steps[currentStep].title}</Text>
-      <Text style={styles.stepSubtitle}>{steps[currentStep].subtitle}</Text>
-      
-      <View style={styles.inputContainer}>
-        <Text style={styles.inputLabel}>First Name *</Text>
-        <TextInput
-          style={styles.textInput}
-          value={formData.firstName}
-          onChangeText={(text) => updateFormData('firstName', text)}
-          placeholder="Enter your first name"
-        />
-      </View>
-
-      <View style={styles.inputContainer}>
-        <Text style={styles.inputLabel}>Last Name *</Text>
-        <TextInput
-          style={styles.textInput}
-          value={formData.lastName}
-          onChangeText={(text) => updateFormData('lastName', text)}
-          placeholder="Enter your last name"
-        />
-      </View>
-
-      <View style={styles.inputContainer}>
-        <Text style={styles.inputLabel}>Email *</Text>
-        <TextInput
-          style={styles.textInput}
-          value={formData.email}
-          onChangeText={(text) => updateFormData('email', text)}
-          placeholder="Enter your email"
-          keyboardType="email-address"
-          autoCapitalize="none"
-        />
-      </View>
-
-      <View style={styles.inputContainer}>
-        <Text style={styles.inputLabel}>Password *</Text>
-        <TextInput
-          style={styles.textInput}
-          value={formData.password}
-          onChangeText={(text) => updateFormData('password', text)}
-          placeholder="Create a password"
-          secureTextEntry
-        />
-      </View>
-
-      <View style={styles.inputContainer}>
-        <Text style={styles.inputLabel}>Confirm Password *</Text>
-        <TextInput
-          style={styles.textInput}
-          value={formData.confirmPassword}
-          onChangeText={(text) => updateFormData('confirmPassword', text)}
-          placeholder="Confirm your password"
-          secureTextEntry
-        />
-      </View>
-    </ScrollView>
-  );
 
   const PhysicalInfoStep = () => (
     <ScrollView style={styles.stepContainer} showsVerticalScrollIndicator={false}>
@@ -276,7 +257,7 @@ const OnboardingScreen = ({ navigation }) => {
             <Icon 
               name={goal.icon} 
               size={30} 
-              color={formData.fitnessGoals.includes(goal.id) ? '#007AFF' : '#666'} 
+              color={formData.fitnessGoals.includes(goal.id) ? colors.primary : colors.textSecondary} 
             />
             <Text style={[
               styles.goalText,
@@ -350,28 +331,76 @@ const OnboardingScreen = ({ navigation }) => {
     </ScrollView>
   );
 
-  const CompletionStep = () => (
-    <View style={styles.stepContainer}>
-      <Icon name="checkmark-circle" size={80} color="#4CAF50" style={styles.completionIcon} />
+  const NutritionPreferencesStep = () => (
+    <ScrollView style={styles.stepContainer} showsVerticalScrollIndicator={false}>
       <Text style={styles.stepTitle}>{steps[currentStep].title}</Text>
       <Text style={styles.stepSubtitle}>{steps[currentStep].subtitle}</Text>
-      <Text style={styles.stepDescription}>
-        You're all set! Your AI fitness coach is ready to help you achieve your goals.
-      </Text>
-    </View>
+      
+      <View style={styles.inputContainer}>
+        <Text style={styles.inputLabel}>Daily Meals</Text>
+        <View style={styles.pickerContainer}>
+          <Picker
+            selectedValue={formData.dailyMeals}
+            onValueChange={(value) => updateFormData('dailyMeals', value)}
+            style={styles.picker}
+          >
+            <Picker.Item label="2 meals per day" value="2" />
+            <Picker.Item label="3 meals per day" value="3" />
+            <Picker.Item label="4 meals per day" value="4" />
+            <Picker.Item label="5 meals per day" value="5" />
+            <Picker.Item label="6 meals per day" value="6" />
+          </Picker>
+        </View>
+      </View>
+
+      <View style={styles.inputContainer}>
+        <Text style={styles.inputLabel}>Budget Level</Text>
+        <View style={styles.pickerContainer}>
+          <Picker
+            selectedValue={formData.budgetLevel}
+            onValueChange={(value) => updateFormData('budgetLevel', value)}
+            style={styles.picker}
+          >
+            <Picker.Item label="Low Budget" value="low" />
+            <Picker.Item label="Medium Budget" value="medium" />
+            <Picker.Item label="High Budget" value="high" />
+          </Picker>
+        </View>
+      </View>
+
+      <View style={styles.inputContainer}>
+        <Text style={styles.inputLabel}>Food Preferences (Optional)</Text>
+        <TextInput
+          style={[styles.textInput, styles.multilineInput]}
+          value={formData.foodPreferences}
+          onChangeText={(text) => updateFormData('foodPreferences', text)}
+          placeholder="e.g., Healthy, High Protein, Low Carb, Vegetarian, Vegan, Keto"
+          multiline
+          numberOfLines={3}
+        />
+        <Text style={styles.helperText}>
+          Enter your food preferences separated by commas
+        </Text>
+      </View>
+
+      <View style={styles.inputContainer}>
+        <Text style={styles.inputLabel}>Food Allergies (Optional)</Text>
+        <TextInput
+          style={[styles.textInput, styles.multilineInput]}
+          value={formData.foodAllergies}
+          onChangeText={(text) => updateFormData('foodAllergies', text)}
+          placeholder="e.g., Seafood, Dairy, Nuts, Eggs, Gluten, Soy"
+          multiline
+          numberOfLines={3}
+        />
+        <Text style={styles.helperText}>
+          Enter any food allergies separated by commas
+        </Text>
+      </View>
+    </ScrollView>
   );
 
   const steps = [
-    {
-      title: 'Welcome to FitAI',
-      subtitle: 'Your personal AI fitness companion',
-      component: WelcomeStep,
-    },
-    {
-      title: 'Personal Information',
-      subtitle: 'Tell us about yourself',
-      component: PersonalInfoStep,
-    },
     {
       title: 'Physical Information',
       subtitle: 'Help us understand your body',
@@ -383,23 +412,28 @@ const OnboardingScreen = ({ navigation }) => {
       component: FitnessGoalsStep,
     },
     {
-      title: 'Health Information',
-      subtitle: 'Current health metrics',
-      component: HealthInfoStep,
+      title: 'Nutrition Preferences',
+      subtitle: 'Customize your meal plans',
+      component: NutritionPreferencesStep,
     },
     {
-      title: 'All Set!',
-      subtitle: 'Ready to start your fitness journey',
-      component: CompletionStep,
+      title: 'Health Information',
+      subtitle: 'Current health metrics (Optional)',
+      component: HealthInfoStep,
     },
   ];
 
   return (
-    <LinearGradient
-      colors={['#007AFF', '#0056CC']}
+    <ImageBackground
+      source={require('../image/banner3.jpg')}
       style={styles.container}
+      imageStyle={styles.backgroundImage}
     >
-      <View style={styles.content}>
+      <LinearGradient
+        colors={['rgba(0,0,0,0.85)', 'rgba(0,0,0,0.65)', 'rgba(0,0,0,0.75)']}
+        style={styles.gradient}
+      >
+        <View style={styles.content}>
         <View style={styles.progressContainer}>
           <View style={styles.progressBar}>
             <View 
@@ -419,12 +453,20 @@ const OnboardingScreen = ({ navigation }) => {
         </View>
 
         <View style={styles.buttonContainer}>
-          {currentStep > 0 && (
+          {currentStep > 0 ? (
             <TouchableOpacity 
               style={styles.previousButton}
               onPress={handlePrevious}
             >
               <Text style={styles.previousButtonText}>Previous</Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity 
+              style={styles.previousButton}
+              onPress={() => navigation.goBack()}
+            >
+              <Icon name="arrow-back" size={20} color={colors.textSecondary} />
+              <Text style={styles.previousButtonText}>Back</Text>
             </TouchableOpacity>
           )}
 
@@ -434,190 +476,24 @@ const OnboardingScreen = ({ navigation }) => {
               onPress={handleNext}
             >
               <Text style={styles.nextButtonText}>Next</Text>
-              <Icon name="arrow-forward" size={20} color="#007AFF" />
+              <Icon name="arrow-forward" size={20} color={colors.textOnPrimary} />
             </TouchableOpacity>
           ) : (
             <TouchableOpacity 
-              style={styles.completeButton}
+              style={[styles.completeButton, isLoading && styles.completeButtonDisabled]}
               onPress={handleComplete}
+              disabled={isLoading}
             >
-              <Text style={styles.completeButtonText}>Get Started</Text>
+              <Text style={styles.completeButtonText}>
+                {isLoading ? 'Creating Account...' : 'Complete Registration'}
+              </Text>
             </TouchableOpacity>
           )}
         </View>
       </View>
-    </LinearGradient>
+      </LinearGradient>
+    </ImageBackground>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: 20,
-    paddingTop: 50,
-    paddingBottom: 30,
-  },
-  progressContainer: {
-    marginBottom: 30,
-  },
-  progressBar: {
-    height: 4,
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
-    borderRadius: 2,
-    marginBottom: 10,
-  },
-  progressFill: {
-    height: '100%',
-    backgroundColor: '#fff',
-    borderRadius: 2,
-  },
-  progressText: {
-    color: '#fff',
-    fontSize: 14,
-    textAlign: 'center',
-  },
-  stepContent: {
-    flex: 1,
-  },
-  stepContainer: {
-    flex: 1,
-  },
-  welcomeIcon: {
-    alignSelf: 'center',
-    marginBottom: 20,
-  },
-  completionIcon: {
-    alignSelf: 'center',
-    marginBottom: 20,
-  },
-  stepTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#fff',
-    textAlign: 'center',
-    marginBottom: 10,
-  },
-  stepSubtitle: {
-    fontSize: 18,
-    color: 'rgba(255, 255, 255, 0.8)',
-    textAlign: 'center',
-    marginBottom: 20,
-  },
-  stepDescription: {
-    fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.9)',
-    textAlign: 'center',
-    lineHeight: 24,
-    paddingHorizontal: 20,
-  },
-  inputContainer: {
-    marginBottom: 20,
-  },
-  inputLabel: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#fff',
-    marginBottom: 8,
-  },
-  textInput: {
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    fontSize: 16,
-    color: '#333',
-  },
-  pickerContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    borderRadius: 12,
-    overflow: 'hidden',
-  },
-  picker: {
-    height: 50,
-  },
-  goalsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    marginBottom: 30,
-  },
-  goalCard: {
-    width: (width - 60) / 2,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 12,
-    padding: 20,
-    alignItems: 'center',
-    marginBottom: 15,
-    borderWidth: 2,
-    borderColor: 'transparent',
-  },
-  goalCardSelected: {
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    borderColor: '#fff',
-  },
-  goalText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: 'rgba(255, 255, 255, 0.8)',
-    marginTop: 8,
-    textAlign: 'center',
-  },
-  goalTextSelected: {
-    color: '#fff',
-  },
-  buttonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 20,
-  },
-  previousButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 25,
-    flex: 1,
-    marginRight: 10,
-    alignItems: 'center',
-  },
-  previousButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  nextButton: {
-    backgroundColor: '#fff',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 25,
-    flex: 2,
-    marginLeft: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  nextButtonText: {
-    color: '#007AFF',
-    fontSize: 16,
-    fontWeight: '600',
-    marginRight: 8,
-  },
-  completeButton: {
-    backgroundColor: '#4CAF50',
-    paddingHorizontal: 32,
-    paddingVertical: 14,
-    borderRadius: 25,
-    flex: 1,
-    alignItems: 'center',
-  },
-  completeButtonText: {
-    color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-});
 
 export default OnboardingScreen;

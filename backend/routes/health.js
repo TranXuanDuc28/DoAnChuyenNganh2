@@ -8,7 +8,9 @@ const {
   BreathingExercise,
   HealthGoal 
 } = require('../models/Health');
+const { User } = require('../models/User');
 const { auth } = require('../middleware/auth');
+const { Op } = require('sequelize');
 const router = express.Router();
 
 // Get health metrics summary
@@ -24,12 +26,39 @@ router.get('/metrics', auth, async (req, res) => {
     endDate.setHours(23, 59, 59, 999);
 
     const [sleep, heartRate, stress, weight, activity] = await Promise.all([
-      SleepRecord.findOne({ user: req.user._id, date: { $gte: startDate, $lt: endDate } }),
-      HeartRateRecord.findOne({ user: req.user._id, timestamp: { $gte: startDate, $lt: endDate } }).sort({ timestamp: -1 }),
-      StressRecord.findOne({ user: req.user._id, timestamp: { $gte: startDate, $lt: endDate } }).sort({ timestamp: -1 }),
-      WeightRecord.findOne({ user: req.user._id, timestamp: { $gte: startDate, $lt: endDate } }).sort({ timestamp: -1 }),
-      ActivityRecord.findOne({ user: req.user._id, date: { $gte: startDate, $lt: endDate } })
-    ]);
+      SleepRecord.findOne({ 
+        where: {
+          userId: req.user.id,
+          date: { [Op.between]: [startDate, endDate] }
+        }
+      }),
+      HeartRateRecord.findOne({ 
+        where: {
+          userId: req.user.id,
+          timestamp: { [Op.between]: [startDate, endDate] }
+        },
+        order: [['timestamp', 'DESC']]
+      }),
+      StressRecord.findOne({ 
+        where: {
+          userId: req.user.id,
+          timestamp: { [Op.between]: [startDate, endDate] }
+        },
+        order: [['timestamp', 'DESC']]
+      }),
+      WeightRecord.findOne({ 
+        where: {
+          userId: req.user.id,
+          timestamp: { [Op.between]: [startDate, endDate] }
+        },
+        order: [['timestamp', 'DESC']]
+      }),
+      ActivityRecord.findOne({
+        where: {
+          userId: req.user.id,
+          date: { [Op.between]: [startDate, endDate] }
+        }
+      })])
 
     res.json({
       sleep,
@@ -49,11 +78,10 @@ router.post('/sleep', auth, async (req, res) => {
   try {
     const sleepData = {
       ...req.body,
-      user: req.user._id
+      userId: req.user.id
     };
 
-    const sleepRecord = new SleepRecord(sleepData);
-    await sleepRecord.save();
+    const sleepRecord = await SleepRecord.create(sleepData);
 
     res.status(201).json({
       message: 'Sleep record added successfully',
@@ -69,17 +97,18 @@ router.get('/sleep', auth, async (req, res) => {
   try {
     const { startDate, endDate, limit = 30 } = req.query;
     
-    const filter = { user: req.user._id };
+    const where = { userId: req.user.id };
     if (startDate && endDate) {
-      filter.date = { 
-        $gte: new Date(startDate), 
-        $lte: new Date(endDate) 
+      where.date = { 
+        [Op.between]: [new Date(startDate), new Date(endDate)]
       };
     }
 
-    const sleepRecords = await SleepRecord.find(filter)
-      .sort({ date: -1 })
-      .limit(limit * 1);
+    const sleepRecords = await SleepRecord.findAll({
+      where,
+      order: [['date', 'DESC']],
+      limit: parseInt(limit)
+    });
 
     res.json(sleepRecords);
   } catch (error) {
@@ -93,12 +122,11 @@ router.post('/heart-rate', auth, async (req, res) => {
   try {
     const heartRateData = {
       ...req.body,
-      user: req.user._id,
+      userId: req.user.id,
       timestamp: req.body.timestamp || new Date()
     };
 
-    const heartRateRecord = new HeartRateRecord(heartRateData);
-    await heartRateRecord.save();
+    const heartRateRecord = await HeartRateRecord.create(heartRateData);
 
     res.status(201).json({
       message: 'Heart rate record added successfully',
@@ -114,17 +142,18 @@ router.get('/heart-rate', auth, async (req, res) => {
   try {
     const { startDate, endDate, limit = 100 } = req.query;
     
-    const filter = { user: req.user._id };
+    const where = { userId: req.user.id };
     if (startDate && endDate) {
-      filter.timestamp = { 
-        $gte: new Date(startDate), 
-        $lte: new Date(endDate) 
+      where.timestamp = { 
+        [Op.between]: [new Date(startDate), new Date(endDate)]
       };
     }
 
-    const heartRateRecords = await HeartRateRecord.find(filter)
-      .sort({ timestamp: -1 })
-      .limit(limit * 1);
+    const heartRateRecords = await HeartRateRecord.findAll({
+      where,
+      order: [['timestamp', 'DESC']],
+      limit: parseInt(limit)
+    });
 
     res.json(heartRateRecords);
   } catch (error) {
@@ -138,12 +167,11 @@ router.post('/stress', auth, async (req, res) => {
   try {
     const stressData = {
       ...req.body,
-      user: req.user._id,
+      userId: req.user.id,
       timestamp: req.body.timestamp || new Date()
     };
 
-    const stressRecord = new StressRecord(stressData);
-    await stressRecord.save();
+    const stressRecord = await StressRecord.create(stressData);
 
     res.status(201).json({
       message: 'Stress record added successfully',
@@ -159,17 +187,18 @@ router.get('/stress', auth, async (req, res) => {
   try {
     const { startDate, endDate, limit = 50 } = req.query;
     
-    const filter = { user: req.user._id };
+    const where = { userId: req.user.id };
     if (startDate && endDate) {
-      filter.timestamp = { 
-        $gte: new Date(startDate), 
-        $lte: new Date(endDate) 
+      where.timestamp = { 
+        [Op.between]: [new Date(startDate), new Date(endDate)]
       };
     }
 
-    const stressRecords = await StressRecord.find(filter)
-      .sort({ timestamp: -1 })
-      .limit(limit * 1);
+    const stressRecords = await StressRecord.findAll({
+      where,
+      order: [['timestamp', 'DESC']],
+      limit: parseInt(limit)
+    });
 
     res.json(stressRecords);
   } catch (error) {
@@ -183,19 +212,18 @@ router.post('/weight', auth, async (req, res) => {
   try {
     const weightData = {
       ...req.body,
-      user: req.user._id,
+      userId: req.user.id,
       timestamp: req.body.timestamp || new Date()
     };
 
     // Calculate BMI if height is available
-    const user = await require('../models/User').findById(req.user._id);
-    if (user && user.profile.height) {
-      const heightInMeters = user.profile.height / 100;
+    const user = await User.findByPk(req.user.id);
+    if (user && user.height) {
+      const heightInMeters = user.height / 100;
       weightData.bmi = weightData.weight / (heightInMeters * heightInMeters);
     }
 
-    const weightRecord = new WeightRecord(weightData);
-    await weightRecord.save();
+    const weightRecord = await WeightRecord.create(weightData);
 
     res.status(201).json({
       message: 'Weight record added successfully',
@@ -211,17 +239,18 @@ router.get('/weight', auth, async (req, res) => {
   try {
     const { startDate, endDate, limit = 30 } = req.query;
     
-    const filter = { user: req.user._id };
+    const where = { userId: req.user.id };
     if (startDate && endDate) {
-      filter.timestamp = { 
-        $gte: new Date(startDate), 
-        $lte: new Date(endDate) 
+      where.timestamp = { 
+        [Op.between]: [new Date(startDate), new Date(endDate)]
       };
     }
 
-    const weightRecords = await WeightRecord.find(filter)
-      .sort({ timestamp: -1 })
-      .limit(limit * 1);
+    const weightRecords = await WeightRecord.findAll({
+      where,
+      order: [['timestamp', 'DESC']],
+      limit: parseInt(limit)
+    });
 
     res.json(weightRecords);
   } catch (error) {
@@ -235,21 +264,42 @@ router.get('/activity', auth, async (req, res) => {
   try {
     const { startDate, endDate, limit = 30 } = req.query;
     
-    const filter = { user: req.user._id };
+    const where = { userId: req.user.id };
     if (startDate && endDate) {
-      filter.date = { 
-        $gte: new Date(startDate), 
-        $lte: new Date(endDate) 
+      where.date = { 
+        [Op.between]: [new Date(startDate), new Date(endDate)]
       };
     }
 
-    const activityRecords = await ActivityRecord.find(filter)
-      .sort({ date: -1 })
-      .limit(limit * 1);
+    const activityRecords = await ActivityRecord.findAll({
+      where,
+      order: [['date', 'DESC']],
+      limit: parseInt(limit)
+    });
 
     res.json(activityRecords);
   } catch (error) {
     console.error('Get activity records error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+router.post('/activity', auth, async (req, res) => {
+  try {
+    const { activityType, duration, caloriesBurned, steps, date } = req.body;
+    
+    const newActivity = await ActivityRecord.create({
+      userId: req.user.id,
+      activityType,
+      duration,
+      caloriesBurned,
+      steps,
+      date: date ? new Date(date) : new Date()
+    });
+
+    res.json(newActivity);
+  } catch (error) {
+    console.error('Add activity record error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -259,17 +309,18 @@ router.get('/breathing', auth, async (req, res) => {
   try {
     const { startDate, endDate, limit = 20 } = req.query;
     
-    const filter = { user: req.user._id };
+    const where = { userId: req.user.id };
     if (startDate && endDate) {
-      filter.timestamp = { 
-        $gte: new Date(startDate), 
-        $lte: new Date(endDate) 
+      where.timestamp = { 
+        [Op.between]: [new Date(startDate), new Date(endDate)]
       };
     }
 
-    const breathingExercises = await BreathingExercise.find(filter)
-      .sort({ timestamp: -1 })
-      .limit(limit * 1);
+    const breathingExercises = await BreathingExercise.findAll({
+      where,
+      order: [['timestamp', 'DESC']],
+      limit: parseInt(limit)
+    });
 
     res.json(breathingExercises);
   } catch (error) {
@@ -282,12 +333,11 @@ router.post('/breathing', auth, async (req, res) => {
   try {
     const breathingData = {
       ...req.body,
-      user: req.user._id,
+      userId: req.user.id,
       timestamp: req.body.timestamp || new Date()
     };
 
-    const breathingExercise = new BreathingExercise(breathingData);
-    await breathingExercise.save();
+    const breathingExercise = await BreathingExercise.create(breathingData);
 
     res.status(201).json({
       message: 'Breathing exercise logged successfully',
@@ -302,10 +352,13 @@ router.post('/breathing', auth, async (req, res) => {
 // Health goals routes
 router.get('/goals', auth, async (req, res) => {
   try {
-    const goals = await HealthGoal.find({
-      user: req.user._id,
-      isActive: true
-    }).sort({ createdAt: -1 });
+    const goals = await HealthGoal.findAll({
+      where: {
+        userId: req.user.id,
+        isActive: true
+      },
+      order: [['createdAt', 'DESC']]
+    });
 
     res.json(goals);
   } catch (error) {
@@ -318,11 +371,10 @@ router.post('/goals', auth, async (req, res) => {
   try {
     const goalData = {
       ...req.body,
-      user: req.user._id
+      userId: req.user.id
     };
 
-    const goal = new HealthGoal(goalData);
-    await goal.save();
+    const goal = await HealthGoal.create(goalData);
 
     res.status(201).json({
       message: 'Health goal created successfully',
@@ -337,16 +389,17 @@ router.post('/goals', auth, async (req, res) => {
 router.put('/goals/:id', auth, async (req, res) => {
   try {
     const goal = await HealthGoal.findOne({
-      _id: req.params.id,
-      user: req.user._id
+      where: {
+        id: req.params.id,
+        userId: req.user.id
+      }
     });
 
     if (!goal) {
       return res.status(404).json({ message: 'Health goal not found' });
     }
 
-    Object.assign(goal, req.body);
-    await goal.save();
+    await goal.update(req.body);
 
     res.json({
       message: 'Health goal updated successfully',
