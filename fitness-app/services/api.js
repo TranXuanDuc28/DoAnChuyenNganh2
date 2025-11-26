@@ -184,9 +184,45 @@ export const aiAPI = {
 
 // Pose API
 export const poseAPI = {
-  evaluate: ({ userId, exerciseName, imageBase64, keypoints }) =>
-    api.post('/pose/evaluate', { userId, exerciseName, imageBase64, keypoints }),
-  history: ({ userId, limit }) => api.get('/pose/history', { params: { userId, limit } }),
+  evaluate: ({ user_id, exerciseName, imageBase64, keypoints }) =>
+    api.post('/pose/evaluate', { user_id, exerciseName, imageBase64, keypoints }),
+  evaluatePose: ({ imageBase64 }) => api.post('/pose/evaluate-pose', { imageBase64 }),
+  history: ({ exerciseName, user_id, limit, type = 'all' }) => api.get('/pose/history', { params: { exerciseName, user_id, limit, type } }),
+  deleteImage: (id, user_id) => api.delete(`/pose/image/${id}`, { params: { user_id } }),
+};
+
+// Video Analysis API (PoseRAC)
+export const videoAnalysisAPI = {
+  // Upload và xử lý video
+  processVideo: (formData, onUploadProgress) => {
+    return api.post('/video-analysis/process', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+      timeout: 300000, // 5 minutes timeout for video upload
+      onUploadProgress: onUploadProgress,
+    });
+  },
+  // Lấy kết quả phân tích theo ID
+  getAnalysis: (id) => api.get(`/video-analysis/${id}`),
+  // Lấy danh sách video analysis
+  getAnalyses: (params) => api.get('/video-analysis', { params }),
+  // Stream video output (với token trong query string để VideoPlayer có thể load)
+  getVideoUrl: async (id) => {
+    try {
+      const token = await AsyncStorage.getItem('authToken');
+      const baseUrl = BASE_URL.replace('/api', '');
+      return `${baseUrl}/api/video-analysis/${id}/video${token ? `?token=${encodeURIComponent(token)}` : ''}`;
+    } catch (error) {
+      console.error('Error getting video URL:', error);
+      const baseUrl = BASE_URL.replace('/api', '');
+      return `${baseUrl}/api/video-analysis/${id}/video`;
+    }
+  },
+  // Xóa video analysis
+  deleteAnalysis: (id) => api.delete(`/video-analysis/${id}`),
+  // Xóa video analysis
+  deleteVideo: (analysisId) => api.delete(`/video-analysis/${analysisId}`),
 };
 
 // Notification API

@@ -3,17 +3,22 @@ const cors = require('cors');
 const helmet = require('helmet');
 const path = require('path');
 const rateLimit = require('express-rate-limit');
+const { createServer } = require('http');
+const { Server } = require('socket.io');
 const { sequelize, testConnection } = require('./config/database');
 require('dotenv').config();
 // build the express app according to the structure above
 const app = express();
+const httpServer = createServer(app);
 
+// ✅ Cho phép Express tin proxy như ngrok / Expo tunnel
+app.set('trust proxy', 1);
 // Security middleware
 app.use(helmet());
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
-    ? ['https://yourdomain.com'] 
-    : ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:8081'],
+  origin: process.env.NODE_ENV === 'production'
+    ? process.env.CORS_ORIGIN_PROD?.split(',') || ['https://yourdomain.com']
+    : process.env.CORS_ORIGIN_DEV?.split(',') || ['http://localhost:3000'],
   credentials: true
 }));
 
@@ -28,11 +33,13 @@ app.use(limiter);
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
+// Serve static files from uploads directory
+app.use('/uploads', express.static('uploads'));
+
 // Database connection and synchronization
 const initializeDatabase = async () => {
   try {
     await testConnection();
-    
     // Import all models to register them with Sequelize
     require('./models/User');
     require('./models/Health');
@@ -43,6 +50,9 @@ const initializeDatabase = async () => {
     require('./models/Pose');
     require('./models/SystemSettings');
     
+    require('./models/VideoAnalysis');
+    require('./models/ImageEvaluation');
+
     // Sync database (create tables if they don't exist)
     // Using alter: false to avoid index issues with many foreign keys
     // Tables will be created if they don't exist, but won't be altered
@@ -119,6 +129,11 @@ app.use('/api/admin', require('./routes/admin'));
 // Static serving for category images stored inside the fitness app image folder
 const categoryImagesDir = path.join(__dirname, '..', 'fitness-app', 'image');
 app.use('/static/category-images', express.static(categoryImagesDir));
+// Python-based pose scoring endpoint (calls Yoga-Posture-Detection main1.py)
+// mounted under /api/pose/evaluate-pose -> full path: /api/pose/evaluate-pose
+app.use('/api/pose', require('./routes/poseScoring'));
+app.use('/api/push', require('./routes/push'));
+app.use('/api/video-analysis', require('./routes/videoAnalysis'));
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
@@ -139,9 +154,25 @@ app.use('*', (req, res) => {
   res.status(404).json({ message: 'Route not found' });
 });
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+// Initialize Socket.IO
+const io = new Server(httpServer, {
+  cors: {
+    origin: process.env.NODE_ENV === 'production'
+      ? process.env.SOCKET_ORIGIN_PROD?.split(',') || ['https://yourdomain.com']
+      : process.env.SOCKET_ORIGIN_DEV?.split(',') || ['http://localhost:3000'],
+    credentials: true,
+    methods: ['GET', 'POST']
+  },
+  transports: ['websocket', 'polling']
 });
 
-module.exports = app;
+// Import and setup WebSocket handlers
+require('./websocket/poseSocket')(io);
+
+const PORT = process.env.PORT || 5000;
+httpServer.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+  console.log(`WebSocket server ready for connections`);
+});
+
+module.exports = { app, io };

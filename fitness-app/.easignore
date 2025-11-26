@@ -1,0 +1,74 @@
+# node modules
+node_modules/
+
+# native project
+android/
+ios/
+
+# git
+.git/
+.gitignore
+
+# expo
+.expo/
+.expo-shared/
+
+# build outputs
+dist/
+build/
+web-build/
+out/
+
+# IDE
+.idea/
+.vscode/
+.DS_Store
+
+# environment
+.env
+.env.*
+!.env.example
+
+# logs
+npm-debug.*
+*.log
+
+# gradle cache
+.gradle/
+**/.gradle/
+**/build/
+
+# debug images
+tmp_debug_images/
+tmp/
+
+# java/maven cache
+**/.m2/
+
+# keystores
+*.jks
+*.keystore
+
+# apple keys
+*.p8
+*.p12
+*.mobileprovision
+
+# swap files
+*.swp
+*.swo
+
+# memory dumps
+.hprof
+
+
+# Any WASM binaries
+*.wasm
+*.data
+*.tflite
+
+# ONNX model files
+assets/*.onnx
+assets/*.onnx.data
+assets/models/
+assets/models/**

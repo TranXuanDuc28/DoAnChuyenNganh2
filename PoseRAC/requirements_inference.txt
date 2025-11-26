@@ -1,0 +1,21 @@
+# PoseRAC Dependencies
+# Python 3.8 - 3.12
+
+# Core
+opencv-python>=4.8.0
+mediapipe>=0.10.0
+torch>=2.0.0
+numpy>=1.24.0
+pandas>=2.0.0
+
+# Training & Metrics
+pytorch-lightning>=2.0.0
+pytorch-metric-learning>=2.0.0
+
+# Visualization
+matplotlib>=3.7.0
+Pillow>=10.0.0
+
+# Utils
+PyYAML>=6.0
+tqdm>=4.65.0

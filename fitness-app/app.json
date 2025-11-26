@@ -11,13 +11,14 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-    "platforms": ["android", "ios", "web"],
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
-        "NSCameraUsageDescription": "We need camera access to scan barcodes and analyze exercise form.",
-        "NSPhotoLibraryUsageDescription": "We need photo library access to upload images for analysis."
-      }
+        "NSCameraUsageDescription": "Ứng dụng cần quyền truy cập camera để nhận diện tư thế",
+        "NSPhotoLibraryUsageDescription": "Ứng dụng cần truy cập thư viện ảnh để tải ảnh nhận diện.",
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "bundleIdentifier": "com.anonymous.fitnessapp"
     },
     "android": {
       "adaptiveIcon": {
@@ -28,21 +29,40 @@
         "CAMERA",
         "READ_MEDIA_IMAGES",
         "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE"
-      ]
+        "WRITE_EXTERNAL_STORAGE",
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ],
+      "package": "com.anonymous.fitnessapp"
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-font",
-      "expo-camera",
       [
-        "expo-barcode-scanner",
+        "expo-splash-screen",
         {
-          "cameraPermission": "Allow $(PRODUCT_NAME) to access camera for scanning barcodes."
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#ffffff",
+          "dark": {
+            "backgroundColor": "#000000"
+          }
         }
-      ]
-    ]
+      ],
+      "expo-video"
+    ],
+    "updates": {
+      "enabled": false,
+      "checkAutomatically": "NEVER",
+      "fallbackToCacheTimeout": 0
+    },
+    "owner": "tranxuanduc75",
+    "extra": {
+      "eas": {
+        "projectId": "b5851130-ce11-49d1-af71-044f5d7cbd45"
+      }
+    }
   }
 }

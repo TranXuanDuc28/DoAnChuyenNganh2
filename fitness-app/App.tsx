@@ -1,3 +1,7 @@
+import { Buffer } from 'buffer';
+global.Buffer = Buffer;
+import process from 'process';
+global.process = process;
 import 'react-native-gesture-handler';
 import React, { useState, useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
@@ -15,7 +19,6 @@ import DashboardScreen from './screens/DashboardScreen';
 import WorkoutScreen from './screens/WorkoutScreen';
 import NutritionScreen from './screens/NutritionScreen';
 import HealthScreen from './screens/HealthScreen';
-import PoseScreen from './screens/PoseScreen';
 import ProfileScreen from './screens/ProfileScreen';
 import AssistantScreen from './screens/AssistantScreen';
 import ExerciseSelectionScreen from './screens/ExerciseSelectionScreen';
@@ -23,6 +26,11 @@ import CategoryExercisesScreen from './screens/CategoryExercisesScreen';
 import ExerciseDetailScreen from './screens/ExerciseDetailScreen';
 import WorkoutPlanDetailScreen from './screens/WorkoutPlanDetailScreen';
 import WorkoutExerciseDetailScreen from './screens/WorkoutExerciseDetailScreen';
+import SocialScreen from './screens/SocialScreen';
+import StatisticsScreen from './screens/StatisticsScreen';
+import PoseScreen from './screens/PoseScreen';
+import ExerciseSelectionScreen from './screens/ExerciseSelectionScreen';
+import PoseHistory from './screens/PoseHistory';
 
 // Import context
 import { AuthProvider, useAuth } from './context/AuthContext';
