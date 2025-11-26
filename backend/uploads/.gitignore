@@ -1,0 +1,4 @@
+# Ignore all uploaded videos
+videos/*
+!videos/.gitkeep
+
