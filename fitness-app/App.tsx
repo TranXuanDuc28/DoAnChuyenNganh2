@@ -29,7 +29,6 @@ import WorkoutExerciseDetailScreen from './screens/WorkoutExerciseDetailScreen';
 import SocialScreen from './screens/SocialScreen';
 import StatisticsScreen from './screens/StatisticsScreen';
 import PoseScreen from './screens/PoseScreen';
-import ExerciseSelectionScreen from './screens/ExerciseSelectionScreen';
 import PoseHistory from './screens/PoseHistory';
 
 // Import context
@@ -181,6 +180,17 @@ const AppNavigator = () => {
               headerStyle: { backgroundColor: colors.primary },
               headerTintColor: colors.textWhite,
               headerTitleStyle: { fontWeight: 'bold' },
+            }}
+          />
+          <Stack.Screen
+            name="PoseHistory"
+            component={PoseHistory}
+            options={{
+              headerShown: true,
+              headerStyle: { backgroundColor: colors.primary },
+              headerTintColor: colors.textWhite,
+              headerTitleStyle: { fontWeight: 'bold' },
+              title: 'Pose History',
             }}
           />
           <Stack.Screen

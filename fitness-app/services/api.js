@@ -15,7 +15,7 @@ const NGROK_URL = 'https://unpriggish-conductorial-lilah.ngrok-free.dev';
 
 const BASE_URL = __DEV__
   ? `${NGROK_URL}/api`  // Using ngrok for mobile device testing
-  : 'https://your-production-api.com/api';
+  : 'http://localhost:5000/api';
 
 // Export BASE_URL for use in other files
 export const API_BASE_URL = BASE_URL;

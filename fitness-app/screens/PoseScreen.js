@@ -461,7 +461,7 @@ const PoseScreen = () => {
       const imageBase64 = `data:image/jpeg;base64,${photo.base64}`;
 
       // Call API without exerciseName - auto-detection!
-      const resp = await poseAPI.score({ imageBase64 });
+      const resp = await poseAPI.evaluatePose({ imageBase64 });
 
       //console.log('[PoseScreen] Camera score response:', resp.data);
 

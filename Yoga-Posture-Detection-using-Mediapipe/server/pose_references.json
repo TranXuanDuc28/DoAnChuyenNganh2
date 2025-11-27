@@ -1,0 +1,50 @@
+{
+    "Half_Moon_Pose": {
+        "name": "Half_Moon_Pose",
+        "name_vi": "Half Moon Pose",
+        "reference_image": "reference_poses/ArdhaChandrasana.jpg",
+        "description": "A balancing pose that strengthens the legs and improves stability"
+    },
+    "Butterfly_Pose": {
+        "name": "Butterfly_Pose",
+        "name_vi": "Butterfly Pose",
+        "reference_image": "reference_poses/BaddhaKonasana.jpg",
+        "description": "A seated pose that opens the hips and stretches the inner thighs"
+    },
+    "Downward_Facing_Dog": {
+        "name": "Downward_Facing_Dog",
+        "name_vi": "Downward Facing Dog",
+        "reference_image": "reference_poses/Downward_dog.jpg",
+        "description": "An inverted V-shaped pose that stretches and strengthens the entire body"
+    },
+    "Dancer_Pose": {
+        "name": "Dancer_Pose",
+        "name_vi": "Dancer Pose",
+        "reference_image": "reference_poses/Natarajasana.jpg",
+        "description": "A graceful balancing pose that improves flexibility and concentration"
+    },
+    "Triangle_Pose": {
+        "name": "Triangle_Pose",
+        "name_vi": "Triangle Pose",
+        "reference_image": "reference_poses/Triangle.jpg",
+        "description": "A standing pose that stretches the sides of the body and strengthens the legs"
+    },
+    "Goddess_Pose": {
+        "name": "Goddess_Pose",
+        "name_vi": "Goddess Pose",
+        "reference_image": "reference_poses/UtkataKonasana.jpg",
+        "description": "A powerful standing pose that strengthens the lower body"
+    },
+    "Warrior_Pose": {
+        "name": "Warrior_Pose",
+        "name_vi": "Warrior Pose",
+        "reference_image": "reference_poses/Veerabhadrasana.jpg",
+        "description": "A strong standing pose that builds strength and stamina"
+    },
+    "Tree_Pose": {
+        "name": "Tree_Pose",
+        "name_vi": "Tree Pose",
+        "reference_image": "reference_poses/Vrukshasana.jpg",
+        "description": "A balancing pose that improves focus and strengthens the legs"
+    }
+}

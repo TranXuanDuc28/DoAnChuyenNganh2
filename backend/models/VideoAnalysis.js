@@ -19,6 +19,7 @@ const VideoAnalysis = sequelize.define('VideoAnalysis', {
   exerciseName: {
     type: DataTypes.STRING,
     allowNull: false,
+    field: 'exercise_name',
     comment: 'Tên động tác được nhận diện (squat, push_up, etc.)'
   },
   repetitionCount: {
@@ -85,13 +86,13 @@ const VideoAnalysis = sequelize.define('VideoAnalysis', {
       fields: ['user_id']
     },
     {
-      fields: ['exerciseName']
+      fields: ['exercise_name']
     },
     {
       fields: ['status']
     },
     {
-      fields: ['createdAt']
+      fields: ['created_at']
     }
   ]
 });

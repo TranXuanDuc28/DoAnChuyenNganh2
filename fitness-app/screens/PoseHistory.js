@@ -532,7 +532,7 @@ const PoseHistory = () => {
                 </View>
 
                 {/* Feedback */}
-                {selectedImage.feedback && selectedImage.feedback.length > 0 && (
+                {selectedImage.feedback && Array.isArray(selectedImage.feedback) && selectedImage.feedback.length > 0 && (
                   <View style={styles.feedbackSection}>
                     <Text style={styles.sectionTitle}>Góp ý cải thiện</Text>
                     {selectedImage.feedback.map((item, index) => (
