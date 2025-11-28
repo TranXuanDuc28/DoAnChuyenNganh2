@@ -11,7 +11,7 @@ const DEV_API_HOST = typeof process !== 'undefined' && process.env && process.en
   : (Platform.OS === 'android' ? '10.0.2.2' : 'localhost');
 
 // NGROK URL for mobile testing - update this when ngrok restarts
-const NGROK_URL = 'https://unpriggish-conductorial-lilah.ngrok-free.dev';
+const NGROK_URL = 'https://156137239b9a.ngrok-free.app';
 
 const BASE_URL = __DEV__
   ? `${NGROK_URL}/api`  // Using ngrok for mobile device testing

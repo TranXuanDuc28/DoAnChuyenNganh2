@@ -3,7 +3,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const { promisify } = require('util');
-const { auth } = require('../middleware/auth');
+const { auth, authOrToken } = require('../middleware/auth');
 const VideoAnalysis = require('../models/VideoAnalysis');
 const poseRACService = require('../services/poseRACService');
 const router = express.Router();
@@ -234,8 +234,9 @@ router.get('/', auth, async (req, res) => {
 /**
  * GET /api/video-analysis/:id/video
  * Stream video output về client
+ * Supports authentication via header or query parameter
  */
-router.get('/:id/video', auth, async (req, res) => {
+router.get('/:id/video', authOrToken, async (req, res) => {
   try {
     const analysis = await VideoAnalysis.findOne({
       where: {

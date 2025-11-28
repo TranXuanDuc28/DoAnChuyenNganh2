@@ -15,6 +15,7 @@ import {
 import { Ionicons as Icon } from '@expo/vector-icons';
 import { poseAPI, videoAnalysisAPI } from '../services/api';
 import colors from '../theme/colors';
+import VideoPlayer from './VideoPlayer';
 
 const HistoryTabs = ({ user, exerciseMode = 'video', exerciseName }) => {
     // Set initial tab based on exerciseMode
@@ -24,6 +25,10 @@ const HistoryTabs = ({ user, exerciseMode = 'video', exerciseName }) => {
     const [isLoading, setIsLoading] = useState(false);
     const [selectedImage, setSelectedImage] = useState(null);
     const [imageModalVisible, setImageModalVisible] = useState(false);
+    const [selectedVideo, setSelectedVideo] = useState(null);
+    const [videoModalVisible, setVideoModalVisible] = useState(false);
+    const [videoUri, setVideoUri] = useState(null);
+    const [isVideoMode, setIsVideoMode] = useState(false);
 
     useEffect(() => {
         if (activeTab === 'images') {
@@ -176,6 +181,21 @@ const HistoryTabs = ({ user, exerciseMode = 'video', exerciseName }) => {
     const renderVideoItem = ({ item }) => (
         <TouchableOpacity
             style={styles.historyCard}
+            onPress={async () => {
+                if (item.status === 'completed') {
+                    try {
+                        const url = await videoAnalysisAPI.getVideoUrl(item.id);
+                        setVideoUri(url);
+                        setIsVideoMode(true);
+                        setSelectedVideo(item);
+                    } catch (error) {
+                        console.error('Failed to get video URL:', error);
+                        Alert.alert('Lỗi', 'Không thể tải video. Vui lòng thử lại.');
+                    }
+                } else {
+                    Alert.alert('Thông báo', 'Video đang được xử lý. Vui lòng thử lại sau.');
+                }
+            }}
             onLongPress={() => {
                 Alert.alert(
                     'Xóa video',
@@ -366,7 +386,7 @@ const HistoryTabs = ({ user, exerciseMode = 'video', exerciseName }) => {
                                 </View>
 
                                 {/* Feedback */}
-                                {selectedImage.feedback && selectedImage.feedback.length > 0 && (
+                                {selectedImage.feedback && Array.isArray(selectedImage.feedback) && selectedImage.feedback.length > 0 && (
                                     <View style={styles.feedbackSection}>
                                         <Text style={styles.sectionTitle}>Góp ý cải thiện</Text>
                                         {selectedImage.feedback.map((item, index) => (
@@ -417,6 +437,33 @@ const HistoryTabs = ({ user, exerciseMode = 'video', exerciseName }) => {
                     </View>
                 </View>
             </Modal>
+
+            {/* Video Player Modal */}
+            {isVideoMode && videoUri && (
+                <Modal
+                    visible={true}
+                    transparent={false}
+                    animationType="slide"
+                    onRequestClose={() => {
+                        setIsVideoMode(false);
+                        setVideoUri(null);
+                        setSelectedVideo(null);
+                    }}
+                >
+                    <VideoPlayer
+                        videoUri={videoUri}
+                        exerciseName={selectedVideo?.exerciseName || exerciseName}
+                        user_id={user?.id}
+                        onRepCountUpdate={() => { }}
+                        onClose={() => {
+                            setIsVideoMode(false);
+                            setVideoUri(null);
+                            setSelectedVideo(null);
+                        }}
+                        initialRepCount={selectedVideo?.repCount || 0}
+                    />
+                </Modal>
+            )}
         </View>
     );
 };

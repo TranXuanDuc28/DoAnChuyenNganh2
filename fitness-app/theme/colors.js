@@ -46,6 +46,7 @@ export const colors = {
   iconSuccess: '#4CAF50',
   iconWarning: '#FF9800',
   iconDanger: '#F44336',
+  iconInfo: '#2196F3',
 
   // Special
   overlay: 'rgba(0, 0, 0, 0.85)',
