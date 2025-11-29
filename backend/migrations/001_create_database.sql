@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS users (
     activityLevel ENUM('sedentary', 'lightly_active', 'moderately_active', 'very_active', 'extremely_active') DEFAULT 'moderately_active',
     profileImage VARCHAR(255),
     bio TEXT CHECK (CHAR_LENGTH(bio) <= 500),
-    currentWeight FLOAT,
+    targetWeight FLOAT COMMENT 'Target weight in kg',
     bodyFatPercentage FLOAT,
     muscleMass FLOAT,
     restingHeartRate INT,

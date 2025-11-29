@@ -62,6 +62,30 @@ router.get('/history', auth, async (req, res) => {
 });
 
 /**
+ * @route   GET /api/workout-plans/today-calories
+ * @desc    Get today's burned calories from completed exercises
+ * @access  Private
+ */
+router.get('/today-calories', auth, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const result = await workoutPlanService.getTodayCalories(userId);
+
+    res.json({
+      success: true,
+      data: result
+    });
+
+  } catch (error) {
+    console.error('Get Today Calories Error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Failed to get today calories'
+    });
+  }
+});
+
+/**
  * @route   GET /api/workout-plans/active
  * @desc    Get user's active workout plan
  * @access  Private

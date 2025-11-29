@@ -18,7 +18,13 @@ app.use(helmet());
 app.use(cors({
   origin: process.env.NODE_ENV === 'production'
     ? process.env.CORS_ORIGIN_PROD?.split(',') || ['https://yourdomain.com']
-    : process.env.CORS_ORIGIN_DEV?.split(',') || ['http://localhost:3000'],
+    : [
+      'http://localhost:3000',  // React Native web
+      'http://localhost:3001',  // Admin web
+      'http://localhost:8081',  // Expo
+      /\.ngrok-free\.dev$/,     // Ngrok tunnels
+      /\.ngrok\.io$/            // Ngrok tunnels (old domain)
+    ],
   credentials: true
 }));
 
@@ -49,7 +55,7 @@ const initializeDatabase = async () => {
     require('./models/Notification');
     require('./models/Pose');
     require('./models/SystemSettings');
-    
+    require('./models/BodyMetricsHistory');
     require('./models/VideoAnalysis');
     require('./models/ImageEvaluation');
 
@@ -58,7 +64,7 @@ const initializeDatabase = async () => {
     // Tables will be created if they don't exist, but won't be altered
     await sequelize.sync({ alter: false });
     console.log('Database synchronized successfully');
-    
+
     // Manually ensure unique constraint on email if needed
     // This handles the case where the table exists but doesn't have the unique constraint
     try {
@@ -69,7 +75,7 @@ const initializeDatabase = async () => {
         AND TABLE_NAME = 'users' 
         AND INDEX_NAME = 'users_email_unique'
       `);
-      
+
       if (results[0].count === 0) {
         // Check current key count before attempting to add
         const [keyCount] = await sequelize.query(`
@@ -78,7 +84,7 @@ const initializeDatabase = async () => {
           WHERE TABLE_SCHEMA = DATABASE()
           AND TABLE_NAME = 'users'
         `);
-        
+
         if (keyCount[0].key_count < 64) {
           await sequelize.query(`
             CREATE UNIQUE INDEX users_email_unique ON users(email)
@@ -98,7 +104,7 @@ const initializeDatabase = async () => {
         console.warn('Could not create unique index on email:', error.message);
       }
     }
-    
+
     // Seed database if in development mode
     if (process.env.NODE_ENV === 'development' && process.argv.includes('--seed')) {
       const { seedDatabase } = require('./seedData');
@@ -119,6 +125,7 @@ app.use('/api/workouts', require('./routes/workouts'));
 app.use('/api/workout-plans', require('./routes/workoutPlan'));
 app.use('/api/nutrition', require('./routes/nutrition'));
 app.use('/api/health', require('./routes/health'));
+app.use('/api/body-metrics', require('./routes/bodyMetrics'));
 app.use('/api/social', require('./routes/social'));
 app.use('/api/ai', require('./routes/ai'));
 app.use('/api/notifications', require('./routes/notifications'));
@@ -143,7 +150,7 @@ app.get('/api/health', (req, res) => {
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).json({ 
+  res.status(500).json({
     message: 'Something went wrong!',
     error: process.env.NODE_ENV === 'development' ? err.message : {}
   });
@@ -168,6 +175,25 @@ const io = new Server(httpServer, {
 
 // Import and setup WebSocket handlers
 require('./websocket/poseSocket')(io);
+
+// Setup cron jobs for automated tasks
+const cron = require('node-cron');
+const reminderService = require('./services/reminderService');
+
+// Run workout reminder check every 2 minutes (FOR TESTING)
+// Change to '0 9 * * *' for daily at 9:00 AM in production
+cron.schedule('*/2 * * * *', async () => {
+  console.log('Running scheduled workout reminder check...');
+  try {
+    await reminderService.scheduleReminders();
+  } catch (error) {
+    console.error('Error in scheduled reminder check:', error);
+  }
+}, {
+  timezone: "Asia/Ho_Chi_Minh" // Vietnam timezone
+});
+
+console.log('Cron jobs initialized - Workout reminders will run every 2 minutes (TESTING MODE)');
 
 const PORT = process.env.PORT || 5000;
 httpServer.listen(PORT, () => {

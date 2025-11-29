@@ -78,7 +78,6 @@ class PoseClassifierML:
             if not results.pose_landmarks:
                 return None
             
-            # Extract x, y, z coordinates (skip visibility)
             landmarks = results.pose_landmarks.landmark
             keypoints = []
             for lm in landmarks:

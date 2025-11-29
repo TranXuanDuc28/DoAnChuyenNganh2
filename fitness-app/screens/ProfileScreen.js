@@ -27,10 +27,14 @@ const ProfileScreen = () => {
   };
 
   const getBMI = () => {
-    if (!user?.profile?.height || !user?.healthMetrics?.currentWeight) return null;
+    // BMI is now calculated and stored automatically in the user model
+    if (user?.profile?.bmi) {
+      return user.profile.bmi.toFixed(1);
+    }
+    // Fallback to manual calculation if BMI is not available
+    if (!user?.profile?.height || !user?.profile?.weight) return null;
     const heightInMeters = user.profile.height / 100;
-    const weight = user.healthMetrics.currentWeight || user.profile.weight;
-    return (weight / (heightInMeters * heightInMeters)).toFixed(1);
+    return (user.profile.weight / (heightInMeters * heightInMeters)).toFixed(1);
   };
 
   const profileStats = [

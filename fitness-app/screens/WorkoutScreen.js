@@ -15,6 +15,33 @@ import colors from '../theme/colors';
 import { workoutAPI } from '../services/api';
 import { styles } from './styles/WorkoutScreen.styles';
 
+// Helper function to calculate current day number based on plan startDate
+const getCurrentDayNumber = (startDate, duration) => {
+  if (!startDate) return null;
+
+  const today = new Date();
+  const start = new Date(startDate);
+
+  // Reset time parts for accurate day calculation
+  today.setHours(0, 0, 0, 0);
+  start.setHours(0, 0, 0, 0);
+
+  const diffTime = today - start;
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+  // Day number is 1-indexed
+  const dayNumber = diffDays + 1;
+
+  // Check if within plan duration
+  const totalDays = duration * 7; // duration is in weeks
+
+  if (dayNumber < 1 || dayNumber > totalDays) {
+    return null; // Outside plan range
+  }
+
+  return dayNumber;
+};
+
 const WorkoutScreen = ({ navigation }) => {
   const [selectedTab, setSelectedTab] = useState('plans');
   const [searchQuery, setSearchQuery] = useState('');
@@ -254,27 +281,51 @@ const WorkoutScreen = ({ navigation }) => {
             </Text>
           </View>
 
-          {/* Current Day */}
-          {currentDay && (
-            <View style={styles.currentDayContainer}>
-              <View style={styles.currentDayHeader}>
-                <Icon name="today" size={18} color={colors.primary} />
-                <Text style={styles.currentDayLabel}>Today</Text>
-              </View>
-              <Text style={styles.currentDayName}>{currentDay.dayName}</Text>
-              <Text style={styles.currentDayFocus}>{currentDay.focusArea}</Text>
-              <View style={styles.currentDayStats}>
-                <View style={styles.currentDayStat}>
-                  <Icon name="time-outline" size={16} color={colors.textSecondary} />
-                  <Text style={styles.currentDayStatText}>{currentDay.totalDuration} min</Text>
+          {/* Current Day - Today's Workout */}
+          {(() => {
+            // Calculate today's day number
+            const todayDayNumber = getCurrentDayNumber(activeWorkoutPlan.startDate, activeWorkoutPlan.duration);
+
+            // Find today's day from the plan
+            const todayDay = todayDayNumber && activeWorkoutPlan.days
+              ? activeWorkoutPlan.days.find(d => d.dayNumber === todayDayNumber)
+              : null;
+
+            if (!todayDay) {
+              return (
+                <View style={styles.currentDayContainer}>
+                  <View style={styles.currentDayHeader}>
+                    <Icon name="today" size={18} color={colors.textSecondary} />
+                    <Text style={styles.currentDayLabel}>Today</Text>
+                  </View>
+                  <Text style={[styles.currentDayName, { color: colors.textSecondary }]}>
+                    {todayDayNumber === null ? 'Plan completed or not started' : 'Rest day'}
+                  </Text>
                 </View>
-                <View style={styles.currentDayStat}>
-                  <Icon name="flame-outline" size={16} color={colors.textSecondary} />
-                  <Text style={styles.currentDayStatText}>{currentDay.estimatedCalories} cal</Text>
+              );
+            }
+
+            return (
+              <View style={styles.currentDayContainer}>
+                <View style={styles.currentDayHeader}>
+                  <Icon name="today" size={18} color={colors.primary} />
+                  <Text style={styles.currentDayLabel}>Today</Text>
+                </View>
+                <Text style={styles.currentDayName}>{todayDay.dayName}</Text>
+                <Text style={styles.currentDayFocus}>{todayDay.focusArea}</Text>
+                <View style={styles.currentDayStats}>
+                  <View style={styles.currentDayStat}>
+                    <Icon name="time-outline" size={16} color={colors.textSecondary} />
+                    <Text style={styles.currentDayStatText}>{todayDay.totalDuration} min</Text>
+                  </View>
+                  <View style={styles.currentDayStat}>
+                    <Icon name="flame-outline" size={16} color={colors.textSecondary} />
+                    <Text style={styles.currentDayStatText}>{todayDay.estimatedCalories} cal</Text>
+                  </View>
                 </View>
               </View>
-            </View>
-          )}
+            );
+          })()}
 
           <View style={styles.planFooter}>
             <Text style={styles.viewDetailsText}>View Details</Text>

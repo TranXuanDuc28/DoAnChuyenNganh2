@@ -4,7 +4,7 @@ const User = require('../models/User');
 const auth = async (req, res, next) => {
   try {
     const token = req.header('Authorization')?.replace('Bearer ', '');
-    
+
     if (!token) {
       return res.status(401).json({ message: 'No token, authorization denied' });
     }
@@ -14,7 +14,7 @@ const auth = async (req, res, next) => {
     const user = await User.findByPk(decoded.userId, {
       attributes: { exclude: ['password'] }
     });
-    
+
     if (!user) {
       return res.status(401).json({ message: 'Token is not valid, user not found' });
     }
@@ -30,7 +30,7 @@ const auth = async (req, res, next) => {
 const optionalAuth = async (req, res, next) => {
   try {
     const token = req.header('Authorization')?.replace('Bearer ', '');
-    
+
     if (token) {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
       const user = await User.findByPk(decoded.userId, {
@@ -38,12 +38,42 @@ const optionalAuth = async (req, res, next) => {
       });
       req.user = user;
     }
-    
+
     next();
   } catch (error) {
     // Continue without authentication for optional auth
     next();
   }
 };
+const authOrToken = async (req, res, next) => {
+  try {
+    // Try to get token from Authorization header first
+    let token = req.header('Authorization')?.replace('Bearer ', '');
 
-module.exports = { auth, optionalAuth };
+    // If no header token, try query parameter
+    if (!token && req.query.token) {
+      token = req.query.token;
+    }
+
+    if (!token) {
+      return res.status(401).json({ message: 'No token, authorization denied' });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findByPk(decoded.userId, {
+      attributes: { exclude: ['password'] }
+    });
+
+    if (!user) {
+      return res.status(401).json({ message: 'Token is not valid, user not found' });
+    }
+
+    req.user = user;
+    next();
+  } catch (error) {
+    console.error('Auth middleware error:', error);
+    res.status(401).json({ message: 'Token is not valid' });
+  }
+};
+
+module.exports = { auth, optionalAuth, authOrToken };

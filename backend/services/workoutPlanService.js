@@ -79,7 +79,6 @@ const generateWorkoutPlan = async (userId, preferences = {}) => {
     // Calculate BMI and fitness metrics
     const bmi = user.calculateBMI();
     const heightInMeters = user.height / 100;
-    const currentWeight = user.currentWeight || user.weight;
     const workoutDuration = user.workout_duration || 60; // Default 60 minutes if not set
 
     // Determine workout location text
@@ -99,7 +98,8 @@ User Profile:
 - Gender: ${user.gender}
 - Age: ${user.age} years
 - Height: ${user.height} cm
-- Weight: ${currentWeight} kg
+- Current Weight: ${user.weight} kg
+${user.targetWeight ? `- Target Weight: ${user.targetWeight} kg` : ''}
 - BMI: ${bmi.toFixed(1)}
 - Fitness Level: ${user.fitnessLevel}
 - Activity Level: ${user.activityLevel}
@@ -140,7 +140,7 @@ Instructions:
 4. Use ONLY the exercise IDs provided above - these exercises are already filtered for the user's workout location preference
 5. Vary the exercises throughout the week to target different muscle groups
 6. Include warm-up and cool-down recommendations in notes
-7. Provide specific sets, reps, duration, and rest periods for each exercise
+7. Provide specific sets, reps, duration (in SECONDS), rest periods, and CALORIES BURNED for each exercise
 8. Make the plan progressive - increase intensity over weeks
 9. Consider the workout location (${locationText}) when designing the plan structure
 10. Rest time guidelines:
@@ -150,6 +150,12 @@ Instructions:
     - Calculate total time including: exercise duration + (sets × rest time) + warm-up/cool-down
     - Adjust number of exercises, sets, or reps to fit within ${workoutDuration} minutes
     - The "totalDuration" field for each day MUST be ≤ ${workoutDuration} minutes
+12. **CALORIES: Calculate realistic calories burned for each exercise**
+    - Base calories on exercise type, intensity, duration, and user's weight (${user.weight} kg)
+    - Strength training: ~5-8 calories per minute
+    - Cardio (moderate): ~8-12 calories per minute
+    - Cardio (high intensity): ~12-15 calories per minute
+    - Flexibility/Yoga: ~3-5 calories per minute
 
 Return ONLY valid JSON in this exact format:
 {
@@ -164,7 +170,6 @@ Return ONLY valid JSON in this exact format:
       "focusArea": "Upper Body",
       "isRestDay": false,
       "totalDuration": 45,
-      "estimatedCalories": 300,
       "note": "totalDuration MUST be ≤ ${workoutDuration} minutes",
       "exercises": [
         {
@@ -173,8 +178,19 @@ Return ONLY valid JSON in this exact format:
           "sets": 3,
           "reps": 12,
           "duration": null,
+          "caloriesBurned": 25,
           "restSeconds": 30,
           "notes": "Keep core tight"
+        },
+        {
+          "exerciseId": 456,
+          "exerciseName": "Running",
+          "sets": null,
+          "reps": null,
+          "duration": 600,
+          "caloriesBurned": 100,
+          "restSeconds": 60,
+          "notes": "Moderate pace"
         }
       ],
       "notes": "Warm up for 5-10 minutes before starting. Focus on form over speed."
@@ -186,13 +202,15 @@ Return ONLY valid JSON in this exact format:
 }
 
 Important:
-- For cardio exercises, use "duration" in minutes instead of "sets" and "reps"
-- For strength exercises, use "sets" and "reps"
+- For cardio exercises, use "duration" in SECONDS instead of "sets" and "reps"
+- For strength exercises, use "sets" and "reps", duration should be null
 - Include rest days strategically (typically 2-3 per week)
 - Total days array should have ${duration * 7} entries
-- Use realistic calorie estimates based on exercise intensity and duration
+- **CRITICAL: "duration" field MUST be in SECONDS, not minutes**
+- **CRITICAL: Every exercise MUST have "caloriesBurned" field with realistic calorie estimate**
 - **ENFORCE: Each workout day's totalDuration MUST NOT exceed ${workoutDuration} minutes**
 - If you cannot fit enough exercises in ${workoutDuration} minutes, reduce sets/reps or number of exercises
+- The "estimatedCalories" field for each day will be calculated automatically from exercise calories, DO NOT include it
 `;
 
     console.log('Generating workout plan with Gemini AI...');
@@ -200,11 +218,25 @@ Important:
     const response = await result.response;
     let text = response.text();
 
+    console.log('AI Response (first 500 chars):', text.substring(0, 500));
+
     // Clean up the response - remove markdown code blocks if present
     text = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
 
+    // Try to extract JSON if there's extra text
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      text = jsonMatch[0];
+    }
+
     // Parse JSON
-    const aiPlan = JSON.parse(text);
+    let aiPlan;
+    try {
+      aiPlan = JSON.parse(text);
+    } catch (parseError) {
+      console.error('Failed to parse AI response:', text.substring(0, 1000));
+      throw new SyntaxError('AI returned invalid JSON format');
+    }
 
     // Validate that all exercise IDs exist
     const exerciseIds = new Set(exercises.map(e => e.id));
@@ -229,6 +261,12 @@ Important:
         }
       });
     }
+
+    // Deactivate all existing active plans for this user before creating new one
+    await WorkoutPlan.update(
+      { isActive: false },
+      { where: { userId: userId, isActive: true } }
+    );
 
     // Create workout plan in database
     const workoutPlan = await WorkoutPlan.create({
@@ -259,6 +297,12 @@ Important:
 
     // Create workout plan days and their exercises
     for (const day of aiPlan.days) {
+      // Calculate total calories from exercises
+      let totalCalories = 0;
+      if (!day.isRestDay && day.exercises && day.exercises.length > 0) {
+        totalCalories = day.exercises.reduce((sum, ex) => sum + (ex.caloriesBurned || 0), 0);
+      }
+
       // Create the day
       const workoutPlanDay = await WorkoutPlanDay.create({
         workoutPlanId: workoutPlan.id,
@@ -267,7 +311,7 @@ Important:
         focusArea: day.focusArea,
         exercises: day.exercises, // Keep JSON for backward compatibility
         totalDuration: day.totalDuration,
-        estimatedCalories: day.estimatedCalories,
+        estimatedCalories: totalCalories, // Use calculated total from exercises
         notes: day.notes,
         isRestDay: day.isRestDay || false,
         isCompleted: false
@@ -290,7 +334,8 @@ Important:
             orderIndex: index,
             sets: exercise.sets || null,
             reps: exercise.reps ? String(exercise.reps) : null,
-            duration: exercise.duration || null,
+            duration: exercise.duration || null, // Already in seconds from AI
+            caloriesBurned: exercise.caloriesBurned || null, // Save calories
             restSeconds: exercise.restSeconds || restTime,
             weight: exercise.weight || null,
             notes: exercise.notes || null
@@ -491,7 +536,8 @@ const getWorkoutPlanDayDetails = async (dayId) => {
       exerciseName: de.exercise ? de.exercise.name : 'Unknown Exercise', // Add exerciseName field
       sets: de.sets,
       reps: de.reps,
-      duration: de.duration,
+      duration: de.duration, // In seconds
+      caloriesBurned: de.caloriesBurned, // Add calories burned
       restSeconds: de.restSeconds,
       weight: de.weight,
       notes: de.notes,
@@ -729,6 +775,141 @@ const getCompletedWorkoutDays = async (userId) => {
   }
 };
 
+/**
+ * Get today's workout plan day based on active plan's startDate
+ * @param {number} userId - User ID
+ * @returns {Promise<Object|null>} Today's WorkoutPlanDay or null if no active plan or day not found
+ */
+const getTodayWorkoutPlanDay = async (userId) => {
+  try {
+    // Get active workout plan
+    const activePlan = await WorkoutPlan.findOne({
+      where: { userId, isActive: true },
+      include: [{
+        model: WorkoutPlanDay,
+        as: 'days'
+      }]
+    });
+
+    if (!activePlan || !activePlan.startDate) {
+      return null;
+    }
+
+    // Calculate which day number corresponds to today
+    const today = new Date();
+    const startDate = new Date(activePlan.startDate);
+
+    // Reset time parts for accurate day calculation
+    today.setHours(0, 0, 0, 0);
+    startDate.setHours(0, 0, 0, 0);
+
+    const diffTime = today - startDate;
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+    // Day number is 1-indexed
+    const dayNumber = diffDays + 1;
+
+    // Check if within plan duration
+    const totalDays = activePlan.duration * 7; // duration is in weeks
+
+    if (dayNumber < 1 || dayNumber > totalDays) {
+      return null; // Outside plan range
+    }
+
+    // Find the day with this day number
+    const todayPlanDay = activePlan.days.find(d => d.dayNumber === dayNumber);
+
+    return todayPlanDay || null;
+  } catch (error) {
+    console.error('Get Today Workout Plan Day Error:', error.message);
+    return null;
+  }
+};
+
+/**
+ * Get today's burned calories from completed exercises
+ * @param {number} userId - User ID
+ * @returns {Promise<Object>} Today's calories and body metrics
+ */
+const getTodayCalories = async (userId) => {
+  try {
+    const User = require('../models/User');
+    const { Op } = require('sequelize');
+
+    // Get user data for body metrics
+    const user = await User.findByPk(userId);
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    // Get today's workout plan day
+    const todayPlanDay = await getTodayWorkoutPlanDay(userId);
+
+    // Get start and end of today
+    const startOfToday = new Date();
+    startOfToday.setHours(0, 0, 0, 0);
+
+    const endOfToday = new Date();
+    endOfToday.setHours(23, 59, 59, 999);
+
+    let totalCaloriesBurned = 0;
+    let completedExercisesCount = 0;
+    let targetCalories = user.fitnessGoals?.includes('weight_loss') ? 500 : 300;
+
+    if (todayPlanDay) {
+      // Get target calories from today's plan day
+      targetCalories = todayPlanDay.estimatedCalories || targetCalories;
+
+      // Get all completed exercises from today's plan day
+      const completedExercises = await WorkoutPlanDayExercise.findAll({
+        where: {
+          workoutPlanDayId: todayPlanDay.id,
+          isCompleted: true,
+          completedAt: {
+            [Op.between]: [startOfToday, endOfToday]
+          }
+        }
+      });
+
+      // Calculate total calories burned today
+      totalCaloriesBurned = completedExercises.reduce((sum, ex) => {
+        return sum + (ex.caloriesBurned || 0);
+      }, 0);
+
+      completedExercisesCount = completedExercises.length;
+    }
+
+    // Calculate BMI
+    const bmi = user.calculateBMI();
+
+    // Calculate WHR
+    const whr = user.calculateWHR();
+
+    return {
+      success: true,
+      caloriesBurned: totalCaloriesBurned,
+      targetCalories: targetCalories,
+      percentage: Math.min((totalCaloriesBurned / targetCalories) * 100, 100),
+      bodyMetrics: {
+        weight: user.weight,
+        height: user.height,
+        targetWeight: user.targetWeight,
+        bmi: parseFloat(bmi.toFixed(1)),
+        waistCircumference: user.waistCircumference,
+        hipCircumference: user.hipCircumference,
+        whr: whr ? parseFloat(whr.toFixed(2)) : null,
+        age: user.age,
+        gender: user.gender
+      },
+      completedExercisesCount: completedExercisesCount
+    };
+
+  } catch (error) {
+    console.error('Get Today Calories Error:', error.message);
+    throw new Error(`Failed to get today calories: ${error.message}`);
+  }
+};
+
 module.exports = {
   generateWorkoutPlan,
   getActiveWorkoutPlan,
@@ -737,6 +918,7 @@ module.exports = {
   completeWorkoutDay,
   completeExercise,
   deactivateWorkoutPlan,
-  getCompletedWorkoutDays
+  getCompletedWorkoutDays,
+  getTodayCalories
 };
 

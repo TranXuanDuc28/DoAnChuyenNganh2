@@ -1,5 +1,5 @@
 const express = require('express');
-const { Food, NutritionEntry, NutritionGoal, MealPlan, WaterIntake } = require('../models/Nutrition');
+const { Food, NutritionEntry, NutritionGoal, MealPlan, WaterIntake, FoodLog } = require('../models/Nutrition');
 const { auth } = require('../middleware/auth');
 const { Op } = require('sequelize');
 const mealPlanService = require('../services/mealPlanService');
@@ -9,7 +9,7 @@ const router = express.Router();
 router.get('/foods', auth, async (req, res) => {
   try {
     const { category, limit = 20, page = 1 } = req.query;
-    
+
     const where = {};
     if (category) where.category = category;
 
@@ -31,7 +31,7 @@ router.get('/foods', auth, async (req, res) => {
 router.get('/foods/search', auth, async (req, res) => {
   try {
     const { q, limit = 10 } = req.query;
-    
+
     if (!q) {
       return res.status(400).json({ message: 'Search query is required' });
     }
@@ -58,7 +58,7 @@ router.get('/foods/search', auth, async (req, res) => {
 router.get('/foods/:id', auth, async (req, res) => {
   try {
     const food = await Food.findByPk(req.params.id);
-    
+
     if (!food) {
       return res.status(404).json({ message: 'Food not found' });
     }
@@ -95,7 +95,7 @@ router.post('/foods', auth, async (req, res) => {
 router.get('/entries', auth, async (req, res) => {
   try {
     const { date, mealType, limit = 50 } = req.query;
-    
+
     const where = { userId: req.user.id };
     if (date) {
       const startDate = new Date(date);
@@ -260,7 +260,7 @@ router.put('/goals', auth, async (req, res) => {
 router.get('/water', auth, async (req, res) => {
   try {
     const { date } = req.query;
-    
+
     const where = { userId: req.user.id };
     if (date) {
       const startDate = new Date(date);
@@ -275,7 +275,7 @@ router.get('/water', auth, async (req, res) => {
       where,
       order: [['loggedAt', 'DESC']]
     });
-    
+
     const totalWater = waterEntries.reduce((sum, entry) => sum + entry.amount, 0);
 
     res.json({
@@ -317,10 +317,10 @@ router.get('/meal-plans', auth, async (req, res) => {
     res.json(result);
   } catch (error) {
     console.error('Get meal plans error:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       success: false,
       message: 'Failed to fetch meal plans',
-      error: error.message 
+      error: error.message
     });
   }
 });
@@ -332,10 +332,10 @@ router.get('/meal-plans/active', auth, async (req, res) => {
     res.json(result);
   } catch (error) {
     console.error('Get active meal plan error:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       success: false,
       message: 'Failed to fetch active meal plan',
-      error: error.message 
+      error: error.message
     });
   }
 });
@@ -365,10 +365,10 @@ router.post('/meal-plans/generate', auth, async (req, res) => {
     res.json(result);
   } catch (error) {
     console.error('Generate meal plan error:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       success: false,
       message: 'Failed to generate meal plan',
-      error: error.message 
+      error: error.message
     });
   }
 });
@@ -383,10 +383,265 @@ router.put('/meal-plans/:id/deactivate', auth, async (req, res) => {
     res.json(result);
   } catch (error) {
     console.error('Deactivate meal plan error:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       success: false,
       message: 'Failed to deactivate meal plan',
-      error: error.message 
+      error: error.message
+    });
+  }
+});
+
+// ============================================
+// FOOD LOG ROUTES (Nutrition Diary)
+// ============================================
+
+/**
+ * @route   POST /api/nutrition/food-log
+ * @desc    Add food to nutrition diary (from barcode scan or manual entry)
+ * @access  Private
+ */
+router.post('/food-log', auth, async (req, res) => {
+  try {
+    const {
+      foodName,
+      brand,
+      barcode,
+      mealType,
+      servingSize,
+      servingAmount,
+      calories,
+      protein,
+      carbs,
+      fat,
+      fiber,
+      sugar,
+      sodium,
+      imageUrl,
+      ingredients,
+      logDate,
+      logTime,
+      notes
+    } = req.body;
+
+    // Validate required fields
+    if (!foodName || !mealType) {
+      return res.status(400).json({
+        success: false,
+        message: 'Food name and meal type are required'
+      });
+    }
+
+    // Create food log entry
+    const foodLog = await FoodLog.create({
+      userId: req.user.id,
+      foodName,
+      brand: brand || null,
+      barcode: barcode || null,
+      mealType,
+      servingSize: servingSize || '100g',
+      servingAmount: servingAmount || 1,
+      calories: calories || 0,
+      protein: protein || 0,
+      carbs: carbs || 0,
+      fat: fat || 0,
+      fiber: fiber || 0,
+      sugar: sugar || 0,
+      sodium: sodium || 0,
+      imageUrl: imageUrl || null,
+      ingredients: ingredients || null,
+      logDate: logDate || new Date(),
+      logTime: logTime || null,
+      notes: notes || null
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: 'Food added to diary successfully',
+      data: foodLog
+    });
+
+  } catch (error) {
+    console.error('Add food log error:', error);
+
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to add food to diary',
+      error: error.message
+    });
+  }
+});
+
+
+/**
+ * @route   GET /api/nutrition/food-log
+ * @desc    Get food logs for a specific date or date range
+ * @access  Private
+ */
+router.get('/food-log', auth, async (req, res) => {
+  try {
+    const { date, startDate, endDate } = req.query;
+
+    let whereClause = {
+      userId: req.user.id
+    };
+
+    if (date) {
+      // Get logs for specific date
+      whereClause.logDate = date;
+    } else if (startDate && endDate) {
+      // Get logs for date range
+      whereClause.logDate = {
+        [Op.between]: [startDate, endDate]
+      };
+    } else {
+      // Default: get today's logs
+      const today = new Date().toISOString().split('T')[0];
+      whereClause.logDate = today;
+    }
+
+    const foodLogs = await FoodLog.findAll({
+      where: whereClause,
+      order: [
+        ['logDate', 'DESC'],
+        ['logTime', 'DESC'],
+        ['createdAt', 'DESC']
+      ]
+    });
+
+    // Calculate daily totals
+    const totals = foodLogs.reduce((acc, log) => {
+      acc.calories += log.calories || 0;
+      acc.protein += log.protein || 0;
+      acc.carbs += log.carbs || 0;
+      acc.fat += log.fat || 0;
+      acc.fiber += log.fiber || 0;
+      acc.sugar += log.sugar || 0;
+      acc.sodium += log.sodium || 0;
+      return acc;
+    }, {
+      calories: 0,
+      protein: 0,
+      carbs: 0,
+      fat: 0,
+      fiber: 0,
+      sugar: 0,
+      sodium: 0
+    });
+
+    res.json({
+      success: true,
+      data: {
+        logs: foodLogs,
+        totals,
+        count: foodLogs.length
+      }
+    });
+
+  } catch (error) {
+    console.error('Get food logs error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch food logs',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * @route   DELETE /api/nutrition/food-log/:id
+ * @desc    Delete a food log entry
+ * @access  Private
+ */
+router.delete('/food-log/:id', auth, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const foodLog = await FoodLog.findOne({
+      where: {
+        id,
+        userId: req.user.id
+      }
+    });
+
+    if (!foodLog) {
+      return res.status(404).json({
+        success: false,
+        message: 'Food log entry not found'
+      });
+    }
+
+    await foodLog.destroy();
+
+    console.log('Food log deleted:', id);
+
+    res.json({
+      success: true,
+      message: 'Food log entry deleted successfully'
+    });
+
+  } catch (error) {
+    console.error('Delete food log error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete food log entry',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * @route   PUT /api/nutrition/food-log/:id
+ * @desc    Update a food log entry
+ * @access  Private
+ */
+router.put('/food-log/:id', auth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+
+    const foodLog = await FoodLog.findOne({
+      where: {
+        id,
+        userId: req.user.id
+      }
+    });
+
+    if (!foodLog) {
+      return res.status(404).json({
+        success: false,
+        message: 'Food log entry not found'
+      });
+    }
+
+    // Update only allowed fields
+    const allowedFields = [
+      'foodName', 'brand', 'mealType', 'servingSize', 'servingAmount',
+      'calories', 'protein', 'carbs', 'fat', 'fiber', 'sugar', 'sodium',
+      'imageUrl', 'ingredients', 'logDate', 'logTime', 'notes'
+    ];
+
+    allowedFields.forEach(field => {
+      if (updateData[field] !== undefined) {
+        foodLog[field] = updateData[field];
+      }
+    });
+
+    await foodLog.save();
+
+    console.log('Food log updated:', id);
+
+    res.json({
+      success: true,
+      message: 'Food log entry updated successfully',
+      data: foodLog
+    });
+
+  } catch (error) {
+    console.error('Update food log error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update food log entry',
+      error: error.message
     });
   }
 });

@@ -1,5 +1,6 @@
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../config/database');
+const User = require('./User');
 
 const ExerciseCategory = sequelize.define('ExerciseCategory', {
   id: {
@@ -170,165 +171,6 @@ const Exercise = sequelize.define('Exercise', {
   }
 }, {
   tableName: 'exercises'
-});
-
-// Workout Model
-const Workout = sequelize.define('Workout', {
-  id: {
-    type: DataTypes.INTEGER,
-    primaryKey: true,
-    autoIncrement: true
-  },
-  name: {
-    type: DataTypes.STRING,
-    allowNull: false
-  },
-  description: {
-    type: DataTypes.TEXT,
-    allowNull: true
-  },
-  category: {
-    type: DataTypes.ENUM('cardio', 'strength', 'flexibility', 'hiit', 'yoga', 'pilates', 'crossfit', 'custom'),
-    allowNull: false
-  },
-  difficulty: {
-    type: DataTypes.ENUM('beginner', 'intermediate', 'advanced'),
-    allowNull: false
-  },
-  duration: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    comment: 'Duration in minutes'
-  },
-  exercises: {
-    type: DataTypes.JSON,
-    defaultValue: [],
-    comment: 'Array of exercises with sets, reps, etc.'
-  },
-  estimatedCalories: {
-    type: DataTypes.INTEGER,
-    allowNull: true
-  },
-  muscleGroups: {
-    type: DataTypes.JSON,
-    defaultValue: [],
-    comment: 'Array of muscle groups'
-  },
-  equipment: {
-    type: DataTypes.JSON,
-    defaultValue: [],
-    comment: 'Array of equipment needed'
-  },
-  tags: {
-    type: DataTypes.JSON,
-    defaultValue: [],
-    comment: 'Array of tags'
-  },
-  isCustom: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: false
-  },
-  createdBy: {
-    type: DataTypes.INTEGER,
-    allowNull: true,
-    references: {
-      model: 'users',
-      key: 'id'
-    }
-  },
-  isPublic: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: true
-  },
-  likes: {
-    type: DataTypes.JSON,
-    defaultValue: [],
-    comment: 'Array of user IDs who liked this workout'
-  },
-  completedCount: {
-    type: DataTypes.INTEGER,
-    defaultValue: 0
-  }
-}, {
-  tableName: 'workouts'
-});
-
-// Workout Session Model
-const WorkoutSession = sequelize.define('WorkoutSession', {
-  id: {
-    type: DataTypes.INTEGER,
-    primaryKey: true,
-    autoIncrement: true
-  },
-  userId: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    references: {
-      model: 'users',
-      key: 'id'
-    }
-  },
-  workoutId: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    references: {
-      model: 'workouts',
-      key: 'id'
-    }
-  },
-  startTime: {
-    type: DataTypes.DATE,
-    allowNull: false
-  },
-  endTime: {
-    type: DataTypes.DATE,
-    allowNull: true
-  },
-  duration: {
-    type: DataTypes.INTEGER,
-    allowNull: true,
-    comment: 'Duration in minutes'
-  },
-  exercises: {
-    type: DataTypes.JSON,
-    defaultValue: [],
-    comment: 'Array of exercises with completed sets'
-  },
-  totalCaloriesBurned: {
-    type: DataTypes.INTEGER,
-    allowNull: true
-  },
-  heartRate: {
-    type: DataTypes.JSON,
-    allowNull: true,
-    comment: 'Heart rate data during workout'
-  },
-  notes: {
-    type: DataTypes.TEXT,
-    allowNull: true
-  },
-  rating: {
-    type: DataTypes.INTEGER,
-    allowNull: true,
-    validate: {
-      min: 1,
-      max: 5
-    }
-  },
-  mood: {
-    type: DataTypes.ENUM('excellent', 'good', 'okay', 'poor', 'terrible'),
-    allowNull: true
-  },
-  difficulty: {
-    type: DataTypes.ENUM('too_easy', 'just_right', 'challenging', 'too_hard'),
-    allowNull: true
-  },
-  isCompleted: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: false
-  }
-}, {
-  tableName: 'workout_sessions'
 });
 
 // Workout Plan Model
@@ -522,6 +364,12 @@ const WorkoutPlanDayExercise = sequelize.define('WorkoutPlanDayExercise', {
     allowNull: true,
     comment: 'Duration in seconds for time-based exercises'
   },
+  caloriesBurned: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    field: 'calories_burned',
+    comment: 'Estimated calories burned for this exercise'
+  },
   restSeconds: {
     type: DataTypes.INTEGER,
     defaultValue: 60,
@@ -631,12 +479,12 @@ Exercise.belongsToMany(ExerciseCategory, {
   as: 'categories'
 });
 
+
 module.exports = {
   ExerciseCategory,
   Exercise,
-  Workout,
-  WorkoutSession,
   WorkoutPlan,
   WorkoutPlanDay,
-  WorkoutPlanDayExercise
+  WorkoutPlanDayExercise,
+
 };

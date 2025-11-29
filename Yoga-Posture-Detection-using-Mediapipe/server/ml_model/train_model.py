@@ -100,7 +100,7 @@ def validate(model, val_loader, criterion, device):
     return avg_loss, accuracy
 
 def train_model(model, train_loader, val_loader, num_epochs=100, learning_rate=0.001, device='cpu'):
-    """Train the model with early stopping"""
+
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     
@@ -184,7 +184,7 @@ def plot_history(history, save_path='ml_model/training_history.png'):
     print(f"\nTraining history plot saved to {save_path}")
 
 if __name__ == "__main__":
-    # Configuration
+
     BATCH_SIZE = 32
     NUM_EPOCHS = 100
     LEARNING_RATE = 0.001

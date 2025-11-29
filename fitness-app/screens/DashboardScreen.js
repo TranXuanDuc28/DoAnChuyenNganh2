@@ -77,10 +77,14 @@ const DashboardScreen = () => {
   };
 
   const getBMI = () => {
-    if (!user?.profile?.height || !user?.healthMetrics?.currentWeight) return null;
+    // BMI is now calculated and stored automatically in the user model
+    if (user?.profile?.bmi) {
+      return user.profile.bmi.toFixed(1);
+    }
+    // Fallback to manual calculation if BMI is not available
+    if (!user?.profile?.height || !user?.profile?.weight) return null;
     const heightInMeters = user.profile.height / 100;
-    const weight = user.healthMetrics.currentWeight || user.profile.weight;
-    return (weight / (heightInMeters * heightInMeters)).toFixed(1);
+    return (user.profile.weight / (heightInMeters * heightInMeters)).toFixed(1);
   };
 
   const getBMIStatus = (bmi) => {
@@ -158,19 +162,19 @@ const DashboardScreen = () => {
         style={styles.header}
         imageStyle={styles.headerImage}
       >
-      
-          <View style={styles.headerContent}>
-            <View>
-              <Text style={styles.greeting}>{getGreeting()},</Text>
-              <Text style={styles.userName}>
-                {user?.firstName || 'User'}
-              </Text>
-            </View>
-            <TouchableOpacity style={styles.notificationButton}>
-              <Icon name="notifications-outline" size={24} color={colors.white} />
-              <View style={styles.notificationBadge} />
-            </TouchableOpacity>
+
+        <View style={styles.headerContent}>
+          <View>
+            <Text style={styles.greeting}>{getGreeting()},</Text>
+            <Text style={styles.userName}>
+              {user?.firstName || 'User'}
+            </Text>
           </View>
+          <TouchableOpacity style={styles.notificationButton}>
+            <Icon name="notifications-outline" size={24} color={colors.white} />
+            <View style={styles.notificationBadge} />
+          </TouchableOpacity>
+        </View>
 
       </ImageBackground>
 

@@ -96,6 +96,30 @@ export const styles = StyleSheet.create({
     flexWrap: 'wrap',
     justifyContent: 'space-between',
   },
+   caloCard: {
+    backgroundColor: colors.card,
+    borderRadius: 16,
+    padding: 16,
+    width: '100%',
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 107, 53, 0.3)',
+    overflow: 'hidden',
+    shadowColor: colors.black,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 3,
+    ...(isWeb && {
+      padding: 20,
+      marginBottom: 16,
+      cursor: 'pointer',
+      transition: 'all 0.2s ease',
+    }),
+  },
   metricCard: {
     backgroundColor: colors.card,
     borderRadius: 16,
@@ -267,6 +291,88 @@ export const styles = StyleSheet.create({
     color: colors.textSecondary,
     textAlign: 'center',
     lineHeight: 20,
+  },
+  // Input Form Styles
+  inputContainer: {
+    marginBottom: 20,
+  },
+  inputHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  inputLabel: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: colors.text,
+    marginLeft: 8,
+  },
+  input: {
+    backgroundColor: colors.card,
+    borderRadius: 12,
+    padding: 16,
+    fontSize: 16,
+    color: colors.text,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    shadowColor: colors.black,
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
+    ...(isWeb && {
+      outlineStyle: 'none',
+      transition: 'all 0.2s ease',
+    }),
+  },
+  // History Styles
+  historyItem: {
+    backgroundColor: colors.card,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  historyDate: {
+    flex: 1,
+  },
+  historyDateText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.text,
+    marginBottom: 4,
+  },
+  historyTimeText: {
+    fontSize: 13,
+    color: colors.textSecondary,
+  },
+  historyValues: {
+    flex: 2,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'flex-end',
+    gap: 12,
+  },
+  historyValueItem: {
+    alignItems: 'flex-end',
+    marginLeft: 12,
+  },
+  historyLabel: {
+    fontSize: 11,
+    color: colors.textSecondary,
+    marginBottom: 2,
+  },
+  historyValue: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.primary,
   },
 });
 

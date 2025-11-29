@@ -16,6 +16,7 @@ import BarcodeScanner from '../components/BarcodeScanner';
 import FoodDetailModal from '../components/FoodDetailModal';
 import { styles } from './styles/NutritionScreen.styles';
 
+
 const NutritionScreen = () => {
   const [selectedTab, setSelectedTab] = useState('today');
   const [loading, setLoading] = useState(false);
@@ -334,83 +335,137 @@ const NutritionScreen = () => {
     setShowFoodDetail(true);
   };
 
-  const handleAddFood = (foodData) => {
+  
+const handleAddFood = async (foodData) => {
     console.log('Adding food:', foodData);
 
-    // Add to logged foods
-    const newFood = {
-      id: `logged-${Date.now()}`,
-      ...foodData,
-      timestamp: new Date().toISOString(),
-    };
+    try {
+        // Prepare data for API
+        const foodLogData = {
+            foodName: foodData.name,
+            brand: foodData.brand || null,
+            barcode: foodData.barcode || null,
+            mealType: foodData.mealType || 'snack',
+            servingSize: foodData.servingSize || '100g',
+            servingAmount: foodData.servingAmount || 1.0,
+            calories: foodData.calories || 0,
+            protein: foodData.protein || 0,
+            carbs: foodData.carbs || 0,
+            fat: foodData.fat || 0,
+            fiber: foodData.fiber || 0,
+            sugar: foodData.sugar || 0,
+            sodium: foodData.sodium || 0,
+            imageUrl: foodData.imageUrl || null,
+            ingredients: foodData.ingredients || null,
+            logDate: new Date().toISOString().split('T')[0],
+            logTime: new Date().toTimeString().split(' ')[0],
+        };
 
-    setLoggedFoods(prev => [...prev, newFood]);
+        // Save to database
+        const response = await aiAPI.addFoodLog(foodLogData);
 
-    // Update nutrition goals
-    setNutritionGoals(prev => ({
-      calories: {
-        ...prev.calories,
-        consumed: prev.calories.consumed + foodData.calories
-      },
-      protein: {
-        ...prev.protein,
-        consumed: prev.protein.consumed + foodData.protein
-      },
-      carbs: {
-        ...prev.carbs,
-        consumed: prev.carbs.consumed + foodData.carbs
-      },
-      fat: {
-        ...prev.fat,
-        consumed: prev.fat.consumed + foodData.fat
-      },
-      water: prev.water,
-    }));
+        if (response.data.success) {
+            const savedFood = response.data.data;
 
-    Alert.alert('Success', `${foodData.name} added to ${foodData.mealType}!`);
-  };
+            // Add to logged foods state
+            const newFood = {
+                id: savedFood.id,
+                name: savedFood.foodName,
+                brand: savedFood.brand,
+                barcode: savedFood.barcode,
+                mealType: savedFood.mealType,
+                servingSize: savedFood.servingSize,
+                servingAmount: savedFood.servingAmount,
+                calories: savedFood.calories,
+                protein: savedFood.protein,
+                carbs: savedFood.carbs,
+                fat: savedFood.fat,
+                timestamp: savedFood.createdAt,
+            };
 
-  const handleDeleteLoggedFood = (foodId) => {
+            setLoggedFoods(prev => [...prev, newFood]);
+
+            // Update nutrition goals
+            setNutritionGoals(prev => ({
+                calories: {
+                    ...prev.calories,
+                    consumed: prev.calories.consumed + savedFood.calories
+                },
+                protein: {
+                    ...prev.protein,
+                    consumed: prev.protein.consumed + savedFood.protein
+                },
+                carbs: {
+                    ...prev.carbs,
+                    consumed: prev.carbs.consumed + savedFood.carbs
+                },
+                fat: {
+                    ...prev.fat,
+                    consumed: prev.fat.consumed + savedFood.fat
+                },
+                water: prev.water,
+            }));
+
+            Alert.alert('Success', `${savedFood.foodName} added to ${savedFood.mealType}!`);
+        }
+    } catch (error) {
+        console.error('Error adding food log:', error);
+        Alert.alert('Error', 'Failed to add food to diary. Please try again.');
+    }
+};
+
+const handleDeleteLoggedFood = (foodId) => {
     const food = loggedFoods.find(f => f.id === foodId);
     if (!food) return;
 
     Alert.alert(
-      'Delete Food',
-      `Remove ${food.name} from your log?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: () => {
-            // Remove from logged foods
-            setLoggedFoods(prev => prev.filter(f => f.id !== foodId));
+        'Delete Food',
+        `Remove ${food.name} from your log?`,
+        [
+            { text: 'Cancel', style: 'cancel' },
+            {
+                text: 'Delete',
+                style: 'destructive',
+                onPress: async () => {
+                    try {
+                        // Delete from database
+                        await aiAPI.deleteFoodLog(foodId);
 
-            // Update nutrition goals
-            setNutritionGoals(prev => ({
-              calories: {
-                ...prev.calories,
-                consumed: Math.max(0, prev.calories.consumed - food.calories)
-              },
-              protein: {
-                ...prev.protein,
-                consumed: Math.max(0, prev.protein.consumed - food.protein)
-              },
-              carbs: {
-                ...prev.carbs,
-                consumed: Math.max(0, prev.carbs.consumed - food.carbs)
-              },
-              fat: {
-                ...prev.fat,
-                consumed: Math.max(0, prev.fat.consumed - food.fat)
-              },
-              water: prev.water,
-            }));
-          }
-        }
-      ]
+                        // Remove from logged foods
+                        setLoggedFoods(prev => prev.filter(f => f.id !== foodId));
+
+                        // Update nutrition goals
+                        setNutritionGoals(prev => ({
+                            calories: {
+                                ...prev.calories,
+                                consumed: Math.max(0, prev.calories.consumed - food.calories)
+                            },
+                            protein: {
+                                ...prev.protein,
+                                consumed: Math.max(0, prev.protein.consumed - food.protein)
+                            },
+                            carbs: {
+                                ...prev.carbs,
+                                consumed: Math.max(0, prev.carbs.consumed - food.carbs)
+                            },
+                            fat: {
+                                ...prev.fat,
+                                consumed: Math.max(0, prev.fat.consumed - food.fat)
+                            },
+                            water: prev.water,
+                        }));
+
+                        Alert.alert('Success', 'Food removed from diary');
+                    } catch (error) {
+                        console.error('Error deleting food log:', error);
+                        Alert.alert('Error', 'Failed to delete food entry.');
+                    }
+                }
+            }
+        ]
     );
-  };
+};
+
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -421,6 +476,7 @@ const NutritionScreen = () => {
     }
     setRefreshing(false);
   };
+
 
   const renderMealItem = ({ item }) => (
     <TouchableOpacity

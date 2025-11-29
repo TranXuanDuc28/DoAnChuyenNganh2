@@ -116,6 +116,7 @@ export const workoutAPI = {
   completeWorkoutDay: (dayId) => api.post(`/workout-plans/day/${dayId}/complete`),
   completeExercise: (exerciseId) => api.post(`/workout-plans/exercise/${exerciseId}/complete`),
   deactivateWorkoutPlan: (planId) => api.put(`/workout-plans/${planId}/deactivate`),
+  getTodayCalories: () => api.get('/workout-plans/today-calories'),
 };
 
 // Nutrition API
@@ -135,6 +136,17 @@ export const nutritionAPI = {
   getWaterIntake: (date) => api.get(`/nutrition/water?date=${date}`),
   addWaterIntake: (amount) => api.post('/nutrition/water', { amount }),
   getAIMealPlan: (preferences) => api.post('/ai/meal-plan', preferences),
+};
+
+// Body Metrics API
+export const bodyMetricsAPI = {
+  getHistory: (limit) => api.get('/body-metrics/history', { params: { limit } }),
+  getLatest: () => api.get('/body-metrics/latest'),
+  addBodyMetrics: (metricsData) => api.post('/body-metrics/add', metricsData),
+  updateMetrics: (id, metricsData) => api.put(`/body-metrics/${id}`, metricsData),
+  deleteMetrics: (id) => api.delete(`/body-metrics/${id}`),
+  getStats: (days) => api.get('/body-metrics/stats', { params: { days } }),
+  getProgress: () => api.get('/body-metrics/progress'),
 };
 
 // Health API
@@ -180,6 +192,12 @@ export const aiAPI = {
   getMealPlan: (id) => api.get(`/ai/meal-plans/${id}`),
   deleteMealPlan: (id) => api.delete(`/ai/meal-plans/${id}`),
   chat: (message) => api.post('/ai/chat', { message }),
+
+  // Food Log (Nutrition Diary)
+  addFoodLog: (foodData) => api.post('/nutrition/food-log', foodData),
+  getFoodLogs: (params) => api.get('/nutrition/food-log', { params }),
+  updateFoodLog: (id, foodData) => api.put(`/nutrition/food-log/${id}`, foodData),
+  deleteFoodLog: (id) => api.delete(`/nutrition/food-log/${id}`),
 };
 
 // Pose API

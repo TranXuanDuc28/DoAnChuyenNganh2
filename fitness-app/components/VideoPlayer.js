@@ -8,14 +8,14 @@ import { colors } from '../theme/colors';
 const VideoPlayer = ({ videoUri, exerciseName, user_id, onRepCountUpdate, onClose, initialRepCount = 0 }) => {
   // Use expo-video's useVideoPlayer hook instead of expo-av's ref
   const player = useVideoPlayer(videoUri);
-  
+
   // Configure player
   useEffect(() => {
     if (player) {
       player.loop = false;
     }
   }, [player]);
-  
+
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLandscape, setIsLandscape] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -27,7 +27,9 @@ const VideoPlayer = ({ videoUri, exerciseName, user_id, onRepCountUpdate, onClos
   const [containerSize, setContainerSize] = useState(Dimensions.get('window'));
   const lastVideoPositionRef = useRef(0);
   const lastSkipLogTimeRef = useRef(0);
-  
+  const [showControls, setShowControls] = useState(true);
+  const hideControlsTimeoutRef = useRef(null);
+
   const repStateRef = useRef({
     lastPhase: null,           // Track phase for rep counting (up -> down or down -> up = +1 rep)
     lastRepTime: Date.now(),   // Timestamp of last rep count (for debouncing) - initialize to current time
@@ -55,7 +57,7 @@ const VideoPlayer = ({ videoUri, exerciseName, user_id, onRepCountUpdate, onClos
 
   useEffect(() => {
     return () => {
-      ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP).catch(() => {});
+      ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP).catch(() => { });
     };
   }, []);
 
@@ -139,7 +141,7 @@ const VideoPlayer = ({ videoUri, exerciseName, user_id, onRepCountUpdate, onClos
   //     const now = Date.now();
   //     const timeSinceLastRep = now - state.lastRepTime;
   //     const REP_COOLDOWN_MS = 1000; // Minimum time between rep counts (1 second)
-      
+
   //     if (state.lastCorrectState !== null && state.lastCorrectState !== result.isCorrect) {
   //       if (result.isCorrect && timeSinceLastRep >= REP_COOLDOWN_MS) {
   //         // Transition from incorrect to correct = completed rep
@@ -162,7 +164,7 @@ const VideoPlayer = ({ videoUri, exerciseName, user_id, onRepCountUpdate, onClos
   //         });
   //       }
   //     }
-      
+
   //     state.lastCorrectState = result.isCorrect;
   //     return; // Early return for plank-to-downward-dog
   //   }
@@ -173,7 +175,7 @@ const VideoPlayer = ({ videoUri, exerciseName, user_id, onRepCountUpdate, onClos
   //     const MIN_PHASE_HOLD_MS = 150; // Minimum time a phase must be held to be considered stable (150ms)
   //     const REP_COOLDOWN_MS = 600; // Minimum time between rep counts (600ms)
   //     const timeSinceLastRep = now - state.lastRepTime;
-      
+
   //     // Track stable phase (ignore 'middle' transitions)
   //     let stablePhase = currentPhase;
   //     if (currentPhase === 'middle') {
@@ -183,13 +185,13 @@ const VideoPlayer = ({ videoUri, exerciseName, user_id, onRepCountUpdate, onClos
   //       // Update last stable phase when we have a non-middle phase
   //       state.lastStablePhase = currentPhase;
   //     }
-      
+
   //     // State machine for jumping jack rep counting
   //     // Cycle: waiting_for_closed -> closed -> spread -> closed (count rep) -> waiting_for_closed
   //     if (stablePhase && stablePhase !== 'middle') {
   //       const phaseChanged = state.lastPhase !== stablePhase;
   //       const timeInCurrentPhase = state.phaseStartTime ? now - state.phaseStartTime : 0;
-        
+
   //       // Update phase start time when phase changes
   //       if (phaseChanged) {
   //         state.phaseStartTime = now;
@@ -199,7 +201,7 @@ const VideoPlayer = ({ videoUri, exerciseName, user_id, onRepCountUpdate, onClos
   //           state: state.jumpingJackState,
   //         });
   //       }
-        
+
   //       // Only process phase transitions if phase has been held for minimum time
   //       if (timeInCurrentPhase >= MIN_PHASE_HOLD_MS || !phaseChanged) {
   //         switch (state.jumpingJackState) {
@@ -211,7 +213,7 @@ const VideoPlayer = ({ videoUri, exerciseName, user_id, onRepCountUpdate, onClos
   //               console.log('[VideoPlayer] 🟢 Jumping Jack: Starting rep (closed position detected)');
   //             }
   //             break;
-              
+
   //           case 'closed':
   //             // From closed, wait for spread
   //             if (stablePhase === 'spread') {
@@ -221,7 +223,7 @@ const VideoPlayer = ({ videoUri, exerciseName, user_id, onRepCountUpdate, onClos
   //             }
   //             // If still closed, stay in closed state
   //             break;
-              
+
   //           case 'spread':
   //             // From spread, wait for closed to complete the rep
   //             if (stablePhase === 'closed') {
@@ -257,12 +259,12 @@ const VideoPlayer = ({ videoUri, exerciseName, user_id, onRepCountUpdate, onClos
   //         }
   //       }
   //     }
-      
+
   //     // Update lastPhase for tracking
   //     if (stablePhase && stablePhase !== 'middle') {
   //       state.lastPhase = stablePhase;
   //     }
-      
+
   //     return; // Early return for jumping-jack
   //   }
 
@@ -276,7 +278,7 @@ const VideoPlayer = ({ videoUri, exerciseName, user_id, onRepCountUpdate, onClos
   //       const now = Date.now();
   //       const timeSinceLastRep = now - state.lastRepTime;
   //       const REP_COOLDOWN_MS = 300; // Minimum time between rep counts (300ms) - reduced to allow faster rep counting
-        
+
   //       // Special case: if lastRepTime is very old (more than 5 seconds), reset it to allow first rep
   //       // This handles cases where video was restarted but lastRepTime wasn't properly reset
   //       if (timeSinceLastRep > 5000) {
@@ -286,16 +288,16 @@ const VideoPlayer = ({ videoUri, exerciseName, user_id, onRepCountUpdate, onClos
   //         });
   //         state.lastRepTime = now - REP_COOLDOWN_MS; // Set to allow immediate counting
   //       }
-        
+
   //       const adjustedTimeSinceLastRep = now - state.lastRepTime;
-        
+
   //       // Only count if enough time has passed since last rep (debounce)
   //       if (adjustedTimeSinceLastRep >= REP_COOLDOWN_MS) {
   //         // Update lastRepTime FIRST before updating phase to prevent race conditions
   //         state.lastRepTime = now;
   //         // Update lastPhase immediately to prevent other frames from counting the same transition
   //         state.lastPhase = currentPhase;
-          
+
   //         // Use functional update to avoid stale closure issue when multiple frames process async
   //         setRepCount(prevCount => {
   //           const newCount = prevCount + 1;
@@ -379,29 +381,51 @@ const VideoPlayer = ({ videoUri, exerciseName, user_id, onRepCountUpdate, onClos
   const togglePlayPause = async () => {
     try {
       if (!player) return;
-      setIsPlaying(false);
-      // if (isPlaying) {
-      //   // pause using player if available
-      //   try { player.pause(); } catch (e) { console.warn('[VideoPlayer] pause failed:', e); }
-      //   setIsPlaying(false);
-      // } else {
-      //   // If at end, restart
-      //   try {
-      //     const atEnd = player.duration && (player.currentTime >= player.duration - 0.05);
-      //     if (atEnd) {
-      //       player.currentTime = 0;
-      //     }
-      //     await player.play();
-      //   } catch (e) {
-      //     // best-effort: try non-async play
-      //     try { player.play(); } catch (e2) { console.warn('[VideoPlayer] play failed:', e2); }
-      //   }
-      //   setIsPlaying(true);
-      // }
+
+      // Show controls when user interacts
+      setShowControls(true);
+      resetHideControlsTimer();
+
+      if (player.playing) {
+        player.pause();
+        setIsPlaying(false);
+      } else {
+        // If at end, restart
+        const atEnd = player.duration && (player.currentTime >= player.duration - 0.05);
+        if (atEnd) {
+          player.currentTime = 0;
+        }
+        player.play();
+        setIsPlaying(true);
+      }
     } catch (e) {
       console.warn('[VideoPlayer] togglePlayPause error:', e);
     }
   };
+
+  // Auto-hide controls in landscape mode
+  const resetHideControlsTimer = () => {
+    if (hideControlsTimeoutRef.current) {
+      clearTimeout(hideControlsTimeoutRef.current);
+    }
+
+    // Only auto-hide in landscape mode when playing
+    if (isLandscape && isPlaying) {
+      hideControlsTimeoutRef.current = setTimeout(() => {
+        setShowControls(false);
+      }, 3000); // Hide after 3 seconds
+    }
+  };
+
+  // Reset timer when playing state or landscape changes
+  useEffect(() => {
+    resetHideControlsTimer();
+    return () => {
+      if (hideControlsTimeoutRef.current) {
+        clearTimeout(hideControlsTimeoutRef.current);
+      }
+    };
+  }, [isPlaying, isLandscape]);
 
   const handleRotate = async () => {
     try {
@@ -416,7 +440,7 @@ const VideoPlayer = ({ videoUri, exerciseName, user_id, onRepCountUpdate, onClos
       console.warn('[VideoPlayer] Orientation lock error:', error);
     }
   };
-  
+
   const handleBackToPortrait = async () => {
     try {
       await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
@@ -462,20 +486,20 @@ const VideoPlayer = ({ videoUri, exerciseName, user_id, onRepCountUpdate, onClos
     // Watch for duration changes (indicates video loaded)
     if (player.duration && player.duration > 0) {
       const durationMillis = player.duration * 1000;
-      
+
       console.log('[VideoPlayer] 📹 Video loaded:', {
         durationMillis,
         durationSeconds: (player.duration).toFixed(2) + 's',
         isPlaying: player.playing,
         currentTime: player.currentTime,
       });
-      
+
       // Clear any previous errors when video loads successfully
       setVideoError(null);
-      
+
       if (durationMillis && durationMillis !== videoDuration) {
         setVideoDuration(durationMillis);
-        
+
         // Note: expo-video doesn't provide naturalSize directly
         // We'll need to get dimensions from the VideoView component
         // For now, we'll use container dimensions as fallback
@@ -483,7 +507,7 @@ const VideoPlayer = ({ videoUri, exerciseName, user_id, onRepCountUpdate, onClos
           duration: durationMillis + 'ms (' + (player.duration).toFixed(2) + 's)',
         });
       }
-      
+
       // Auto-play video when loaded
       if (!player.playing) {
         try {
@@ -496,24 +520,24 @@ const VideoPlayer = ({ videoUri, exerciseName, user_id, onRepCountUpdate, onClos
       }
     }
   }, [player?.duration, player?.playing, videoDuration]);
-  
+
   // Watch for playing state changes
   useEffect(() => {
     if (!player) return;
     setIsPlaying(player.playing);
   }, [player?.playing]);
-  
+
   // Watch for position changes and handle video events (replaces onPlaybackStatusUpdate)
   useEffect(() => {
     if (!player) return;
-    
+
     const interval = setInterval(() => {
       if (!player.duration || player.duration === 0) return;
-      
+
       const currentPos = (player.currentTime || 0) * 1000; // Convert to milliseconds
       const durationMillis = (player.duration || 0) * 1000;
       const lastPos = lastVideoPositionRef.current;
-      
+
       // Log position updates periodically (every 1 second)
       if (Math.abs(currentPos - lastPos) >= 1000 || lastPos === 0) {
         console.log('[VideoPlayer] 📍 Video position update:', {
@@ -524,7 +548,7 @@ const VideoPlayer = ({ videoUri, exerciseName, user_id, onRepCountUpdate, onClos
           repCount,
         });
       }
-      
+
       // Reset rep state when video starts playing from beginning (position < 500ms)
       if (player.playing && !isPlaying && currentPos < 500) {
         const resetTime = Date.now();
@@ -543,7 +567,7 @@ const VideoPlayer = ({ videoUri, exerciseName, user_id, onRepCountUpdate, onClos
           onRepCountUpdate(0);
         }
       }
-      
+
       // Check if video finished (reached end)
       if (durationMillis > 0 && currentPos >= durationMillis - 100) {
         console.log('[VideoPlayer] ⏹️ Video finished playing (auto-replay)', {
@@ -560,11 +584,11 @@ const VideoPlayer = ({ videoUri, exerciseName, user_id, onRepCountUpdate, onClos
         }
         lastVideoPositionRef.current = 0;
       }
-      
+
       // Detect if video was seeked backwards (restart or seek to beginning)
       if (
-        currentPos < 1000 && 
-        lastPos > 2000 && 
+        currentPos < 1000 &&
+        lastPos > 2000 &&
         repCount > 0 &&
         Math.abs(currentPos - lastPos) > 1000 // Significant jump backwards
       ) {
@@ -588,10 +612,10 @@ const VideoPlayer = ({ videoUri, exerciseName, user_id, onRepCountUpdate, onClos
           onRepCountUpdate(0);
         }
       }
-      
+
       lastVideoPositionRef.current = currentPos;
     }, 100); // Check every 100ms
-    
+
     return () => clearInterval(interval);
   }, [player, isPlaying, repCount, onRepCountUpdate]);
 
@@ -636,12 +660,27 @@ const VideoPlayer = ({ videoUri, exerciseName, user_id, onRepCountUpdate, onClos
             allowsFullscreen={false}
             allowsPictureInPicture={false}
           />
-          
-          {/* Tap overlay: toggle play/pause when user taps the video */}
-          <TouchableOpacity style={styles.tapOverlay} activeOpacity={1} onPress={togglePlayPause} />
 
-          {/* Landscape: show centered play/pause + back button */}
-          {isLandscape && (
+          {/* Tap overlay: toggle play/pause and show controls when user taps the video */}
+          <TouchableOpacity
+            style={styles.tapOverlay}
+            activeOpacity={1}
+            onPress={() => {
+              if (isLandscape) {
+                // In landscape, tap shows/hides controls
+                setShowControls(!showControls);
+                if (!showControls) {
+                  resetHideControlsTimer();
+                }
+              } else {
+                // In portrait, tap toggles play/pause
+                togglePlayPause();
+              }
+            }}
+          />
+
+          {/* Landscape: show centered play/pause + back button (with auto-hide) */}
+          {isLandscape && showControls && (
             <>
               <TouchableOpacity style={styles.landscapeCenterBtn} onPress={togglePlayPause}>
                 <Ionicons name={isPlaying ? 'pause' : 'play'} size={48} color="#fff" />
@@ -669,8 +708,8 @@ const VideoPlayer = ({ videoUri, exerciseName, user_id, onRepCountUpdate, onClos
               )}
               <View style={styles.errorButtonContainer}>
                 {videoError.isRateLimit && (
-                  <TouchableOpacity 
-                    style={[styles.errorButton, styles.retryButton]} 
+                  <TouchableOpacity
+                    style={[styles.errorButton, styles.retryButton]}
                     onPress={async () => {
                       setVideoError(null);
                       // Wait a bit before retrying
@@ -691,8 +730,8 @@ const VideoPlayer = ({ videoUri, exerciseName, user_id, onRepCountUpdate, onClos
                     <Text style={styles.errorButtonText}>Thử lại</Text>
                   </TouchableOpacity>
                 )}
-                <TouchableOpacity 
-                  style={styles.errorButton} 
+                <TouchableOpacity
+                  style={styles.errorButton}
                   onPress={() => {
                     setVideoError(null);
                     onClose?.();
@@ -718,27 +757,27 @@ const VideoPlayer = ({ videoUri, exerciseName, user_id, onRepCountUpdate, onClos
       {/* Hide controls in landscape (fullscreen) */}
       {!isLandscape && (
         <View style={styles.controls}>
-        <TouchableOpacity onPress={togglePlayPause} style={styles.playButton}>
-          <Ionicons 
-            name={isPlaying ? "pause" : "play"} 
-            size={32} 
-            color={colors.primary} 
-          />
-        </TouchableOpacity>
-        
-        {/* NEW: Nút Replay */}
-        <TouchableOpacity onPress={handleReplay} style={styles.controlButton}>
-          <Ionicons name="reload" size={28} color={colors.primary} />
-        </TouchableOpacity>
-        
-        {/* NEW: Nút Rotate */}
-        <TouchableOpacity onPress={handleRotate} style={styles.controlButton}>
-          <Ionicons 
-            name={isLandscape ? "phone-portrait" : "phone-landscape"} 
-            size={28} 
-            color={colors.primary} 
-          />
-        </TouchableOpacity>
+          <TouchableOpacity onPress={handlePlayPause} style={styles.playButton}>
+            <Ionicons
+              name={isPlaying ? "pause" : "play"}
+              size={32}
+              color={colors.primary}
+            />
+          </TouchableOpacity>
+
+          {/* NEW: Nút Replay */}
+          <TouchableOpacity onPress={handleReplay} style={styles.controlButton}>
+            <Ionicons name="reload" size={28} color={colors.primary} />
+          </TouchableOpacity>
+
+          {/* NEW: Nút Rotate */}
+          <TouchableOpacity onPress={handleRotate} style={styles.controlButton}>
+            <Ionicons
+              name={isLandscape ? "phone-portrait" : "phone-landscape"}
+              size={28}
+              color={colors.primary}
+            />
+          </TouchableOpacity>
         </View>
       )}
     </View>
@@ -981,4 +1020,3 @@ const styles = StyleSheet.create({
 });
 
 export default VideoPlayer;
-

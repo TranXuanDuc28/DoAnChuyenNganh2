@@ -79,13 +79,34 @@ const User = sequelize.define('User', {
     }
   },
   // Health metrics
-  currentWeight: {
+  targetWeight: {
     type: DataTypes.FLOAT,
-    allowNull: true
+    allowNull: true,
+    comment: 'Target weight in kg'
+  },
+  waistCircumference: {
+    type: DataTypes.FLOAT,
+    allowNull: true,
+    comment: 'Waist circumference in cm'
+  },
+  hipCircumference: {
+    type: DataTypes.FLOAT,
+    allowNull: true,
+    comment: 'Hip circumference in cm'
   },
   bodyFatPercentage: {
     type: DataTypes.FLOAT,
     allowNull: true
+  },
+  bmi: {
+    type: DataTypes.FLOAT,
+    allowNull: true,
+    comment: 'Body Mass Index (auto-calculated)'
+  },
+  whr: {
+    type: DataTypes.FLOAT,
+    allowNull: true,
+    comment: 'Waist-to-Hip Ratio (auto-calculated)'
   },
   nutritionStreak: {
     type: DataTypes.INTEGER,
@@ -126,6 +147,12 @@ const User = sequelize.define('User', {
     defaultValue: [],
     comment: 'Array of food allergies (e.g., seafood, dairy)'
   },
+  // Push Notifications
+  pushToken: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    comment: 'Expo push notification token'
+  },
   // Status
   isActive: {
     type: DataTypes.BOOLEAN,
@@ -152,38 +179,64 @@ const User = sequelize.define('User', {
         const salt = await bcrypt.genSalt(12);
         user.password = await bcrypt.hash(user.password, salt);
       }
+      // Auto-calculate BMI and WHR
+      if (user.height && user.weight) {
+        const heightInMeters = user.height / 100;
+        user.bmi = user.weight / (heightInMeters * heightInMeters);
+      }
+      if (user.waistCircumference && user.hipCircumference) {
+        user.whr = user.waistCircumference / user.hipCircumference;
+      }
     },
     beforeUpdate: async (user) => {
       if (user.changed('password')) {
         const salt = await bcrypt.genSalt(12);
         user.password = await bcrypt.hash(user.password, salt);
       }
+      // Auto-calculate BMI if height or weight changed
+      if (user.changed('height') || user.changed('weight')) {
+        if (user.height && user.weight) {
+          const heightInMeters = user.height / 100;
+          user.bmi = user.weight / (heightInMeters * heightInMeters);
+        }
+      }
+      // Auto-calculate WHR if waist or hip circumference changed
+      if (user.changed('waistCircumference') || user.changed('hipCircumference')) {
+        if (user.waistCircumference && user.hipCircumference) {
+          user.whr = user.waistCircumference / user.hipCircumference;
+        }
+      }
     }
   }
 });
 
 // Instance methods
-User.prototype.comparePassword = async function(candidatePassword) {
+User.prototype.comparePassword = async function (candidatePassword) {
   return bcrypt.compare(candidatePassword, this.password);
 };
 
-User.prototype.calculateBMI = function() {
+User.prototype.calculateBMI = function () {
   const heightInMeters = this.height / 100;
-  const currentWeight = this.currentWeight || this.weight;
-  return currentWeight / (heightInMeters * heightInMeters);
+  return this.weight / (heightInMeters * heightInMeters);
 };
 
-User.prototype.calculateDailyCalories = function() {
+User.prototype.calculateWHR = function () {
+  if (!this.waistCircumference || !this.hipCircumference) {
+    return null;
+  }
+  return this.waistCircumference / this.hipCircumference;
+};
+
+User.prototype.calculateDailyCalories = function () {
   const { age, gender, weight, height, activityLevel } = this;
-  const currentWeight = this.currentWeight || weight;
-  
+
   let bmr;
   if (gender === 'male') {
-    bmr = 88.362 + (13.397 * currentWeight) + (4.799 * height) - (5.677 * age);
+    bmr = 88.362 + (13.397 * weight) + (4.799 * height) - (5.677 * age);
   } else {
-    bmr = 447.593 + (9.247 * currentWeight) + (3.098 * height) - (4.330 * age);
+    bmr = 447.593 + (9.247 * weight) + (3.098 * height) - (4.330 * age);
   }
-  
+
   const activityMultipliers = {
     sedentary: 1.2,
     lightly_active: 1.375,
@@ -191,15 +244,28 @@ User.prototype.calculateDailyCalories = function() {
     very_active: 1.725,
     extremely_active: 1.9
   };
-  
+
   return Math.round(bmr * activityMultipliers[activityLevel]);
 };
 
 // Virtual for full name
 Object.defineProperty(User.prototype, 'fullName', {
-  get: function() {
+  get: function () {
     return `${this.firstName} ${this.lastName}`;
   }
 });
+
+// Define associations (will be set up after all models are loaded)
+User.associate = (models) => {
+  User.hasMany(models.BodyMetricsHistory, {
+    foreignKey: 'userId',
+    as: 'metricsHistory'
+  });
+
+  User.hasMany(models.Notification, {
+    foreignKey: 'userId',
+    as: 'notifications'
+  });
+};
 
 module.exports = User;

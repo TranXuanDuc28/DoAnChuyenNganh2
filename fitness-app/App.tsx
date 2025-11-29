@@ -10,6 +10,18 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { StatusBar } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons as Icon } from '@expo/vector-icons';
+import * as Notifications from 'expo-notifications';
+
+// Configure notification handler
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
+  }),
+});
 
 // Import screens
 import OnboardingScreen from './screens/OnboardingScreen';
@@ -230,6 +242,32 @@ const AppNavigator = () => {
 };
 
 const App = () => {
+  // Listen for notifications
+  useEffect(() => {
+    // Notification received listener
+    const notificationListener = Notifications.addNotificationReceivedListener(notification => {
+      console.log('Notification received:', notification);
+    });
+
+    // Notification response listener (when user taps notification)
+    const responseListener = Notifications.addNotificationResponseReceivedListener(response => {
+      console.log('Notification tapped:', response);
+      const data = response.notification.request.content.data;
+
+      // Handle navigation based on notification type
+      if (data.screen === 'Workout') {
+        // Navigate to Workout screen
+        // Note: Navigation will be handled by the navigation container
+        console.log('Navigate to Workout screen');
+      }
+    });
+
+    return () => {
+      notificationListener.remove();
+      responseListener.remove();
+    };
+  }, []);
+
   return (
     <AuthProvider>
       <StatusBar barStyle="dark-content" backgroundColor={colors.primary} />

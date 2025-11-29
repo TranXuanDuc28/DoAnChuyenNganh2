@@ -14,6 +14,43 @@ import colors from '../theme/colors';
 import { workoutAPI } from '../services/api';
 import { styles } from './styles/WorkoutPlanDetailScreen.styles';
 
+// Helper function to format duration
+const formatDuration = (seconds) => {
+  if (!seconds) return null;
+  if (seconds >= 60) {
+    const minutes = Math.floor(seconds / 60);
+    return `${minutes} phút`;
+  }
+  return `${seconds} giây`;
+};
+
+// Helper function to calculate current day number based on plan startDate
+const getCurrentDayNumber = (startDate, duration) => {
+  if (!startDate) return null;
+
+  const today = new Date();
+  const start = new Date(startDate);
+
+  // Reset time parts for accurate day calculation
+  today.setHours(0, 0, 0, 0);
+  start.setHours(0, 0, 0, 0);
+
+  const diffTime = today - start;
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+  // Day number is 1-indexed
+  const dayNumber = diffDays + 1;
+
+  // Check if within plan duration
+  const totalDays = duration * 7; // duration is in weeks
+
+  if (dayNumber < 1 || dayNumber > totalDays) {
+    return null; // Outside plan range
+  }
+
+  return dayNumber;
+};
+
 const WorkoutPlanDetailScreen = ({ route, navigation }) => {
   const { plan } = route.params;
   const [selectedDay, setSelectedDay] = useState(null);
@@ -82,18 +119,25 @@ const WorkoutPlanDetailScreen = ({ route, navigation }) => {
     const isCompleted = item.isCompleted;
     const isRestDay = item.isRestDay;
 
+    // Calculate current day number based on plan startDate
+    const currentDayNumber = getCurrentDayNumber(plan.startDate, plan.duration);
+    const isPastDay = currentDayNumber ? item.dayNumber < currentDayNumber : false;
+    const isDisabled = isPastDay && !isCompleted; // Disable past days that are not completed
+
     return (
       <TouchableOpacity
         style={[
           styles.dayItem,
           isSelected && styles.dayItemSelected,
           isCompleted && styles.dayItemCompleted,
+          isDisabled && { opacity: 0.5 },
         ]}
         onPress={() => {
-          if (isCompleted) return;
+          if (isCompleted || isDisabled) return;
           handleSelectDay(item);
         }}
-        activeOpacity={isCompleted ? 1 : 0.7}
+        activeOpacity={isCompleted || isDisabled ? 1 : 0.7}
+        disabled={isDisabled}
       >
         <View style={styles.dayItemContent}>
           <View style={styles.dayItemHeader}>
@@ -101,6 +145,7 @@ const WorkoutPlanDetailScreen = ({ route, navigation }) => {
               styles.dayNumber,
               isSelected && styles.dayNumberSelected,
               isCompleted && styles.dayNumberCompleted,
+              isDisabled && { color: colors.textSecondary },
             ]}>
               {item.dayNumber}
             </Text>
@@ -110,11 +155,15 @@ const WorkoutPlanDetailScreen = ({ route, navigation }) => {
             {isRestDay && (
               <Icon name="moon" size={14} color={colors.textSecondary} style={{ marginLeft: 4 }} />
             )}
+            {isDisabled && !isCompleted && (
+              <Icon name="lock-closed" size={14} color={colors.textSecondary} style={{ marginLeft: 4 }} />
+            )}
           </View>
           <Text
             style={[
               styles.dayItemText,
               isSelected && styles.dayItemTextSelected,
+              isDisabled && { color: colors.textSecondary },
             ]}
             numberOfLines={1}
           >
@@ -129,15 +178,21 @@ const WorkoutPlanDetailScreen = ({ route, navigation }) => {
     const exercise = item.exerciseDetails;
     const isCompleted = item.isCompleted; // Check if exercise is completed
 
+    // Check if this is a past day
+    const currentDayNumber = getCurrentDayNumber(plan.startDate, plan.duration);
+    const isPastDay = currentDayNumber && selectedDay ? selectedDay.dayNumber < currentDayNumber : false;
+    const isDisabled = (isPastDay && !isCompleted) || isCompleted; // Disable if past day (and not completed) or already completed
+
     return (
       <TouchableOpacity
         style={[
           styles.exerciseItem,
-          isCompleted && styles.exerciseItemCompleted
+          isCompleted && styles.exerciseItemCompleted,
+          isPastDay && !isCompleted && { opacity: 0.5 },
         ]}
         onPress={() => {
-          // Don't allow clicking on completed exercises
-          if (isCompleted) {
+          // Don't allow clicking on completed or past day exercises
+          if (isDisabled) {
             return;
           }
 
@@ -156,8 +211,8 @@ const WorkoutPlanDetailScreen = ({ route, navigation }) => {
             });
           }
         }}
-        activeOpacity={isCompleted ? 1 : 0.7} // No opacity change if completed
-        disabled={isCompleted} // Disable touch if completed
+        activeOpacity={isDisabled ? 1 : 0.7} // No opacity change if disabled
+        disabled={isDisabled} // Disable touch if disabled
       >
         <View style={styles.exerciseNumber}>
           <Text style={styles.exerciseNumberText}>{index + 1}</Text>
@@ -213,9 +268,18 @@ const WorkoutPlanDetailScreen = ({ route, navigation }) => {
             ) : item.duration ? (
               <View style={styles.exerciseDetailItem}>
                 <Icon name="time-outline" size={16} color={colors.textOnPrimary} />
-                <Text style={styles.exerciseDetailText}>{item.duration} phút</Text>
+                <Text style={styles.exerciseDetailText}>{formatDuration(item.duration)}</Text>
               </View>
             ) : null}
+
+            {item.caloriesBurned && (
+              <View style={[styles.exerciseDetailItem, { backgroundColor: 'rgba(255, 152, 0, 0.15)' }]}>
+                <Icon name="flame-outline" size={16} color={colors.warning} />
+                <Text style={[styles.exerciseDetailText, { color: colors.warning }]}>
+                  {item.caloriesBurned} cal
+                </Text>
+              </View>
+            )}
 
             {item.restSeconds && (
               <View style={[styles.exerciseDetailItem, { backgroundColor: 'rgba(255, 255, 255, 0.1)' }]}>
@@ -345,18 +409,27 @@ const WorkoutPlanDetailScreen = ({ route, navigation }) => {
       </ScrollView>
 
       {/* Complete Button */}
-      {selectedDay && !selectedDay.isCompleted && (
-        <View style={styles.footer}>
-          <TouchableOpacity
-            style={styles.completeButton}
-            onPress={handleCompleteDay}
-            activeOpacity={0.8}
-          >
-            <Icon name="checkmark-circle" size={24} color={colors.white} />
-            <Text style={styles.completeButtonText}>Hoàn thành buổi tập</Text>
-          </TouchableOpacity>
-        </View>
-      )}
+      {selectedDay && !selectedDay.isCompleted && (() => {
+        // Check if this is a past day
+        const currentDayNumber = getCurrentDayNumber(plan.startDate, plan.duration);
+        const isPastDay = currentDayNumber ? selectedDay.dayNumber < currentDayNumber : false;
+
+        // Don't show complete button for past days
+        if (isPastDay) return null;
+
+        return (
+          <View style={styles.footer}>
+            <TouchableOpacity
+              style={styles.completeButton}
+              onPress={handleCompleteDay}
+              activeOpacity={0.8}
+            >
+              <Icon name="checkmark-circle" size={24} color={colors.white} />
+              <Text style={styles.completeButtonText}>Hoàn thành buổi tập</Text>
+            </TouchableOpacity>
+          </View>
+        );
+      })()}
     </View>
   );
 };

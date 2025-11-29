@@ -43,11 +43,14 @@ const OnboardingScreen = ({ navigation, route }) => {
     fitnessLevel: 'beginner',
     fitnessGoals: [],
     activityLevel: 'moderately_active',
+    workoutDuration: '',
     
     // Health Info
-    currentWeight: '',
+    targetWeight: '',
+    waistCircumference: '',
+    hipCircumference: '',
     bodyFatPercentage: '',
-    restingHeartRate: '',
+    muscleMass: '',
     
     // Nutrition Preferences
     dailyMeals: '3',
@@ -101,16 +104,19 @@ const OnboardingScreen = ({ navigation, route }) => {
           lastName: formData.lastName,
           age: parseInt(formData.age) || 0,
           gender: formData.gender,
-          height: parseInt(formData.height) || 0,
-          weight: parseInt(formData.weight) || 0,
+          height: parseFloat(formData.height) || 0,
+          weight: parseFloat(formData.weight) || 0,
           fitnessLevel: formData.fitnessLevel,
           fitnessGoals: formData.fitnessGoals,
           activityLevel: formData.activityLevel,
+          workoutDuration: parseInt(formData.workoutDuration) || null,
         },
         healthMetrics: {
-          currentWeight: parseFloat(formData.currentWeight) || parseFloat(formData.weight) || null,
+          targetWeight: parseFloat(formData.targetWeight) || null,
+          waistCircumference: parseFloat(formData.waistCircumference) || null,
+          hipCircumference: parseFloat(formData.hipCircumference) || null,
           bodyFatPercentage: parseFloat(formData.bodyFatPercentage) || null,
-          restingHeartRate: parseInt(formData.restingHeartRate) || null,
+          muscleMass: parseFloat(formData.muscleMass) || null,
         },
         nutritionPreferences: {
           dailyMeals: parseInt(formData.dailyMeals) || 3,
@@ -285,6 +291,20 @@ const OnboardingScreen = ({ navigation, route }) => {
           </Picker>
         </View>
       </View>
+
+      <View style={styles.inputContainer}>
+        <Text style={styles.inputLabel}>Workout Duration (minutes/day)</Text>
+        <TextInput
+          style={styles.textInput}
+          value={formData.workoutDuration}
+          onChangeText={(text) => updateFormData('workoutDuration', text)}
+          placeholder="How many minutes per day do you plan to workout?"
+          keyboardType="numeric"
+        />
+        <Text style={styles.helperText}>
+          Average time you plan to spend on workouts each day
+        </Text>
+      </View>
     </ScrollView>
   );
 
@@ -297,18 +317,40 @@ const OnboardingScreen = ({ navigation, route }) => {
       </Text>
       
       <View style={styles.inputContainer}>
-        <Text style={styles.inputLabel}>Current Weight (kg)</Text>
+        <Text style={styles.inputLabel}>Target Weight (kg)</Text>
         <TextInput
           style={styles.textInput}
-          value={formData.currentWeight}
-          onChangeText={(text) => updateFormData('currentWeight', text)}
-          placeholder="Enter your current weight"
+          value={formData.targetWeight}
+          onChangeText={(text) => updateFormData('targetWeight', text)}
+          placeholder="Enter your target weight"
           keyboardType="numeric"
         />
       </View>
 
       <View style={styles.inputContainer}>
-        <Text style={styles.inputLabel}>Body Fat Percentage</Text>
+        <Text style={styles.inputLabel}>Waist Circumference (cm)</Text>
+        <TextInput
+          style={styles.textInput}
+          value={formData.waistCircumference}
+          onChangeText={(text) => updateFormData('waistCircumference', text)}
+          placeholder="Enter waist circumference"
+          keyboardType="numeric"
+        />
+      </View>
+
+      <View style={styles.inputContainer}>
+        <Text style={styles.inputLabel}>Hip Circumference (cm)</Text>
+        <TextInput
+          style={styles.textInput}
+          value={formData.hipCircumference}
+          onChangeText={(text) => updateFormData('hipCircumference', text)}
+          placeholder="Enter hip circumference"
+          keyboardType="numeric"
+        />
+      </View>
+
+      <View style={styles.inputContainer}>
+        <Text style={styles.inputLabel}>Body Fat Percentage (%)</Text>
         <TextInput
           style={styles.textInput}
           value={formData.bodyFatPercentage}
@@ -319,12 +361,12 @@ const OnboardingScreen = ({ navigation, route }) => {
       </View>
 
       <View style={styles.inputContainer}>
-        <Text style={styles.inputLabel}>Resting Heart Rate (bpm)</Text>
+        <Text style={styles.inputLabel}>Muscle Mass (kg)</Text>
         <TextInput
           style={styles.textInput}
-          value={formData.restingHeartRate}
-          onChangeText={(text) => updateFormData('restingHeartRate', text)}
-          placeholder="Enter resting heart rate"
+          value={formData.muscleMass}
+          onChangeText={(text) => updateFormData('muscleMass', text)}
+          placeholder="Enter muscle mass (optional)"
           keyboardType="numeric"
         />
       </View>
