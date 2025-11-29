@@ -74,7 +74,10 @@ export const authAPI = {
   completeOnboarding: (onboardingData, token) => api.put('/auth/onboarding', onboardingData, {
     headers: { Authorization: `Bearer ${token}` }
   }),
-  changePassword: (passwordData) => api.put('/auth/password', passwordData),
+  uploadProfileImage: (formData) => api.post('/users/profile/image', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
+  changePassword: (currentPassword, newPassword) => api.put('/auth/password', { currentPassword, newPassword }),
   forgotPassword: (email) => api.post('/auth/forgot-password', { email }),
   resetPassword: (token, newPassword) => api.post('/auth/reset-password', { token, newPassword }),
 };

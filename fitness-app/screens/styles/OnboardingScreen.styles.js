@@ -6,6 +6,7 @@ const isWeb = Platform.OS === 'web';
 
 export const styles = StyleSheet.create({
   container: {
+    marginTop: 20,
     flex: 1,
     ...(isWeb && {
       maxWidth: 1200,
@@ -14,6 +15,7 @@ export const styles = StyleSheet.create({
     }),
   },
   backgroundImage: {
+
     resizeMode: 'cover',
   },
   gradient: {
@@ -22,7 +24,8 @@ export const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: 20,
-    paddingTop: 50,
+
+    paddingTop: 20,
     paddingBottom: 30,
     ...(isWeb && {
       paddingHorizontal: 40,

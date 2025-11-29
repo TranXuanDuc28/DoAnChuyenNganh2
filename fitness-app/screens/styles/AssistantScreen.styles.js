@@ -6,6 +6,7 @@ const isWeb = Platform.OS === 'web';
 export const styles = StyleSheet.create({
   container: {
     flex: 1,
+
     backgroundColor: colors.background,
     ...(isWeb && {
       maxWidth: 1200,
@@ -17,8 +18,8 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingTop: 60,
     paddingBottom: 20,
+    paddingTop: 60,
     backgroundColor: colors.card,
     borderBottomLeftRadius: 24,
     borderBottomRightRadius: 24,

@@ -6,6 +6,7 @@ const isWeb = Platform.OS === 'web';
 export const styles = StyleSheet.create({
   container: {
     flex: 1,
+
     backgroundColor: colors.background,
     ...(isWeb && {
       maxWidth: 1200,
@@ -18,6 +19,7 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     paddingTop: Platform.OS === 'android' ? 60 : 40,
     paddingBottom: 30,
+    paddingTop: 80,
     paddingHorizontal: 20,
     marginBottom: 24,
     borderBottomLeftRadius: 32,
@@ -47,18 +49,10 @@ export const styles = StyleSheet.create({
     shadowOpacity: 0.4,
     shadowRadius: 16,
   },
-  editImageButton: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    backgroundColor: colors.primary,
-    borderRadius: 20,
-    padding: 8,
-    borderWidth: 3,
-    borderColor: colors.card,
-    ...(isWeb && {
-      cursor: 'pointer',
-    }),
+  profileImage: {
+    width: 150,
+    height: 150,
+    borderRadius: 75,
   },
   userName: {
     fontSize: 28,
@@ -72,176 +66,238 @@ export const styles = StyleSheet.create({
     color: colors.textSecondary,
     marginBottom: 20,
   },
-  bmiContainer: {
+
+  // Edit Mode Styles
+  nameInputContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 107, 53, 0.1)', // primary with opacity
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 107, 53, 0.2)',
-  },
-  bmiLabel: {
-    fontSize: 14,
-    color: colors.primary,
-    marginRight: 8,
-    fontWeight: '600',
-  },
-  bmiValue: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: colors.primary,
-  },
-  statsSection: {
-    marginBottom: 24,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: colors.white,
-    marginHorizontal: 24,
-    marginBottom: 16,
-    letterSpacing: 0.5,
-  },
-  statsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    paddingHorizontal: 20,
-    justifyContent: 'space-between',
     gap: 12,
+    marginBottom: 16,
   },
-  statCardContainer: {
-    width: '48%',
-    marginBottom: 4, // handled by gap
-    ...(isWeb && {
-      width: 'calc(50% - 8px)',
-    }),
-  },
-  statCard: {
-    backgroundColor: colors.card,
-    borderRadius: 20,
-    padding: 20,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.border,
-    ...(isWeb && {
-      cursor: 'pointer',
-      transition: 'all 0.2s ease',
-      ':hover': {
-        transform: 'translateY(-2px)',
-        borderColor: colors.primary,
-      },
-    }),
-  },
-  statIcon: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 12,
-  },
-  statValue: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: colors.white,
-    marginBottom: 4,
-  },
-  statTitle: {
-    fontSize: 13,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    fontWeight: '500',
-  },
-  quickActionsSection: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    backgroundColor: colors.card,
-    marginHorizontal: 20,
-    borderRadius: 24,
-    paddingVertical: 24,
-    marginBottom: 24,
-    borderWidth: 1,
-    borderColor: colors.border,
-    ...(isWeb && {
-      marginHorizontal: 24,
-    }),
-  },
-  quickActionButton: {
-    alignItems: 'center',
-    opacity: 0.9,
-    ...(isWeb && {
-      cursor: 'pointer',
-      transition: 'opacity 0.2s ease',
-      ':hover': {
-        opacity: 1,
-      },
-    }),
-  },
-  quickActionText: {
-    fontSize: 12,
-    color: colors.textSecondary,
-    marginTop: 8,
-    fontWeight: '500',
-  },
-  menuSection: {
-    backgroundColor: colors.card,
-    marginHorizontal: 20,
-    borderRadius: 24,
-    marginBottom: 24,
-    borderWidth: 1,
-    borderColor: colors.border,
-    overflow: 'hidden',
-    ...(isWeb && {
-      marginHorizontal: 24,
-    }),
-  },
-  menuItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 24,
-    paddingVertical: 18,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-    ...(isWeb && {
-      cursor: 'pointer',
-      transition: 'background-color 0.2s ease',
-      ':hover': {
-        backgroundColor: colors.cardDarkLight,
-      },
-    }),
-  },
-  menuItemLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  menuItemText: {
+  nameInput: {
+    flex: 1,
+    backgroundColor: colors.cardDark,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     fontSize: 16,
     color: colors.white,
-    marginLeft: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  headerActions: {
+    marginTop: 16,
+    width: '100%',
+  },
+  editButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.primary,
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    gap: 8,
+  },
+  editButtonText: {
+    color: colors.white,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  editActions: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  cancelButton: {
+    flex: 1,
+    backgroundColor: colors.cardDark,
+    borderRadius: 12,
+    paddingVertical: 12,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  cancelButtonText: {
+    color: colors.white,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  saveButton: {
+    flex: 1,
+    backgroundColor: colors.primary,
+    borderRadius: 12,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  saveButtonText: {
+    color: colors.white,
+    fontSize: 16,
+    fontWeight: '600',
+  },
+
+  // Section Styles
+  section: {
+    backgroundColor: colors.card,
+    marginHorizontal: 20,
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: colors.white,
+    marginBottom: 16,
+  },
+
+  // Info Row/Column Styles
+  infoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  infoColumn: {
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  infoLabel: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    fontWeight: '500',
+    marginBottom: 8,
+  },
+  infoValue: {
+    fontSize: 16,
+    color: colors.white,
+    fontWeight: '600',
+  },
+  infoInput: {
+    backgroundColor: colors.cardDark,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    fontSize: 16,
+    color: colors.white,
+    borderWidth: 1,
+    borderColor: colors.border,
+    minWidth: 100,
+  },
+  bioInput: {
+    backgroundColor: colors.cardDark,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 14,
+    color: colors.white,
+    borderWidth: 1,
+    borderColor: colors.border,
+    minHeight: 80,
+    textAlignVertical: 'top',
+  },
+  bioText: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    lineHeight: 20,
+  },
+
+  // Gender Selector
+  genderSelector: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  genderOption: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+    backgroundColor: colors.cardDark,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  genderOptionSelected: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  genderOptionText: {
+    fontSize: 14,
+    color: colors.textSecondary,
     fontWeight: '500',
   },
+  genderOptionTextSelected: {
+    color: colors.white,
+  },
+
+  // Level Selector
+  levelSelector: {
+    flexDirection: 'row',
+    gap: 8,
+    flexWrap: 'wrap',
+  },
+  levelOption: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    backgroundColor: colors.cardDark,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  levelOptionSelected: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  levelOptionText: {
+    fontSize: 13,
+    color: colors.textSecondary,
+    fontWeight: '500',
+  },
+  levelOptionTextSelected: {
+    color: colors.white,
+  },
+
+  // Chip Selector (for goals, preferences, allergies)
+  chipContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 8,
+  },
+  chip: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: colors.cardDark,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  chipSelected: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  chipText: {
+    fontSize: 13,
+    color: colors.textSecondary,
+    fontWeight: '500',
+  },
+  chipTextSelected: {
+    color: colors.white,
+  },
+
+  // Logout Button
   logoutButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255, 23, 68, 0.1)', // danger with opacity
+    backgroundColor: 'rgba(255, 23, 68, 0.1)',
     marginHorizontal: 20,
     borderRadius: 16,
     paddingVertical: 18,
     marginBottom: 40,
     borderWidth: 1,
     borderColor: 'rgba(255, 23, 68, 0.3)',
-    ...(isWeb && {
-      marginHorizontal: 24,
-      cursor: 'pointer',
-      transition: 'all 0.2s ease',
-      ':hover': {
-        backgroundColor: 'rgba(255, 23, 68, 0.2)',
-      },
-    }),
   },
   logoutText: {
     fontSize: 16,
@@ -249,6 +305,125 @@ export const styles = StyleSheet.create({
     color: colors.danger,
     marginLeft: 8,
   },
+
+  // Edit Image Button
+  editImageButton: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    backgroundColor: colors.primary,
+    borderRadius: 20,
+    padding: 8,
+    borderWidth: 3,
+    borderColor: colors.card,
+  },
+
+  // Change Buttons (Email/Password)
+  changeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    marginTop: 12,
+    backgroundColor: colors.cardDark,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  changeButtonText: {
+    flex: 1,
+    fontSize: 15,
+    color: colors.white,
+    fontWeight: '500',
+    marginLeft: 12,
+  },
+
+  // Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    backgroundColor: colors.card,
+    borderRadius: 16,
+    padding: 24,
+    width: '100%',
+    maxWidth: 400,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: colors.white,
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  modalLabel: {
+    fontSize: 14,
+    color: colors.textSecondary,
+    marginBottom: 8,
+    marginTop: 12,
+    fontWeight: '500',
+  },
+  currentValue: {
+    fontSize: 15,
+    color: colors.white,
+    marginBottom: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    backgroundColor: colors.cardDark,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  modalInput: {
+    backgroundColor: colors.cardDark,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    fontSize: 15,
+    color: colors.white,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginBottom: 8,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 20,
+  },
+  modalCancelButton: {
+    flex: 1,
+    backgroundColor: colors.cardDark,
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  modalCancelText: {
+    color: colors.white,
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  modalSaveButton: {
+    flex: 1,
+    backgroundColor: colors.primary,
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
+  modalSaveText: {
+    color: colors.white,
+    fontSize: 15,
+    fontWeight: '600',
+  },
+
+  // Version
   versionContainer: {
     alignItems: 'center',
     paddingBottom: 40,
@@ -258,4 +433,3 @@ export const styles = StyleSheet.create({
     color: colors.textTertiary,
   },
 });
-

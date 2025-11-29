@@ -7,6 +7,7 @@ const isWeb = Platform.OS === 'web';
 export const styles = StyleSheet.create({
   container: {
     flex: 1,
+    
     backgroundColor: colors.background,
     ...(isWeb && {
       maxWidth: 1200,

@@ -34,17 +34,17 @@ const HealthScreen = () => {
       }
     } catch (error) {
       console.error('Failed to load today data:', error);
-      Alert.alert('Lỗi', 'Không thể tải dữ liệu');
+      Alert.alert('Error', 'Failed to load data');
     } finally {
       setLoading(false);
     }
   };
 
   const getBMIStatus = (bmi) => {
-    if (bmi < 18.5) return { status: 'Thiếu cân', color: colors.info };
-    if (bmi < 25) return { status: 'Bình thường', color: colors.success };
-    if (bmi < 30) return { status: 'Thừa cân', color: colors.warning };
-    return { status: 'Béo phì', color: colors.danger };
+    if (bmi < 18.5) return { status: 'Underweight', color: colors.info };
+    if (bmi < 25) return { status: 'Normal', color: colors.success };
+    if (bmi < 30) return { status: 'Overweight', color: colors.warning };
+    return { status: 'Obese', color: colors.danger };
   };
 
   const getWHRStatus = (whr, gender) => {
@@ -52,13 +52,13 @@ const HealthScreen = () => {
 
     // WHR thresholds differ by gender
     if (gender === 'male') {
-      if (whr < 0.90) return { status: 'Tốt', color: colors.success };
-      if (whr < 0.95) return { status: 'Trung bình', color: colors.warning };
-      return { status: 'Cao', color: colors.danger };
+      if (whr < 0.90) return { status: 'Good', color: colors.success };
+      if (whr < 0.95) return { status: 'Average', color: colors.warning };
+      return { status: 'High', color: colors.danger };
     } else {
-      if (whr < 0.80) return { status: 'Tốt', color: colors.success };
-      if (whr < 0.85) return { status: 'Trung bình', color: colors.warning };
-      return { status: 'Cao', color: colors.danger };
+      if (whr < 0.80) return { status: 'Good', color: colors.success };
+      if (whr < 0.85) return { status: 'Average', color: colors.warning };
+      return { status: 'High', color: colors.danger };
     }
   };
 
@@ -69,7 +69,7 @@ const HealthScreen = () => {
       unit: 'kg',
       target: todayData.bodyMetrics?.targetWeight || todayData.bodyMetrics?.weight,
       status: 'progress',
-      label: 'Cân nặng'
+      label: 'Weight'
     },
     bmi: {
       value: todayData.bodyMetrics?.bmi || 0,
@@ -83,19 +83,19 @@ const HealthScreen = () => {
       value: todayData.bodyMetrics?.height || 0,
       unit: 'cm',
       status: 'normal',
-      label: 'Chiều cao'
+      label: 'Height'
     },
     waist: {
       value: todayData.bodyMetrics?.waistCircumference || 0,
       unit: 'cm',
       status: 'normal',
-      label: 'Vòng eo'
+      label: 'Waist'
     },
     hip: {
       value: todayData.bodyMetrics?.hipCircumference || 0,
       unit: 'cm',
       status: 'normal',
-      label: 'Vòng mông'
+      label: 'Hips'
     },
     whr: {
       value: todayData.bodyMetrics?.whr || 0,
@@ -110,27 +110,27 @@ const HealthScreen = () => {
     {
       id: 1,
       type: 'exercise',
-      title: 'Bài tập hoàn thành',
-      value: `${todayData?.completedExercisesCount || 0} bài`,
-      time: 'Hôm nay',
+      title: 'Exercises Completed',
+      value: `${todayData?.completedExercisesCount || 0} exercises`,
+      time: 'Today',
       icon: 'fitness',
       color: colors.primary,
     },
     {
       id: 2,
       type: 'calories',
-      title: 'Calo đốt cháy',
+      title: 'Calories Burned',
       value: `${todayData?.caloriesBurned || 0} cal`,
-      time: 'Hôm nay',
+      time: 'Today',
       icon: 'flame',
       color: colors.iconDanger,
     },
   ];
 
   const tabs = [
-    { id: 'overview', title: 'Tổng quan', icon: 'stats-chart' },
-    { id: 'update', title: 'Cập nhật', icon: 'create' },
-    { id: 'insights', title: 'Thông tin', icon: 'bulb' },
+    { id: 'overview', title: 'Overview', icon: 'stats-chart' },
+    { id: 'update', title: 'Update', icon: 'create' },
+    { id: 'insights', title: 'Insights', icon: 'bulb' },
   ];
 
   const [bodyMetricsForm, setBodyMetricsForm] = useState({
@@ -172,7 +172,7 @@ const HealthScreen = () => {
       if (bodyMetricsForm.bodyFatPercentage) updateData.bodyFatPercentage = parseFloat(bodyMetricsForm.bodyFatPercentage);
 
       if (Object.keys(updateData).length === 0) {
-        Alert.alert('Thông báo', 'Vui lòng nhập ít nhất một chỉ số để cập nhật');
+        Alert.alert('Notice', 'Please enter at least one metric to update');
         return;
       }
 
@@ -180,7 +180,7 @@ const HealthScreen = () => {
       const response = await bodyMetricsAPI.addBodyMetrics(updateData);
 
       if (response.data) {
-        Alert.alert('Thành công', 'Đã cập nhật chỉ số cơ thể');
+        Alert.alert('Success', 'Body metrics updated');
 
         // Reset form
         setBodyMetricsForm({
@@ -207,7 +207,7 @@ const HealthScreen = () => {
       }
     } catch (error) {
       console.error('Failed to update metrics:', error);
-      Alert.alert('Lỗi', 'Không thể cập nhật chỉ số');
+      Alert.alert('Error', 'Failed to update metrics');
     } finally {
       setUpdating(false);
     }
@@ -285,26 +285,26 @@ const HealthScreen = () => {
     <View style={styles.historyItem}>
       <View style={styles.historyDate}>
         <Text style={styles.historyDateText}>
-          {new Date(item.recordedAt).toLocaleDateString('vi-VN')}
+          {new Date(item.recordedAt).toLocaleDateString('en-US')}
         </Text>
         <Text style={styles.historyTimeText}>
-          {new Date(item.recordedAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+          {new Date(item.recordedAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
         </Text>
       </View>
       <View style={styles.historyValues}>
         <View style={styles.historyValueItem}>
-          <Text style={styles.historyLabel}>Cân nặng</Text>
+          <Text style={styles.historyLabel}>Weight</Text>
           <Text style={styles.historyValue}>{item.weight} kg</Text>
         </View>
         {item.waistCircumference && (
           <View style={styles.historyValueItem}>
-            <Text style={styles.historyLabel}>Vòng eo</Text>
+            <Text style={styles.historyLabel}>Waist</Text>
             <Text style={styles.historyValue}>{item.waistCircumference} cm</Text>
           </View>
         )}
         {item.hipCircumference && (
           <View style={styles.historyValueItem}>
-            <Text style={styles.historyLabel}>Vòng mông</Text>
+            <Text style={styles.historyLabel}>Hips</Text>
             <Text style={styles.historyValue}>{item.hipCircumference} cm</Text>
           </View>
         )}
@@ -316,7 +316,7 @@ const HealthScreen = () => {
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Sức khỏe</Text>
+        <Text style={styles.headerTitle}>Health</Text>
         <TouchableOpacity style={styles.headerButton} onPress={loadTodayData}>
           <Icon name="refresh" size={24} color={colors.primary} />
         </TouchableOpacity>
@@ -351,7 +351,7 @@ const HealthScreen = () => {
         {loading ? (
           <View style={{ paddingVertical: 40, alignItems: 'center' }}>
             <ActivityIndicator size="large" color={colors.primary} />
-            <Text style={{ marginTop: 12, color: colors.textSecondary }}>Đang tải...</Text>
+            <Text style={{ marginTop: 12, color: colors.textSecondary }}>Loading...</Text>
           </View>
         ) : selectedTab === 'overview' && (
           <View>
@@ -361,7 +361,7 @@ const HealthScreen = () => {
                 <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
                   <Icon name="flame" size={32} color={colors.primary} />
                   <View style={{ marginLeft: 12, flex: 1 }}>
-                    <Text style={[styles.metricTitle, { fontSize: 18 }]}>Calo hôm nay</Text>
+                    <Text style={[styles.metricTitle, { fontSize: 18 }]}>Calories Today</Text>
                     <Text style={[styles.metricValue, { fontSize: 28, color: colors.primary }]}>
                       {todayData.caloriesBurned} / {todayData.targetCalories} cal
                     </Text>
@@ -379,7 +379,7 @@ const HealthScreen = () => {
                   />
                 </View>
                 <Text style={[styles.metricTarget, { marginTop: 8 }]}>
-                  {todayData.completedExercisesCount} bài tập đã hoàn thành
+                  {todayData.completedExercisesCount} exercises completed
                 </Text>
               </View>
             )}
@@ -393,7 +393,7 @@ const HealthScreen = () => {
 
             {/* Recent Records */}
             <View style={styles.recordsSection}>
-              <Text style={styles.sectionTitle}>Hoạt động gần đây</Text>
+              <Text style={styles.sectionTitle}>Recent Activity</Text>
               <FlatList
                 data={recentRecords}
                 renderItem={renderRecentRecord}
@@ -406,20 +406,20 @@ const HealthScreen = () => {
 
         {selectedTab === 'update' && (
           <View style={styles.trackContainer}>
-            <Text style={styles.sectionTitle}>Cập nhật chỉ số cơ thể</Text>
+            <Text style={styles.sectionTitle}>Update Body Metrics</Text>
             <Text style={[styles.metricTarget, { marginBottom: 20 }]}>
-              Nhập các chỉ số mới của bạn để cập nhật hồ sơ sức khỏe
+              Enter your new metrics to update your health profile
             </Text>
 
             {/* Weight Input */}
             <View style={styles.inputContainer}>
               <View style={styles.inputHeader}>
                 <Icon name="fitness" size={20} color={colors.primary} />
-                <Text style={styles.inputLabel}>Cân nặng (kg)</Text>
+                <Text style={styles.inputLabel}>Weight (kg)</Text>
               </View>
               <TextInput
                 style={styles.input}
-                placeholder={todayData?.bodyMetrics?.weight ? `Hiện tại: ${todayData.bodyMetrics.weight} kg` : "Nhập cân nặng"}
+                placeholder={todayData?.bodyMetrics?.weight ? `Current: ${todayData.bodyMetrics.weight} kg` : "Enter weight"}
                 value={bodyMetricsForm.weight}
                 onChangeText={(text) => setBodyMetricsForm({ ...bodyMetricsForm, weight: text })}
                 keyboardType="decimal-pad"
@@ -431,11 +431,11 @@ const HealthScreen = () => {
             <View style={styles.inputContainer}>
               <View style={styles.inputHeader}>
                 <Icon name="resize-outline" size={20} color={colors.info} />
-                <Text style={styles.inputLabel}>Chiều cao (cm)</Text>
+                <Text style={styles.inputLabel}>Height (cm)</Text>
               </View>
               <TextInput
                 style={styles.input}
-                placeholder={todayData?.bodyMetrics?.height ? `Hiện tại: ${todayData.bodyMetrics.height} cm` : "Nhập chiều cao"}
+                placeholder={todayData?.bodyMetrics?.height ? `Current: ${todayData.bodyMetrics.height} cm` : "Enter height"}
                 value={bodyMetricsForm.height}
                 onChangeText={(text) => setBodyMetricsForm({ ...bodyMetricsForm, height: text })}
                 keyboardType="decimal-pad"
@@ -447,11 +447,11 @@ const HealthScreen = () => {
             <View style={styles.inputContainer}>
               <View style={styles.inputHeader}>
                 <Icon name="resize" size={20} color={colors.warning} />
-                <Text style={styles.inputLabel}>Vòng eo (cm)</Text>
+                <Text style={styles.inputLabel}>Waist (cm)</Text>
               </View>
               <TextInput
                 style={styles.input}
-                placeholder={todayData?.bodyMetrics?.waistCircumference ? `Hiện tại: ${todayData.bodyMetrics.waistCircumference} cm` : "Nhập vòng eo"}
+                placeholder={todayData?.bodyMetrics?.waistCircumference ? `Current: ${todayData.bodyMetrics.waistCircumference} cm` : "Enter waist"}
                 value={bodyMetricsForm.waistCircumference}
                 onChangeText={(text) => setBodyMetricsForm({ ...bodyMetricsForm, waistCircumference: text })}
                 keyboardType="decimal-pad"
@@ -463,11 +463,11 @@ const HealthScreen = () => {
             <View style={styles.inputContainer}>
               <View style={styles.inputHeader}>
                 <Icon name="resize" size={20} color={colors.success} />
-                <Text style={styles.inputLabel}>Vòng mông (cm)</Text>
+                <Text style={styles.inputLabel}>Hips (cm)</Text>
               </View>
               <TextInput
                 style={styles.input}
-                placeholder={todayData?.bodyMetrics?.hipCircumference ? `Hiện tại: ${todayData.bodyMetrics.hipCircumference} cm` : "Nhập vòng mông"}
+                placeholder={todayData?.bodyMetrics?.hipCircumference ? `Current: ${todayData.bodyMetrics.hipCircumference} cm` : "Enter hips"}
                 value={bodyMetricsForm.hipCircumference}
                 onChangeText={(text) => setBodyMetricsForm({ ...bodyMetricsForm, hipCircumference: text })}
                 keyboardType="decimal-pad"
@@ -479,11 +479,11 @@ const HealthScreen = () => {
             <View style={styles.inputContainer}>
               <View style={styles.inputHeader}>
                 <Icon name="analytics" size={20} color={colors.info} />
-                <Text style={styles.inputLabel}>Tỷ lệ mỡ cơ thể (%)</Text>
+                <Text style={styles.inputLabel}>Body Fat Percentage (%)</Text>
               </View>
               <TextInput
                 style={styles.input}
-                placeholder="Nhập tỷ lệ mỡ (nếu có)"
+                placeholder="Enter body fat (if any)"
                 value={bodyMetricsForm.bodyFatPercentage}
                 onChangeText={(text) => setBodyMetricsForm({ ...bodyMetricsForm, bodyFatPercentage: text })}
                 keyboardType="decimal-pad"
@@ -503,7 +503,7 @@ const HealthScreen = () => {
                 <>
                   <Icon name="checkmark-circle" size={22} color="#fff" />
                   <Text style={[styles.trackButtonText, { color: '#fff', marginLeft: 8 }]}>
-                    Cập nhật chỉ số
+                    Update Metrics
                   </Text>
                 </>
               )}
@@ -513,7 +513,7 @@ const HealthScreen = () => {
 
             {/* History Section */}
             <View style={{ marginTop: 30 }}>
-              <Text style={styles.sectionTitle}>Lịch sử cập nhật</Text>
+              <Text style={styles.sectionTitle}>Update History</Text>
               {metricsHistory.length > 0 ? (
                 <FlatList
                   data={metricsHistory}
@@ -523,7 +523,7 @@ const HealthScreen = () => {
                 />
               ) : (
                 <Text style={[styles.metricTarget, { textAlign: 'center', marginTop: 10 }]}>
-                  Chưa có lịch sử cập nhật
+                  No update history
                 </Text>
               )}
             </View>
@@ -534,9 +534,9 @@ const HealthScreen = () => {
           <View style={styles.insightsContainer}>
             <View style={styles.insightCard}>
               <Icon name="bulb" size={32} color={colors.warning} />
-              <Text style={styles.insightTitle}>Mẹo sức khỏe</Text>
+              <Text style={styles.insightTitle}>Health Tip</Text>
               <Text style={styles.insightDescription}>
-                Duy trì việc theo dõi các chỉ số cơ thể thường xuyên giúp bạn nắm bắt được tiến độ và điều chỉnh kế hoạch tập luyện phù hợp.
+                Regularly tracking your body metrics helps you monitor progress and adjust your workout plan accordingly.
               </Text>
             </View>
           </View>
