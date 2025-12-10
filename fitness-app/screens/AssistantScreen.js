@@ -9,6 +9,8 @@ import {
   Platform,
   ActivityIndicator,
   Alert,
+  Keyboard,
+  TouchableWithoutFeedback,
 } from 'react-native';
 import { Ionicons as Icon } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
@@ -56,7 +58,7 @@ const AssistantScreen = () => {
     try {
       // Call backend AI chat API
       const response = await aiAPI.chat(inputText.trim());
-      
+
       if (response.data.success && response.data.response) {
         const botResponse = {
           id: (Date.now() + 1).toString(),
@@ -71,12 +73,12 @@ const AssistantScreen = () => {
     } catch (error) {
       console.error('Chat error:', error);
       console.error('Error details:', error.response?.data || error.message);
-      
+
       let errorText = "Sorry, I'm having trouble connecting right now. Please try again! 🔄";
-      
+
       // Provide more specific error messages
       const errorMsg = error.response?.data?.error || error.message || '';
-      
+
       if (errorMsg.includes('API key') || errorMsg.includes('not configured')) {
         errorText = "AI service is not configured properly. Please contact support. 🔑";
       } else if (errorMsg.includes('quota')) {
@@ -86,7 +88,7 @@ const AssistantScreen = () => {
       } else if (errorMsg.includes('Unauthorized') || errorMsg.includes('401')) {
         errorText = "Session expired. Please log in again. 🔐";
       }
-      
+
       const errorMessage = {
         id: (Date.now() + 1).toString(),
         text: errorText,
@@ -162,8 +164,8 @@ const AssistantScreen = () => {
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
     >
       {/* Header */}
       <View style={styles.header}>
@@ -181,44 +183,48 @@ const AssistantScreen = () => {
         </View>
       </View>
 
-      {/* Messages */}
-      <FlatList
-        ref={flatListRef}
-        data={messages}
-        renderItem={renderMessage}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.messagesList}
-        onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
-      />
+      {/* Messages - flex: 1 để chiếm hết không gian còn lại */}
+      <View style={{ flex: 1 }}>
+        <FlatList
+          ref={flatListRef}
+          data={messages}
+          renderItem={renderMessage}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.messagesList}
+          onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+        />
 
-      {/* Quick Questions */}
-      {messages.length <= 1 && (
-        <View style={styles.quickQuestionsContainer}>
-          <Text style={styles.quickQuestionsTitle}>Quick Questions:</Text>
-          <View style={styles.quickQuestionsGrid}>
-            {quickQuestions.map((q) => (
-              <TouchableOpacity
-                key={q.id}
-                style={styles.quickQuestionButton}
-                onPress={() => handleQuickQuestion(q.text)}
-              >
-                <Icon name={q.icon} size={20} color="#ffffffff" />
-                <Text style={styles.quickQuestionText}>{q.text}</Text>
-              </TouchableOpacity>
-            ))}
+        {/* Quick Questions */}
+        {messages.length <= 1 && (
+          <View style={styles.quickQuestionsContainer}>
+            <Text style={styles.quickQuestionsTitle}>Quick Questions:</Text>
+            <View style={styles.quickQuestionsGrid}>
+              {quickQuestions.map((q) => (
+                <TouchableOpacity
+                  key={q.id}
+                  style={styles.quickQuestionButton}
+                  onPress={() => handleQuickQuestion(q.text)}
+                >
+                  <Icon name={q.icon} size={20} color="#ffffffff" />
+                  <Text style={styles.quickQuestionText}>{q.text}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
           </View>
-        </View>
-      )}
+        )}
 
-      {/* Loading Indicator */}
-      {loading && (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="small" color="#ffffffff" />
-          <Text style={styles.loadingText}>AI is thinking...</Text>
-        </View>
-      )}
+        {/* Loading Indicator */}
+        {loading && (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="small" color="#ffffffff" />
+            <Text style={styles.loadingText}>AI is thinking...</Text>
+          </View>
+        )}
+      </View>
 
-      {/* Input */}
+      {/* Input - sẽ được đẩy lên bởi KeyboardAvoidingView */}
       <View style={styles.inputContainer}>
         <View style={styles.inputWrapper}>
           <TextInput
@@ -230,6 +236,9 @@ const AssistantScreen = () => {
             multiline
             maxLength={500}
             editable={!loading}
+            onSubmitEditing={sendMessage}
+            blurOnSubmit={false}
+            returnKeyType="send"
           />
           <TouchableOpacity
             style={[

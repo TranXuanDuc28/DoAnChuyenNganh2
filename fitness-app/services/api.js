@@ -112,7 +112,9 @@ export const workoutAPI = {
   getAIWorkoutPlan: (preferences) => api.post('/ai/workout-plan', preferences),
   getExerciseCategories: () => api.get('/workouts/exercise-categories'),
   // AI Workout Plan APIs
-  generateAIWorkoutPlan: (preferences) => api.post('/workout-plans/generate', preferences),
+  generateAIWorkoutPlan: (preferences) => api.post('/workout-plans/generate', preferences, {
+    timeout: 200000, // 200 seconds (3m20s) for AI generation - longer than backend timeout
+  }),
   getActiveWorkoutPlan: () => api.get('/workout-plans/active'),
   getAllWorkoutPlans: () => api.get('/workout-plans'),
   getWorkoutPlanDay: (dayId) => api.get(`/workout-plans/day/${dayId}`),
@@ -135,6 +137,9 @@ export const nutritionAPI = {
   getNutritionGoals: () => api.get('/nutrition/goals'),
   updateNutritionGoals: (goals) => api.put('/nutrition/goals', goals),
   getMealPlans: () => api.get('/nutrition/meal-plans'),
+  generateMealPlan: (preferences) => api.post('/nutrition/meal-plans/generate', preferences, {
+    timeout: 200000, // 200 seconds for AI meal plan generation
+  }),
   createMealPlan: (planData) => api.post('/nutrition/meal-plans', planData),
   getWaterIntake: (date) => api.get(`/nutrition/water?date=${date}`),
   addWaterIntake: (amount) => api.post('/nutrition/water', { amount }),
@@ -189,8 +194,12 @@ export const socialAPI = {
 // AI API
 export const aiAPI = {
   getDailySummary: () => api.get('/ai/daily-summary'),
-  generateWorkoutPlan: (preferences) => api.post('/ai/generate-workout-plan', preferences),
-  generateMealPlan: (preferences) => api.post('/ai/generate-meal-plan', preferences),
+  generateWorkoutPlan: (preferences) => api.post('/ai/generate-workout-plan', preferences, {
+    timeout: 200000, // 200 seconds for AI generation
+  }),
+  generateMealPlan: (preferences) => api.post('/ai/generate-meal-plan', preferences, {
+    timeout: 200000, // 200 seconds for AI generation
+  }),
   getMealPlans: () => api.get('/ai/meal-plans'),
   getMealPlan: (id) => api.get(`/ai/meal-plans/${id}`),
   deleteMealPlan: (id) => api.delete(`/ai/meal-plans/${id}`),

@@ -137,13 +137,38 @@ const WorkoutScreen = ({ navigation }) => {
       const response = await workoutAPI.generateAIWorkoutPlan(preferences);
 
       if (response.data.success) {
-        setActiveWorkoutPlan(response.data.data);
+        const plan = response.data.data;
+        setActiveWorkoutPlan(plan);
         await fetchWorkoutPlans(); // Refresh list
-        alert('Workout plan created successfully!');
+
+        // Enhanced success notification
+        alert(
+          `✅ Workout Plan Created!\n\n` +
+          `📋 ${plan.name}\n` +
+          `⏱️ ${plan.duration} weeks • ${plan.frequency} sessions/week\n` +
+          `📊 ${plan.totalDays} days total\n` +
+          `🎯 Level: ${plan.difficulty}\n\n` +
+          `Your personalized AI workout plan is ready! Start your fitness journey now! 💪`
+        );
       }
     } catch (error) {
       console.error('Failed to generate workout plan:', error);
-      alert('Failed to create workout plan. Please try again.');
+
+      // Better error messages
+      if (error.message && error.message.includes('timeout')) {
+        alert(
+          '⏱️ Generation Timeout\n\n' +
+          'The AI is taking longer than expected to create your plan. ' +
+          'This usually happens when the system is busy.\n\n' +
+          'Please try again in a moment.'
+        );
+      } else {
+        alert(
+          '❌ Failed to Create Plan\n\n' +
+          'We couldn\'t generate your workout plan right now. ' +
+          'Please check your internet connection and try again.'
+        );
+      }
     } finally {
       setGeneratingPlan(false);
     }

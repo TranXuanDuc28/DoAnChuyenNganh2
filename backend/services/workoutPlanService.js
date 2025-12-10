@@ -89,7 +89,16 @@ const generateWorkoutPlan = async (userId, preferences = {}) => {
       locationText = 'At home only';
     }
 
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+    // Configure Gemini model with timeout settings
+    // Set timeout to 3 minutes (180 seconds) to allow sufficient time for plan generation
+    const model = genAI.getGenerativeModel({
+      model: 'gemini-2.5-flash',
+      generationConfig: {
+        temperature: 0.7,
+        topK: 40,
+        topP: 0.95,
+      }
+    });
 
     const prompt = `
 You are a professional fitness trainer and workout program designer. Create a personalized ${duration}-week workout plan for this user.
@@ -214,9 +223,21 @@ Important:
 `;
 
     console.log('Generating workout plan with Gemini AI...');
-    const result = await model.generateContent(prompt);
+    console.log('⏱️ Timeout set to 3 minutes for AI generation');
+
+    // Wrap Gemini API call with timeout (3 minutes = 180 seconds)
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Gemini API timeout after 3 minutes')), 180000);
+    });
+
+    const generationPromise = model.generateContent(prompt);
+
+    // Race between generation and timeout
+    const result = await Promise.race([generationPromise, timeoutPromise]);
     const response = await result.response;
     let text = response.text();
+
+    console.log('✅ Gemini AI response received successfully');
 
     console.log('AI Response (first 500 chars):', text.substring(0, 500));
 
@@ -721,11 +742,13 @@ const getCompletedWorkoutDays = async (userId) => {
           model: WorkoutPlanDay,
           as: 'workoutPlanDay',
           attributes: ['dayName', 'dayNumber', 'focusArea'],
+          required: true, // INNER JOIN to ensure workoutPlanDay exists
           include: [{
             model: WorkoutPlan,
             as: 'workoutPlan',
-            where: { userId },
-            attributes: ['name']
+            where: { userId }, // Filter by userId here
+            attributes: ['name'],
+            required: true // INNER JOIN to ensure only user's plans are included
           }]
         }
       ],

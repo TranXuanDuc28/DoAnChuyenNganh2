@@ -37,7 +37,7 @@ const calculateDailyCalories = (user) => {
 
   // Adjust based on fitness goals
   const primaryGoal = Array.isArray(user.fitnessGoals) ? user.fitnessGoals[0] : user.fitnessGoals;
-  
+
   switch (primaryGoal) {
     case 'lose_weight':
       return Math.round(tdee - 500); // 500 calorie deficit
@@ -59,7 +59,7 @@ const calculateDailyCalories = (user) => {
 const calculateBMI = (weight, height) => {
   const heightInMeters = height / 100;
   const bmi = weight / (heightInMeters * heightInMeters);
-  
+
   let level;
   if (bmi < 18.5) level = 'Underweight';
   else if (bmi < 25) level = 'Normal';
@@ -285,12 +285,32 @@ IMPORTANT:
       throw new Error('GEMINI_API_KEY is not configured');
     }
 
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
-    const result = await model.generateContent(prompt);
+    // Configure Gemini model with timeout settings
+    // Set timeout to 3 minutes (180 seconds) to allow sufficient time for plan generation
+    const model = genAI.getGenerativeModel({
+      model: 'gemini-2.5-flash',
+      generationConfig: {
+        temperature: 0.7,
+        topK: 40,
+        topP: 0.95,
+      }
+    });
+
+    console.log('⏱️ Timeout set to 3 minutes for AI generation');
+
+    // Wrap Gemini API call with timeout (3 minutes = 180 seconds)
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Gemini API timeout after 3 minutes')), 180000);
+    });
+
+    const generationPromise = model.generateContent(prompt);
+
+    // Race between generation and timeout
+    const result = await Promise.race([generationPromise, timeoutPromise]);
     const response = await result.response;
     let text = response.text();
 
-    console.log('✅ Gemini AI response received');
+    console.log('✅ Gemini AI response received successfully');
 
     // Step 7: Parse AI response
     text = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
@@ -348,16 +368,16 @@ IMPORTANT:
 
   } catch (error) {
     console.error('❌ Error generating meal plan:', error);
-    
+
     if (error.message.includes('API key')) {
       throw new Error('Gemini API key is not configured properly');
     }
-    
+
     if (error instanceof SyntaxError) {
       console.error('Failed to parse AI response as JSON');
       throw new Error('Failed to parse meal plan from AI response. Please try again.');
     }
-    
+
     throw error;
   }
 };

@@ -365,6 +365,16 @@ router.post('/meal-plans/generate', auth, async (req, res) => {
     res.json(result);
   } catch (error) {
     console.error('Generate meal plan error:', error);
+
+    // Check if it's a timeout error
+    if (error.message && error.message.includes('timeout')) {
+      return res.status(504).json({
+        success: false,
+        message: 'Meal plan generation timed out. The AI is taking longer than expected. Please try again with fewer days or simpler preferences.',
+        error: 'TIMEOUT'
+      });
+    }
+
     res.status(500).json({
       success: false,
       message: 'Failed to generate meal plan',

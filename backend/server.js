@@ -196,9 +196,17 @@ cron.schedule('*/2 * * * *', async () => {
 console.log('Cron jobs initialized - Workout reminders will run every 2 minutes (TESTING MODE)');
 
 const PORT = process.env.PORT || 5000;
+
+// Set server timeout to 5 minutes (300 seconds) for long-running AI operations
+// This allows Gemini AI to complete workout/meal plan generation without timeout
+httpServer.timeout = 300000; // 5 minutes in milliseconds
+httpServer.keepAliveTimeout = 310000; // Slightly longer than timeout
+httpServer.headersTimeout = 320000; // Slightly longer than keepAliveTimeout
+
 httpServer.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   console.log(`WebSocket server ready for connections`);
+  console.log(`Server timeout set to 5 minutes for AI operations`);
 });
 
 module.exports = { app, io };

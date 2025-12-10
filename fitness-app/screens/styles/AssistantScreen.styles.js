@@ -78,7 +78,7 @@ export const styles = StyleSheet.create({
   messagesList: {
     paddingHorizontal: 16,
     paddingVertical: 20,
-    paddingBottom: 100,
+    paddingBottom: 20,
     ...(isWeb && {
       paddingHorizontal: 24,
       paddingVertical: 24,
@@ -228,10 +228,6 @@ export const styles = StyleSheet.create({
     fontWeight: '500',
   },
   inputContainer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
     backgroundColor: colors.card,
     paddingHorizontal: 16,
     paddingVertical: 12,

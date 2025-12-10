@@ -30,6 +30,16 @@ router.post('/generate', auth, async (req, res) => {
 
   } catch (error) {
     console.error('Generate Workout Plan Error:', error);
+
+    // Check if it's a timeout error
+    if (error.message && error.message.includes('timeout')) {
+      return res.status(504).json({
+        success: false,
+        message: 'Workout plan generation timed out. The AI is taking longer than expected. Please try again with simpler preferences or fewer weeks.',
+        error: 'TIMEOUT'
+      });
+    }
+
     res.status(500).json({
       success: false,
       message: error.message || 'Failed to generate workout plan'
