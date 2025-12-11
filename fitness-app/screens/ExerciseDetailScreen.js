@@ -17,12 +17,23 @@ const { width } = Dimensions.get('window');
 const ExerciseDetailScreen = ({ route, navigation }) => {
   const { exercise } = route.params;
   const [activeTab, setActiveTab] = useState('instructions'); // instructions, tips
-  
+
+  // Debug: Log exercise data to check if instructions and tips exist
+  console.log('Exercise data:', {
+    name: exercise.name,
+    hasInstructions: !!exercise.instructions,
+    instructionsLength: exercise.instructions?.length || 0,
+    instructions: exercise.instructions,
+    hasTips: !!exercise.tips,
+    tipsLength: exercise.tips?.length || 0,
+    tips: exercise.tips
+  });
+
   // Create video player instance only if videoUrl exists
-  const player = exercise.videoUrl 
+  const player = exercise.videoUrl
     ? useVideoPlayer(exercise.videoUrl, player => {
-        player.loop = true;
-      })
+      player.loop = true;
+    })
     : null;
 
   const getDifficultyColor = (difficulty) => {
@@ -61,7 +72,7 @@ const ExerciseDetailScreen = ({ route, navigation }) => {
         >
           <Icon name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        
+
         <Text style={styles.headerTitle}>Chi tiết bài tập</Text>
 
         <TouchableOpacity style={styles.headerButton}>
@@ -96,7 +107,7 @@ const ExerciseDetailScreen = ({ route, navigation }) => {
         {/* Exercise Info */}
         <View style={styles.infoSection}>
           <Text style={styles.exerciseName}>{exercise.name}</Text>
-          
+
           {exercise.description && (
             <Text style={styles.exerciseDescription}>{exercise.description}</Text>
           )}

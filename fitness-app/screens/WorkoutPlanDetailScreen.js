@@ -57,13 +57,14 @@ const WorkoutPlanDetailScreen = ({ route, navigation }) => {
   const [dayDetails, setDayDetails] = useState(null);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [planData, setPlanData] = useState(plan); // Store mutable plan data
 
   useEffect(() => {
     // Auto-select current day or first incomplete day
-    if (plan.currentDay) {
-      handleSelectDay(plan.currentDay);
-    } else if (plan.days && plan.days.length > 0) {
-      const firstIncompleteDay = plan.days.find(d => !d.isCompleted);
+    if (planData.currentDay) {
+      handleSelectDay(planData.currentDay);
+    } else if (planData.days && planData.days.length > 0) {
+      const firstIncompleteDay = planData.days.find(d => !d.isCompleted);
       if (firstIncompleteDay) {
         handleSelectDay(firstIncompleteDay);
       }
@@ -98,15 +99,49 @@ const WorkoutPlanDetailScreen = ({ route, navigation }) => {
           text: 'Hoàn thành',
           onPress: async () => {
             try {
+              setLoading(true);
               const response = await workoutAPI.completeWorkoutDay(selectedDay.id);
               if (response.data.success) {
-                Alert.alert('Chúc mừng!', 'Bạn đã hoàn thành buổi tập!');
-                // Refresh the screen
-                navigation.goBack();
+                // Update local state immediately
+                const updatedDay = { ...selectedDay, isCompleted: true, completedAt: new Date().toISOString() };
+                setSelectedDay(updatedDay);
+
+                // Update plan days
+                const updatedDays = planData.days.map(day =>
+                  day.id === selectedDay.id
+                    ? updatedDay
+                    : day
+                );
+                setPlanData({ ...planData, days: updatedDays });
+
+                // Reload day details to get updated exercise completion status
+                const dayResponse = await workoutAPI.getWorkoutPlanDay(selectedDay.id);
+                if (dayResponse.data.success) {
+                  setDayDetails(dayResponse.data.data);
+                }
+
+                Alert.alert(
+                  'Chúc mừng! 🎉',
+                  'Bạn đã hoàn thành buổi tập!\n\nTiếp tục phát huy nhé! 💪',
+                  [
+                    {
+                      text: 'OK',
+                      onPress: () => {
+                        // Find next incomplete day
+                        const nextDay = updatedDays.find(d => !d.isCompleted && d.dayNumber > selectedDay.dayNumber);
+                        if (nextDay) {
+                          handleSelectDay(nextDay);
+                        }
+                      }
+                    }
+                  ]
+                );
               }
             } catch (error) {
               console.error('Failed to complete day:', error);
-              Alert.alert('Lỗi', 'Không thể hoàn thành buổi tập');
+              Alert.alert('Lỗi', 'Không thể hoàn thành buổi tập. Vui lòng thử lại.');
+            } finally {
+              setLoading(false);
             }
           },
         },
@@ -120,7 +155,7 @@ const WorkoutPlanDetailScreen = ({ route, navigation }) => {
     const isRestDay = item.isRestDay;
 
     // Calculate current day number based on plan startDate
-    const currentDayNumber = getCurrentDayNumber(plan.startDate, plan.duration);
+    const currentDayNumber = getCurrentDayNumber(planData.startDate, planData.duration);
     const isPastDay = currentDayNumber ? item.dayNumber < currentDayNumber : false;
     const isDisabled = isPastDay && !isCompleted; // Disable past days that are not completed
 
@@ -179,7 +214,7 @@ const WorkoutPlanDetailScreen = ({ route, navigation }) => {
     const isCompleted = item.isCompleted; // Check if exercise is completed
 
     // Check if this is a past day
-    const currentDayNumber = getCurrentDayNumber(plan.startDate, plan.duration);
+    const currentDayNumber = getCurrentDayNumber(planData.startDate, planData.duration);
     const isPastDay = currentDayNumber && selectedDay ? selectedDay.dayNumber < currentDayNumber : false;
     const isDisabled = (isPastDay && !isCompleted) || isCompleted; // Disable if past day (and not completed) or already completed
 
@@ -316,9 +351,9 @@ const WorkoutPlanDetailScreen = ({ route, navigation }) => {
           <Icon name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
         <View style={styles.headerTitleContainer}>
-          <Text style={styles.headerTitle}>{plan.name}</Text>
+          <Text style={styles.headerTitle}>{planData.name}</Text>
           <Text style={styles.headerSubtitle}>
-            {plan.duration} tuần • {plan.frequency} buổi/tuần
+            {planData.duration} tuần • {planData.frequency} buổi/tuần
           </Text>
         </View>
       </View>
@@ -327,11 +362,12 @@ const WorkoutPlanDetailScreen = ({ route, navigation }) => {
       <View style={styles.daysContainer}>
         <FlatList
           horizontal
-          data={plan.days || []}
+          data={planData.days || []}
           renderItem={renderDayItem}
           keyExtractor={(item) => item.id.toString()}
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.daysList}
+          extraData={planData.days} // Re-render when days change
         />
       </View>
 
@@ -411,7 +447,7 @@ const WorkoutPlanDetailScreen = ({ route, navigation }) => {
       {/* Complete Button */}
       {selectedDay && !selectedDay.isCompleted && (() => {
         // Check if this is a past day
-        const currentDayNumber = getCurrentDayNumber(plan.startDate, plan.duration);
+        const currentDayNumber = getCurrentDayNumber(planData.startDate, planData.duration);
         const isPastDay = currentDayNumber ? selectedDay.dayNumber < currentDayNumber : false;
 
         // Don't show complete button for past days
@@ -435,299 +471,3 @@ const WorkoutPlanDetailScreen = ({ route, navigation }) => {
 };
 
 export default WorkoutPlanDetailScreen;
-
-/*
-// Styles moved to ./styles/WorkoutPlanDetailScreen.styles.js
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    backgroundColor: colors.card,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  backButton: {
-    marginRight: 12,
-  },
-  headerTitleContainer: {
-    flex: 1,
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: colors.text,
-  },
-  headerSubtitle: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    marginTop: 2,
-  },
-  daysContainer: {
-    backgroundColor: colors.card,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-    paddingVertical: 12,
-  },
-  daysList: {
-    paddingHorizontal: 16,
-  },
-  dayItem: {
-    width: 60,
-    marginHorizontal: 4,
-    paddingVertical: 12,
-    paddingHorizontal: 8,
-    borderRadius: 12,
-    backgroundColor: colors.background,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  dayItemSelected: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
-  },
-  dayItemCompleted: {
-    backgroundColor: colors.successLight,
-    borderColor: colors.success,
-  },
-  dayItemContent: {
-    alignItems: 'center',
-  },
-  dayItemHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  dayNumber: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: colors.text,
-  },
-  dayNumberSelected: {
-    color: '#fff',
-  },
-  dayNumberCompleted: {
-    color: colors.success,
-  },
-  dayItemText: {
-    fontSize: 10,
-    color: colors.textSecondary,
-    textAlign: 'center',
-  },
-  dayItemTextSelected: {
-    color: '#fff',
-  },
-  content: {
-    flex: 1,
-  },
-  loadingContainer: {
-    paddingVertical: 40,
-    alignItems: 'center',
-  },
-  dayHeader: {
-    padding: 20,
-    backgroundColor: colors.card,
-    marginBottom: 12,
-  },
-  dayTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: colors.text,
-    marginBottom: 4,
-  },
-  dayFocus: {
-    fontSize: 16,
-    color: colors.textSecondary,
-    marginBottom: 16,
-  },
-  dayStats: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-  },
-  dayStat: {
-    alignItems: 'center',
-  },
-  dayStatValue: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: colors.text,
-    marginTop: 4,
-  },
-  dayStatLabel: {
-    fontSize: 12,
-    color: colors.textSecondary,
-    marginTop: 2,
-  },
-  restDayContainer: {
-    alignItems: 'center',
-    paddingVertical: 60,
-    paddingHorizontal: 40,
-  },
-  restDayTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: colors.text,
-    marginTop: 16,
-    marginBottom: 8,
-  },
-  restDayText: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    lineHeight: 20,
-  },
-  notesContainer: {
-    flexDirection: 'row',
-    backgroundColor: colors.primaryLight,
-    padding: 16,
-    marginHorizontal: 20,
-    marginBottom: 12,
-    borderRadius: 12,
-  },
-  notesText: {
-    flex: 1,
-    fontSize: 14,
-    color: colors.text,
-    marginLeft: 12,
-    lineHeight: 20,
-  },
-  exercisesSection: {
-    paddingHorizontal: 20,
-    paddingBottom: 100,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: colors.text,
-    marginBottom: 16,
-  },
-  exerciseItem: {
-    flexDirection: 'row',
-    backgroundColor: colors.card,
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  exerciseNumber: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: colors.primaryLight,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-  exerciseNumberText: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: colors.primary,
-  },
-  exerciseContent: {
-    flex: 1,
-  },
-  exerciseName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.text,
-    marginBottom: 6,
-  },
-  exerciseDescription: {
-    fontSize: 13,
-    color: colors.textSecondary,
-    marginBottom: 8,
-    lineHeight: 18,
-  },
-  exerciseMeta: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginBottom: 8,
-  },
-  exerciseMetaItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginRight: 16,
-    marginBottom: 4,
-  },
-  exerciseMetaText: {
-    fontSize: 12,
-    color: colors.textSecondary,
-    marginLeft: 4,
-  },
-  exerciseDetails: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginTop: 8,
-  },
-  exerciseDetailItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.primaryLight,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 8,
-    marginRight: 8,
-    marginBottom: 8,
-  },
-  exerciseDetailText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: colors.primary,
-    marginLeft: 6,
-  },
-  exerciseNotes: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginTop: 8,
-    paddingTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-  },
-  exerciseNotesText: {
-    flex: 1,
-    fontSize: 12,
-    color: colors.textSecondary,
-    marginLeft: 6,
-    fontStyle: 'italic',
-  },
-  emptyContainer: {
-    paddingVertical: 60,
-    alignItems: 'center',
-  },
-  emptyText: {
-    fontSize: 14,
-    color: colors.textSecondary,
-  },
-  footer: {
-    padding: 20,
-    backgroundColor: colors.card,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-  },
-  completeButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.success,
-    paddingVertical: 16,
-    borderRadius: 12,
-  },
-  completeButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginLeft: 8,
-  },
-});
-*/
-

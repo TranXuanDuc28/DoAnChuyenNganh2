@@ -48,6 +48,7 @@ const WorkoutScreen = ({ navigation }) => {
   const [exerciseCategories, setExerciseCategories] = useState([]);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [categoriesError, setCategoriesError] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
 
   // AI Workout Plan states
   const [activeWorkoutPlan, setActiveWorkoutPlan] = useState(null);
@@ -197,6 +198,42 @@ const WorkoutScreen = ({ navigation }) => {
       console.error('Failed to load history:', error);
     } finally {
       setHistoryLoading(false);
+    }
+  };
+
+  // Reload current tab data
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      if (selectedTab === 'plans') {
+        await fetchWorkoutPlans();
+      } else if (selectedTab === 'history') {
+        await fetchHistory();
+      } else if (selectedTab === 'exercises') {
+        // Reload categories
+        setCategoriesLoading(true);
+        setCategoriesError('');
+        try {
+          const { data } = await workoutAPI.getExerciseCategories();
+          const normalized = (data || []).map((item) => ({
+            id: item.id,
+            name: item.name,
+            englishName: item.englishName || item.english_name,
+            imageUrl: item.imageUrl || item.image_url,
+            imageKey: item.imageKey || item.image_key,
+            backgroundColor: item.backgroundColor || item.background_color || '#f1f5f9',
+            exerciseCount: Number(item.exerciseCount ?? 0),
+          }));
+          setExerciseCategories(normalized);
+        } catch (error) {
+          console.error('Failed to load exercise categories', error);
+          setCategoriesError('Unable to load exercise categories.');
+        } finally {
+          setCategoriesLoading(false);
+        }
+      }
+    } finally {
+      setRefreshing(false);
     }
   };
 
@@ -452,7 +489,17 @@ const WorkoutScreen = ({ navigation }) => {
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Workouts</Text>
-
+        <TouchableOpacity
+          onPress={handleRefresh}
+          style={styles.headerButton}
+          disabled={refreshing}
+        >
+          <Icon
+            name={refreshing ? "sync" : "refresh"}
+            size={22}
+            color={colors.primary}
+          />
+        </TouchableOpacity>
       </View>
 
       {/* Tabs */}

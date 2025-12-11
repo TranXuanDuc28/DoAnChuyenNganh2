@@ -759,27 +759,31 @@ def inference_optimized(video_path, output_path=None,
             if roi.shape[:2] == graph.shape[:2]:
                 frame[y:y+h, x:x+w] = cv2.addWeighted(roi, 0.4, graph, 0.6, 0)
         
-        # Text rendering with cache
+        # Text rendering with cache - LARGER & BOLDER
+        # Số lần
         frame = text_renderer.render(frame, f"Số lần: {pose_count}", 
-                                     (width - 250, 30), font_size=35, color=(0, 0, 255))
+                                     (width - 350, 60), font_size=55, color=(0, 0, 255))
         
+        # Bài tập & Độ tin cậy
         frame = text_renderer.render(frame, f"Bài tập: {best_action_name}", 
-                                     (20, height - 150), font_size=30, color=(255, 0, 0))
+                                     (30, height - 200), font_size=45, color=(255, 0, 0))
         
         frame = text_renderer.render(frame, f"Độ tin cậy: {classify_prob:.2f}", 
-                                     (20, height - 110), font_size=24, color=(0, 255, 0))
+                                     (30, height - 140), font_size=35, color=(0, 255, 0))
         
+        # Điểm số
         score_color = (0, 255, 0) if current_form_score >= 85 else \
                      (0, 255, 255) if current_form_score >= 70 else (0, 0, 255)
         
         frame = text_renderer.render(frame, f"Điểm: {current_form_score:.0f}/100", 
-                                     (width - 250, 80), font_size=30, color=score_color)
+                                     (width - 350, 140), font_size=50, color=score_color)
         
-        y_offset = height - 70
+        # Feedback messages
+        y_offset = height - 90
         for feedback_text in current_feedback[:3]:
             frame = text_renderer.render(frame, feedback_text, 
-                                        (20, y_offset), font_size=22, color=(255, 255, 0))
-            y_offset += 30
+                                        (30, y_offset), font_size=32, color=(255, 255, 0))
+            y_offset += 40
         
         out_video.write(frame)
     

@@ -15,6 +15,7 @@ const Exercises = () => {
   const [videoFile, setVideoFile] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
   const [exerciseCategories, setExerciseCategories] = useState([]);
+  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState(''); // New filter state
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -37,7 +38,7 @@ const Exercises = () => {
   useEffect(() => {
     fetchExercises();
     fetchExerciseCategories();
-  }, [page, search]);
+  }, [page, search, selectedCategoryFilter]); // Added selectedCategoryFilter dependency
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -46,7 +47,7 @@ const Exercises = () => {
         setShowCategoryDropdown(false);
       }
     };
-    
+
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showCategoryDropdown]);
@@ -68,7 +69,8 @@ const Exercises = () => {
         limit: 20,
         search,
         category: '',
-        difficulty: ''
+        difficulty: '',
+        categoryId: selectedCategoryFilter || undefined // Add category filter
       });
       setExercises(response.data.exercises);
       setTotalPages(response.data.pagination.totalPages);
@@ -109,12 +111,12 @@ const Exercises = () => {
     setImageFile(null);
     setVideoFile(null);
     setImagePreview(exercise.imageUrl || '');
-    
+
     // Extract category IDs from the categories array
     const categoryIds = exercise.categories && Array.isArray(exercise.categories)
       ? exercise.categories.map(cat => cat.id)
       : [];
-    
+
     setFormData({
       name: exercise.name || '',
       description: exercise.description || '',
@@ -158,7 +160,7 @@ const Exercises = () => {
     e.preventDefault();
     try {
       const submitFormData = new FormData();
-      
+
       // Add all form fields
       Object.keys(formData).forEach(key => {
         if (Array.isArray(formData[key])) {
@@ -224,6 +226,31 @@ const Exercises = () => {
             setPage(1);
           }}
         />
+        <select
+          value={selectedCategoryFilter}
+          onChange={(e) => {
+            setSelectedCategoryFilter(e.target.value);
+            setPage(1);
+          }}
+          style={{
+            marginLeft: '12px',
+            padding: '10px 12px',
+            border: '1px solid #e2e8f0',
+            borderRadius: '8px',
+            backgroundColor: '#fff',
+            cursor: 'pointer',
+            fontSize: '14px',
+            color: '#1e293b',
+            minWidth: '200px'
+          }}
+        >
+          <option value="">Tất cả nhóm cơ</option>
+          {exerciseCategories.map((cat) => (
+            <option key={cat.id} value={cat.id}>
+              {cat.name} {cat.english_name ? `(${cat.english_name})` : ''}
+            </option>
+          ))}
+        </select>
       </div>
 
       {loading ? (
@@ -253,21 +280,21 @@ const Exercises = () => {
                       <td>{exercise.id}</td>
                       <td>
                         {exercise.imageUrl ? (
-                          <img 
-                            src={exercise.imageUrl} 
+                          <img
+                            src={exercise.imageUrl}
                             alt={exercise.name}
-                            style={{ 
-                              width: '50px', 
-                              height: '50px', 
-                              objectFit: 'cover', 
-                              borderRadius: '8px' 
+                            style={{
+                              width: '50px',
+                              height: '50px',
+                              objectFit: 'cover',
+                              borderRadius: '8px'
                             }}
                           />
                         ) : (
-                          <div style={{ 
-                            width: '50px', 
-                            height: '50px', 
-                            background: '#f1f5f9', 
+                          <div style={{
+                            width: '50px',
+                            height: '50px',
+                            background: '#f1f5f9',
                             borderRadius: '8px',
                             display: 'flex',
                             alignItems: 'center',
@@ -282,8 +309,8 @@ const Exercises = () => {
                         <div style={{ fontWeight: '600' }}>{exercise.name}</div>
                         {exercise.description && (
                           <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
-                            {exercise.description.length > 50 
-                              ? exercise.description.substring(0, 50) + '...' 
+                            {exercise.description.length > 50
+                              ? exercise.description.substring(0, 50) + '...'
                               : exercise.description}
                           </div>
                         )}
@@ -314,11 +341,11 @@ const Exercises = () => {
                       </td>
                       <td>
                         <div style={{ fontSize: '13px' }}>
-                          {exercise.sets && exercise.reps 
-                            ? `${exercise.sets} × ${exercise.reps}` 
-                            : exercise.duration 
-                            ? `${exercise.duration}s` 
-                            : '-'}
+                          {exercise.sets && exercise.reps
+                            ? `${exercise.sets} × ${exercise.reps}`
+                            : exercise.duration
+                              ? `${exercise.duration}s`
+                              : '-'}
                         </div>
                       </td>
                       <td>{exercise.videoUrl ? '✓' : '✗'}</td>
@@ -449,7 +476,7 @@ const Exercises = () => {
                     </div>
                     <span style={{ marginLeft: '8px', color: '#64748b' }}>▼</span>
                   </div>
-                  
+
                   {showCategoryDropdown && (
                     <div
                       style={{
@@ -518,7 +545,7 @@ const Exercises = () => {
                 </small>
               </div>
 
-              
+
 
               <div className="form-group">
                 <label>Thiết bị cần thiết</label>
@@ -526,9 +553,9 @@ const Exercises = () => {
                   type="text"
                   placeholder="VD: Tạ đơn, Ghế tập, Thanh xà (phân cách bằng dấu phẩy)"
                   value={formData.equipment.join(', ')}
-                  onChange={(e) => setFormData({ 
-                    ...formData, 
-                    equipment: e.target.value.split(',').map(s => s.trim()).filter(s => s) 
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    equipment: e.target.value.split(',').map(s => s.trim()).filter(s => s)
                   })}
                 />
               </div>
@@ -591,9 +618,9 @@ const Exercises = () => {
                   rows="4"
                   placeholder="Mỗi bước một dòng"
                   value={formData.instructions.join('\n')}
-                  onChange={(e) => setFormData({ 
-                    ...formData, 
-                    instructions: e.target.value.split('\n').filter(s => s.trim()) 
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    instructions: e.target.value.split('\n').filter(s => s.trim())
                   })}
                 />
                 <small style={{ display: 'block', marginTop: '4px', color: '#64748b' }}>
@@ -607,9 +634,9 @@ const Exercises = () => {
                   rows="3"
                   placeholder="Mỗi tip một dòng"
                   value={formData.tips.join('\n')}
-                  onChange={(e) => setFormData({ 
-                    ...formData, 
-                    tips: e.target.value.split('\n').filter(s => s.trim()) 
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    tips: e.target.value.split('\n').filter(s => s.trim())
                   })}
                 />
                 <small style={{ display: 'block', marginTop: '4px', color: '#64748b' }}>
@@ -625,14 +652,14 @@ const Exercises = () => {
                 />
                 {imagePreview && (
                   <div style={{ marginTop: '10px' }}>
-                    <img 
-                      src={imagePreview} 
-                      alt="Preview" 
-                      style={{ 
-                        width: '200px', 
-                        height: '150px', 
-                        objectFit: 'cover', 
-                        borderRadius: '8px' 
+                    <img
+                      src={imagePreview}
+                      alt="Preview"
+                      style={{
+                        width: '200px',
+                        height: '150px',
+                        objectFit: 'cover',
+                        borderRadius: '8px'
                       }}
                     />
                   </div>
@@ -673,5 +700,4 @@ const Exercises = () => {
 };
 
 export default Exercises;
-
 

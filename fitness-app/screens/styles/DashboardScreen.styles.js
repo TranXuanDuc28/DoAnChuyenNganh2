@@ -7,7 +7,7 @@ const isWeb = Platform.OS === 'web';
 export const styles = StyleSheet.create({
   container: {
     flex: 1,
-    
+
     backgroundColor: colors.background,
     ...(isWeb && {
       maxWidth: 1200,
@@ -204,6 +204,14 @@ export const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     alignItems: 'center', // Center chart
+  },
+  chartSubtitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.textSecondary,
+    marginBottom: 8,
+    alignSelf: 'flex-start',
+    marginLeft: 10,
   },
   chart: {
     borderRadius: 16,

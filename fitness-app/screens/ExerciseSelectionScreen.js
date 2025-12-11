@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,144 +6,50 @@ import {
   ScrollView,
   TouchableOpacity,
   StatusBar,
+  ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import colors from '../theme/colors';
+import { poseAPI } from '../services/api';
 
 const ExerciseSelectionScreen = () => {
   const navigation = useNavigation();
+  const [exercises, setExercises] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState(null);
 
-  const exercises = [
-    // =====================================
-    // 🎯 START FEATURE — chức năng hệ thống
-    // =====================================
-    {
-      id: 'start-pose',
-      name: 'Bắt đầu nhận diện',
-      color: colors.iconInfo,
-      gradient: [colors.iconInfo, colors.iconSuccess],
-      icon: '🚀',
-      description: 'Khởi động camera và bắt đầu phân tích tư thế',
-      mode: 'system', // 🚀 Thêm loại chức năng
-    },
+  // Fetch exercises from API
+  const fetchExercises = async () => {
+    try {
+      setError(null);
+      const response = await poseAPI.getExercises();
+      if (response.data.success) {
+        setExercises(response.data.exercises);
+      } else {
+        setError('Không thể tải danh sách bài tập');
+      }
+    } catch (err) {
+      console.error('Error fetching exercises:', err);
+      setError('Lỗi kết nối. Vui lòng thử lại sau.');
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
 
-    // =====================================
-    // 🧘 Yoga – Nhận diện bằng ảnh (image)
-    // =====================================
-    {
-      id: 'Tree_Pose',
-      name: 'Tree Pose',
-      color: colors.primary,
-      gradient: [colors.warning, colors.iconWarning],
-      icon: '🌳',
-      description: 'Tư thế cái cây - cải thiện thăng bằng và sức mạnh chân',
-      mode: 'image',
-    },
-    {
-      id: 'Half_Moon_Pose',
-      name: 'Half Moon Pose',
-      color: colors.primary,
-      gradient: [colors.warning, colors.iconWarning],
-      icon: '🌙',
-      description: 'Tư thế bán nguyệt - tăng sức mạnh chân và cải thiện thăng bằng',
-      mode: 'image',
-    },
-    {
-      id: 'Butterfly_Pose',
-      name: 'Butterfly Pose',
-      color: colors.primary,
-      gradient: [colors.warning, colors.iconWarning],
-      icon: '🦋',
-      description: 'Tư thế con bướm - mở hông và kéo giãn đùi trong',
-      mode: 'image',
-    },
-    {
-      id: 'Downward_Facing_Dog',
-      name: 'Downward Facing Dog',
-      color: colors.primary,
-      gradient: [colors.warning, colors.iconWarning],
-      icon: '🐶',
-      description: 'Tư thế chó úp mặt - kéo giãn và tăng sức mạnh toàn thân',
-      mode: 'image',
-    },
-    {
-      id: 'Dancer_Pose',
-      name: 'Dancer Pose',
-      color: colors.primary,
-      gradient: [colors.warning, colors.iconWarning],
-      icon: '💃',
-      description: 'Tư thế vũ công - tăng sự dẻo dai và tập trung',
-      mode: 'image',
-    },
-    {
-      id: 'Triangle_Pose',
-      name: 'Triangle Pose',
-      color: colors.primary,
-      gradient: [colors.warning, colors.iconWarning],
-      icon: '🔺',
-      description: 'Tư thế tam giác - kéo giãn hai bên thân và mạnh chân',
-      mode: 'image',
-    },
-    {
-      id: 'Goddess_Pose',
-      name: 'Goddess Pose',
-      color: colors.primary,
-      gradient: [colors.warning, colors.iconWarning],
-      icon: '👑',
-      description: 'Tư thế nữ thần - tăng sức mạnh thân dưới',
-      mode: 'image',
-    },
-    {
-      id: 'Warrior_Pose',
-      name: 'Warrior Pose',
-      color: colors.primary,
-      gradient: [colors.warning, colors.iconWarning],
-      icon: '⚔️',
-      description: 'Tư thế chiến binh - tăng sức mạnh và độ bền',
-      mode: 'image',
-    },
+  // Load exercises on mount
+  useEffect(() => {
+    fetchExercises();
+  }, []);
 
-    // =====================================
-    // 🏋️ Bài tập động – cần video (video)
-    // =====================================
-    {
-      id: 'push-ups',
-      name: 'Push Ups',
-      color: colors.primary,
-      gradient: [colors.primaryDark, colors.primary],
-      icon: '🏋️',
-      description: 'Chống đẩy',
-      mode: 'video',
-    },
-    {
-      id: 'squats',
-      name: 'Squats',
-      color: colors.primary,
-      gradient: [colors.primaryDark, colors.primary],
-      icon: '🦵',
-      description: 'Ngồi xổm',
-      mode: 'video',
-    },
-    {
-      id: 'plank',
-      name: 'Plank',
-      color: colors.iconSuccess,
-      gradient: [colors.warning, colors.iconWarning],
-      icon: '🤸',
-      description: 'Tư thế Tấm ván',
-      mode: 'video',
-    },
-    {
-      id: 'jumping-jack',
-      name: 'Jumping Jack',
-      color: colors.primary,
-      gradient: [colors.primaryDark, colors.primary],
-      icon: '🤸',
-      description: 'Nhảy dây',
-      mode: 'video',
-    },
-  ];
+  // Pull to refresh handler
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchExercises();
+  };
 
   const handleExercisePress = (exercise) => {
     if (exercise.id === 'start-pose') {
@@ -156,6 +62,51 @@ const ExerciseSelectionScreen = () => {
       });
     }
   };
+
+  // Loading state
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <StatusBar barStyle="dark-content" backgroundColor={colors.primary} />
+        <LinearGradient
+          colors={colors.gradients.primary}
+          style={styles.header}
+        >
+          <Text style={styles.title}>AI Workout</Text>
+        </LinearGradient>
+        <View style={styles.centerContainer}>
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text style={styles.loadingText}>Đang tải bài tập...</Text>
+        </View>
+      </View>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <View style={styles.container}>
+        <StatusBar barStyle="dark-content" backgroundColor={colors.primary} />
+        <LinearGradient
+          colors={colors.gradients.primary}
+          style={styles.header}
+        >
+          <Text style={styles.title}>AI Workout</Text>
+        </LinearGradient>
+        <View style={styles.centerContainer}>
+          <Text style={styles.errorIcon}>⚠️</Text>
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity
+            style={styles.retryButton}
+            onPress={fetchExercises}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.retryButtonText}>Thử lại</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -171,6 +122,14 @@ const ExerciseSelectionScreen = () => {
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[colors.primary]}
+            tintColor={colors.primary}
+          />
+        }
       >
         {exercises.map((exercise) => (
           <TouchableOpacity
@@ -289,6 +248,39 @@ const styles = StyleSheet.create({
   arrow: {
     fontSize: 24,
     color: colors.white,
+    fontWeight: 'bold',
+  },
+  // Loading and error states
+  centerContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: colors.textSecondary,
+  },
+  errorIcon: {
+    fontSize: 64,
+    marginBottom: 16,
+  },
+  errorText: {
+    fontSize: 16,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  retryButton: {
+    backgroundColor: colors.primary,
+    paddingHorizontal: 32,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: colors.white,
+    fontSize: 16,
     fontWeight: 'bold',
   },
 });

@@ -133,12 +133,40 @@ const Exercise = sequelize.define('Exercise', {
   instructions: {
     type: DataTypes.JSON,
     defaultValue: [],
-    comment: 'Array of instruction steps'
+    comment: 'Array of instruction steps',
+    get() {
+      const rawValue = this.getDataValue('instructions');
+      if (!rawValue) return [];
+      if (Array.isArray(rawValue)) return rawValue;
+      if (typeof rawValue === 'string') {
+        try {
+          const parsed = JSON.parse(rawValue);
+          return Array.isArray(parsed) ? parsed : [];
+        } catch {
+          return [];
+        }
+      }
+      return [];
+    }
   },
   tips: {
     type: DataTypes.JSON,
     defaultValue: [],
-    comment: 'Array of tips'
+    comment: 'Array of tips',
+    get() {
+      const rawValue = this.getDataValue('tips');
+      if (!rawValue) return [];
+      if (Array.isArray(rawValue)) return rawValue;
+      if (typeof rawValue === 'string') {
+        try {
+          const parsed = JSON.parse(rawValue);
+          return Array.isArray(parsed) ? parsed : [];
+        } catch {
+          return [];
+        }
+      }
+      return [];
+    }
   },
   videoUrl: {
     type: DataTypes.STRING,

@@ -214,6 +214,7 @@ export const aiAPI = {
 
 // Pose API
 export const poseAPI = {
+  getExercises: () => api.get('/pose/exercises'),
   evaluate: ({ user_id, exerciseName, imageBase64, keypoints }) =>
     api.post('/pose/evaluate', { user_id, exerciseName, imageBase64, keypoints }),
   evaluatePose: ({ imageBase64 }) => api.post('/pose/evaluate-pose', { imageBase64 }),
@@ -259,6 +260,13 @@ export const videoAnalysisAPI = {
 export const notificationAPI = {
   getNotifications: () => api.get('/notifications'),
   markAsRead: (notificationIds) => api.post('/notifications/mark-read', { notificationIds }),
+};
+
+// Dashboard API
+export const dashboardAPI = {
+  getStats: () => api.get('/dashboard/stats'),
+  getWeeklyProgress: () => api.get('/dashboard/weekly-progress'),
+  getRecommendations: () => api.get('/dashboard/recommendations'),
 };
 
 export default api;

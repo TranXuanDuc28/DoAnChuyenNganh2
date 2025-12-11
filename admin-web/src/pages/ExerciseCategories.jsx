@@ -278,7 +278,7 @@ const ExerciseCategories = () => {
                             )}
                           </div>
                           <div>
-                            <div style={{ fontWeight: 600 }}>{category.name}</div>
+                            <div style={{ fontWeight: 60, fontSize: '2rem' }}>{category.name}</div>
                            
                           </div>
                         </div>
@@ -465,4 +465,3 @@ const ExerciseCategories = () => {
 };
 
 export default ExerciseCategories;
-

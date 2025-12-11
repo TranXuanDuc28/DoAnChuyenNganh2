@@ -7,6 +7,7 @@ import {
   Dimensions,
   RefreshControl,
   ImageBackground,
+  ActivityIndicator,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons as Icon } from '@expo/vector-icons';
@@ -14,59 +15,71 @@ import { LineChart, BarChart } from 'react-native-chart-kit';
 import { useAuth } from '../context/AuthContext';
 import colors from '../theme/colors';
 import { styles } from './styles/DashboardScreen.styles';
+import { dashboardAPI } from '../services/api';
 
 const { width } = Dimensions.get('window');
 
 const DashboardScreen = () => {
   const { user } = useAuth();
+  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState(null);
+
   const [todayStats, setTodayStats] = useState({
-    steps: 8450,
-    calories: 320,
-    activeMinutes: 45,
-    water: 6,
-    sleep: 7.5,
-    heartRate: 72,
+    steps: 0,
+    calories: 0,
+    activeMinutes: 0,
+    water: 0,
+    sleep: 0,
+    heartRate: 0,
   });
 
   const [weeklyData, setWeeklyData] = useState({
-    steps: [8000, 9200, 7800, 10500, 8800, 9600, 8450],
-    calories: [280, 320, 290, 380, 310, 340, 320],
+    steps: [0, 0, 0, 0, 0, 0, 0],
+    calories: [0, 0, 0, 0, 0, 0, 0],
   });
 
-  const [aiRecommendations, setAiRecommendations] = useState([
-    {
-      id: 1,
-      type: 'workout',
-      title: 'Try a 20-minute HIIT workout',
-      description: 'Based on your activity level, a high-intensity workout would be perfect today.',
-      icon: 'fitness',
-      color: colors.primary,
-    },
-    {
-      id: 2,
-      type: 'nutrition',
-      title: 'Increase protein intake',
-      description: 'Your protein consumption is below your goal. Try adding a protein shake.',
-      icon: 'restaurant',
-      color: colors.success,
-    },
-    {
-      id: 3,
-      type: 'sleep',
-      title: 'Improve sleep quality',
-      description: 'Your sleep score is 7.5/10. Try going to bed 30 minutes earlier.',
-      icon: 'bed',
-      color: colors.warning,
-    },
-  ]);
+  const [aiRecommendations, setAiRecommendations] = useState([]);
+
+  // Fetch all dashboard data
+  const fetchDashboardData = async () => {
+    try {
+      setError(null);
+
+      // Fetch all data in parallel
+      const [statsRes, weeklyRes, recommendationsRes] = await Promise.all([
+        dashboardAPI.getStats(),
+        dashboardAPI.getWeeklyProgress(),
+        dashboardAPI.getRecommendations(),
+      ]);
+
+      if (statsRes.data.success) {
+        setTodayStats(statsRes.data.stats);
+      }
+
+      if (weeklyRes.data.success) {
+        setWeeklyData(weeklyRes.data.weeklyData);
+      }
+
+      if (recommendationsRes.data.success) {
+        setAiRecommendations(recommendationsRes.data.recommendations);
+      }
+    } catch (err) {
+      console.error('Error fetching dashboard data:', err);
+      setError('Không thể tải dữ liệu. Vui lòng thử lại.');
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
 
   const onRefresh = async () => {
     setRefreshing(true);
-    // Simulate API call
-    setTimeout(() => {
-      setRefreshing(false);
-    }, 1000);
+    await fetchDashboardData();
   };
 
   const getGreeting = () => {
@@ -148,6 +161,40 @@ const DashboardScreen = () => {
 
   const bmi = getBMI();
   const bmiStatus = bmi ? getBMIStatus(bmi) : null;
+
+  // Loading state
+  if (loading) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={{ marginTop: 16, color: colors.textSecondary }}>Đang tải...</Text>
+      </View>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center', padding: 20 }]}>
+        <Icon name="alert-circle" size={64} color={colors.danger} />
+        <Text style={{ marginTop: 16, fontSize: 16, color: colors.textSecondary, textAlign: 'center' }}>
+          {error}
+        </Text>
+        <TouchableOpacity
+          style={{
+            marginTop: 20,
+            backgroundColor: colors.primary,
+            paddingHorizontal: 24,
+            paddingVertical: 12,
+            borderRadius: 8,
+          }}
+          onPress={fetchDashboardData}
+        >
+          <Text style={{ color: colors.white, fontSize: 16, fontWeight: 'bold' }}>Thử lại</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   return (
     <ScrollView
@@ -249,17 +296,24 @@ const DashboardScreen = () => {
       {/* Weekly Progress Chart */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Weekly Progress</Text>
+
+        {/* Steps Chart */}
         <View style={styles.chartContainer}>
+          <Text style={styles.chartSubtitle}>Steps (thousands)</Text>
           <LineChart
             data={{
-              labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+              labels: weeklyData.dates.map(dateStr => {
+                const date = new Date(dateStr);
+                const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                return dayNames[date.getDay()];
+              }),
               datasets: [
                 {
                   data: weeklyData.steps.map(step => step / 1000), // Convert to thousands
                 },
               ],
             }}
-            width={width - 80} // Adjusted for padding
+            width={width - 40} // Adjusted width
             height={220}
             chartConfig={chartConfig}
             bezier
@@ -269,6 +323,37 @@ const DashboardScreen = () => {
             withVerticalLines={false}
             withHorizontalLines={true}
             yAxisSuffix="k"
+          />
+        </View>
+
+        {/* Calories Chart */}
+        <View style={[styles.chartContainer, { marginTop: 20 }]}>
+          <Text style={styles.chartSubtitle}>Calories</Text>
+          <LineChart
+            data={{
+              labels: weeklyData.dates.map(dateStr => {
+                const date = new Date(dateStr);
+                const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                return dayNames[date.getDay()];
+              }),
+              datasets: [
+                {
+                  data: weeklyData.calories.map(cal => cal || 0),
+                },
+              ],
+            }}
+            width={width - 40} // Adjusted width
+            height={220}
+            chartConfig={{
+              ...chartConfig,
+              color: (opacity = 1) => `rgba(255, 107, 53, ${opacity})`, // Orange for calories
+            }}
+            bezier
+            style={styles.chart}
+            withInnerLines={true}
+            withOuterLines={false}
+            withVerticalLines={false}
+            withHorizontalLines={true}
           />
         </View>
       </View>

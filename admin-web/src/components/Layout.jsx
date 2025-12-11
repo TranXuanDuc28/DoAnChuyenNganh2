@@ -33,6 +33,7 @@ const Layout = () => {
     { path: '/exercises', icon: Dumbbell, label: 'Bài tập' },
     { path: '/exercises/import', icon: Upload, label: 'Import bài tập' },
     { path: '/exercise-categories', icon: Layers, label: 'Danh mục bài tập' },
+    { path: '/pose-exercises', icon: Dumbbell, label: 'Bài tập AI Pose' },
     { path: '/workouts', icon: Calendar, label: 'Workouts' },
     { path: '/workout-plans', icon: FileText, label: 'Kế hoạch tập' },
     { path: '/settings', icon: Settings, label: 'Cài đặt' },
@@ -54,7 +55,7 @@ const Layout = () => {
         <nav className="sidebar-nav">
           {menuItems.map((item) => {
             const Icon = item.icon;
-            const isActive = location.pathname === item.path || 
+            const isActive = location.pathname === item.path ||
               (item.path === '/exercises' && location.pathname.startsWith('/exercises'));
             return (
               <Link
