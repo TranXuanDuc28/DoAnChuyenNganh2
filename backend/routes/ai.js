@@ -69,8 +69,8 @@ router.post('/generate-meal-plan', auth, async (req, res) => {
     res.status(201).json(result);
   } catch (err) {
     console.error('Generate meal plan error:', err.message);
-    res.status(500).json({ 
-      success: false, 
+    res.status(500).json({
+      success: false,
       error: err.message || 'Failed to generate meal plan'
     });
   }
@@ -82,9 +82,28 @@ router.post('/generate-meal-plan', auth, async (req, res) => {
 router.get('/meal-plans', auth, async (req, res) => {
   try {
     const { MealPlan } = require('../models/Nutrition');
+    const { Op } = require('sequelize');
+
+    // First, deactivate expired meal plans
+    const now = new Date();
+    await MealPlan.update(
+      { isActive: false },
+      {
+        where: {
+          userId: req.user.id,
+          isActive: true,
+          endDate: {
+            [Op.lt]: now // endDate is less than current time
+          }
+        }
+      }
+    );
+
+    // Then fetch only active meal plans
     const mealPlans = await MealPlan.findAll({
       where: {
-        userId: req.user.id
+        userId: req.user.id,
+        isActive: true
       },
       order: [['createdAt', 'DESC']]
     });
@@ -95,8 +114,8 @@ router.get('/meal-plans', auth, async (req, res) => {
     });
   } catch (err) {
     console.error('Get meal plans error:', err.message);
-    res.status(500).json({ 
-      success: false, 
+    res.status(500).json({
+      success: false,
       error: 'Failed to fetch meal plans'
     });
   }
@@ -128,8 +147,8 @@ router.get('/meal-plans/:id', auth, async (req, res) => {
     });
   } catch (err) {
     console.error('Get meal plan error:', err.message);
-    res.status(500).json({ 
-      success: false, 
+    res.status(500).json({
+      success: false,
       error: 'Failed to fetch meal plan'
     });
   }
@@ -163,8 +182,8 @@ router.delete('/meal-plans/:id', auth, async (req, res) => {
     });
   } catch (err) {
     console.error('Delete meal plan error:', err.message);
-    res.status(500).json({ 
-      success: false, 
+    res.status(500).json({
+      success: false,
       error: 'Failed to delete meal plan'
     });
   }

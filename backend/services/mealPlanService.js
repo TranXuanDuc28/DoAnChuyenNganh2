@@ -421,8 +421,29 @@ const getActiveMealPlan = async (userId) => {
  */
 const getAllMealPlans = async (userId) => {
   try {
+    const { Op } = require('sequelize');
+
+    // First, deactivate expired meal plans
+    const now = new Date();
+    await MealPlan.update(
+      { isActive: false },
+      {
+        where: {
+          userId,
+          isActive: true,
+          endDate: {
+            [Op.lt]: now // endDate is less than current time
+          }
+        }
+      }
+    );
+
+    // Then fetch only active meal plans
     const mealPlans = await MealPlan.findAll({
-      where: { userId },
+      where: {
+        userId,
+        isActive: true
+      },
       order: [['createdAt', 'DESC']]
     });
 

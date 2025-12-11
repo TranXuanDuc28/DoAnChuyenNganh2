@@ -613,9 +613,22 @@ const completeWorkoutDay = async (dayId, userId) => {
       throw new Error('Workout day not found or does not belong to user');
     }
 
+    const completionTime = new Date();
+
     day.isCompleted = true;
-    day.completedAt = new Date();
+    day.completedAt = completionTime;
     await day.save();
+
+    // Mark all exercises in this day as completed
+    await WorkoutPlanDayExercise.update(
+      {
+        isCompleted: true,
+        completedAt: completionTime
+      },
+      {
+        where: { workoutPlanDayId: dayId }
+      }
+    );
 
     // Update workout plan progress
     const plan = day.workoutPlan;
@@ -769,8 +782,12 @@ const getCompletedWorkoutDays = async (userId) => {
         const repsNum = parseInt(ex.reps) || 10;
         estimatedDuration = Math.ceil((ex.sets * repsNum * 3 + ex.sets * (ex.restSeconds || 30)) / 60);
       } else if (ex.duration) {
-        estimatedDuration = ex.duration;
+        // Duration is stored in SECONDS in database, convert to minutes
+        estimatedDuration = Math.ceil(ex.duration / 60);
       }
+
+      // Use actual calories burned from database, or estimate if not available
+      const calories = ex.caloriesBurned || (estimatedDuration * 5);
 
       return {
         id: ex.id,
@@ -780,7 +797,7 @@ const getCompletedWorkoutDays = async (userId) => {
         focusArea: day?.focusArea,
         date: ex.completedAt,
         duration: estimatedDuration > 0 ? `${estimatedDuration} min` : 'N/A',
-        calories: estimatedDuration * 5, // Rough estimate: 5 cal/min
+        calories: calories,
         sets: ex.sets,
         reps: ex.reps,
         weight: ex.weight

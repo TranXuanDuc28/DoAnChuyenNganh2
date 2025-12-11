@@ -683,12 +683,21 @@ const NutritionScreen = () => {
         {days.map((day, dayIndex) => {
           const mealTypes = ['breakfast', 'lunch', 'dinner', 'snack'];
 
+          // Calculate if this day is in the past
+          const currentDayNumber = calculateCurrentDay(mealPlan);
+          const dayNumber = day.dayNumber || dayIndex + 1;
+          const isPastDay = dayNumber < currentDayNumber;
+
           return (
-            <View key={dayIndex} style={styles.dayContainer}>
+            <View key={dayIndex} style={[styles.dayContainer, isPastDay && { opacity: 0.6 }]}>
               <View style={styles.dayHeader}>
-                <Text style={styles.dayTitle}>Day {day.dayNumber || dayIndex + 1}</Text>
+                <Text style={[styles.dayTitle, isPastDay && { textDecorationLine: 'line-through' }]}>
+                  Day {dayNumber}
+                </Text>
                 {day.dailyTotals && (
-                  <Text style={styles.dayCalories}>{day.dailyTotals.calories} cal</Text>
+                  <Text style={[styles.dayCalories, isPastDay && { textDecorationLine: 'line-through' }]}>
+                    {day.dailyTotals.calories} cal
+                  </Text>
                 )}
               </View>
 
@@ -699,32 +708,46 @@ const NutritionScreen = () => {
                 return (
                   <View key={mealType} style={styles.aiMealCard}>
                     <View style={styles.aiMealHeader}>
-                      <Text style={styles.aiMealType}>
+                      <Text style={[styles.aiMealType, isPastDay && { textDecorationLine: 'line-through' }]}>
                         {mealType.charAt(0).toUpperCase() + mealType.slice(1)}
                       </Text>
-                      <Text style={styles.aiMealTime}>{meal.time}</Text>
+                      <Text style={[styles.aiMealTime, isPastDay && { textDecorationLine: 'line-through' }]}>
+                        {meal.time}
+                      </Text>
                     </View>
 
-                    <Text style={styles.aiMealName}>{meal.name}</Text>
+                    <Text style={[styles.aiMealName, isPastDay && { textDecorationLine: 'line-through' }]}>
+                      {meal.name}
+                    </Text>
                     {meal.description && (
-                      <Text style={styles.aiMealDescription}>{meal.description}</Text>
+                      <Text style={[styles.aiMealDescription, isPastDay && { textDecorationLine: 'line-through' }]}>
+                        {meal.description}
+                      </Text>
                     )}
 
                     <View style={styles.aiMealMacros}>
                       <View style={styles.macroItem}>
-                        <Text style={styles.macroValue}>{meal.totalCalories}</Text>
+                        <Text style={[styles.macroValue, isPastDay && { textDecorationLine: 'line-through' }]}>
+                          {meal.totalCalories}
+                        </Text>
                         <Text style={styles.macroLabel}>Cal</Text>
                       </View>
                       <View style={styles.macroItem}>
-                        <Text style={styles.macroValue}>{meal.macros?.protein}g</Text>
+                        <Text style={[styles.macroValue, isPastDay && { textDecorationLine: 'line-through' }]}>
+                          {meal.macros?.protein}g
+                        </Text>
                         <Text style={styles.macroLabel}>Protein</Text>
                       </View>
                       <View style={styles.macroItem}>
-                        <Text style={styles.macroValue}>{meal.macros?.carbs}g</Text>
+                        <Text style={[styles.macroValue, isPastDay && { textDecorationLine: 'line-through' }]}>
+                          {meal.macros?.carbs}g
+                        </Text>
                         <Text style={styles.macroLabel}>Carbs</Text>
                       </View>
                       <View style={styles.macroItem}>
-                        <Text style={styles.macroValue}>{meal.macros?.fat}g</Text>
+                        <Text style={[styles.macroValue, isPastDay && { textDecorationLine: 'line-through' }]}>
+                          {meal.macros?.fat}g
+                        </Text>
                         <Text style={styles.macroLabel}>Fat</Text>
                       </View>
                     </View>
@@ -734,8 +757,12 @@ const NutritionScreen = () => {
                         <Text style={styles.foodsListTitle}>Foods:</Text>
                         {meal.foods.map((food, index) => (
                           <View key={index} style={styles.foodItem}>
-                            <Text style={styles.foodName}>• {food.name}</Text>
-                            <Text style={styles.foodAmount}>{food.amount} ({food.calories} cal)</Text>
+                            <Text style={[styles.foodName, isPastDay && { textDecorationLine: 'line-through' }]}>
+                              • {food.name}
+                            </Text>
+                            <Text style={[styles.foodAmount, isPastDay && { textDecorationLine: 'line-through' }]}>
+                              {food.amount} ({food.calories} cal)
+                            </Text>
                           </View>
                         ))}
                       </View>
@@ -745,7 +772,7 @@ const NutritionScreen = () => {
                       <View style={styles.instructionsList}>
                         <Text style={styles.instructionsTitle}>Instructions:</Text>
                         {meal.instructions.map((instruction, index) => (
-                          <Text key={index} style={styles.instructionText}>
+                          <Text key={index} style={[styles.instructionText, isPastDay && { textDecorationLine: 'line-through' }]}>
                             {index + 1}. {instruction}
                           </Text>
                         ))}
