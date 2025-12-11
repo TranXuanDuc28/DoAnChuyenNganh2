@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { evaluatePose, getHistory, getImageHistory, deleteImageEvaluation } = require('../services/poseService');
+const PoseExercise = require('../models/PoseExercise');
 const fs = require('fs');
 // POST /api/pose/evaluate
 router.post('/evaluate', async (req, res) => {
@@ -185,6 +186,56 @@ router.delete('/image/:id', async (req, res) => {
     }
   } catch (error) {
     console.error('Delete image evaluation error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// GET /api/pose/exercises - Get all active exercises for mobile app
+router.get('/exercises', async (req, res) => {
+  try {
+    const exercises = await PoseExercise.getActiveExercises();
+
+    // Transform to match mobile app format
+    const formattedExercises = exercises.map(ex => ({
+      id: ex.exercise_id,
+      name: ex.name,
+      description: ex.description,
+      icon: ex.icon,
+      color: ex.color,
+      gradient: [ex.gradient_start, ex.gradient_end],
+      mode: ex.mode
+    }));
+
+    res.json({ success: true, exercises: formattedExercises });
+  } catch (error) {
+    console.error('Get exercises error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// GET /api/pose/exercises/:id - Get single exercise by ID
+router.get('/exercises/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const exercise = await PoseExercise.getExerciseById(id);
+
+    if (!exercise) {
+      return res.status(404).json({ success: false, message: 'Exercise not found' });
+    }
+
+    const formattedExercise = {
+      id: exercise.exercise_id,
+      name: exercise.name,
+      description: exercise.description,
+      icon: exercise.icon,
+      color: exercise.color,
+      gradient: [exercise.gradient_start, exercise.gradient_end],
+      mode: exercise.mode
+    };
+
+    res.json({ success: true, exercise: formattedExercise });
+  } catch (error) {
+    console.error('Get exercise error:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 });

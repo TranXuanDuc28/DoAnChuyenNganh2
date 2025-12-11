@@ -3,15 +3,14 @@ const fs = require('fs');
 const path = require('path');
 const User = require('../models/User');
 const { Exercise, Workout, WorkoutPlan, ExerciseCategory } = require('../models/Workout');
-const SystemSettings = require('../models/SystemSettings');
 const { adminAuth } = require('../middleware/admin');
 const { Op } = require('sequelize');
 const { sequelize } = require('../config/database');
-const { 
-  uploadToCloudinary, 
-  deleteFromCloudinary, 
+const {
+  uploadToCloudinary,
+  deleteFromCloudinary,
   createUploadMiddleware,
-  extractPublicId 
+  extractPublicId
 } = require('../utils/cloudinary');
 const router = express.Router();
 
@@ -53,9 +52,9 @@ const uploadCategoryImage = async (file, categoryName = '') => {
 
   const folderSlug = slugify(categoryName) || 'category';
   const folder = `fitness-app/categories/${folderSlug}`;
-  
+
   const result = await uploadToCloudinary(file.buffer, folder);
-  
+
   return {
     imageUrl: result.url,
     imageKey: result.publicId
@@ -73,9 +72,9 @@ const uploadExerciseImage = async (file, exerciseName = '') => {
 
   const folderSlug = slugify(exerciseName) || 'exercise';
   const folder = `fitness-app/exercises/${folderSlug}`;
-  
+
   const result = await uploadToCloudinary(file.buffer, folder);
-  
+
   return {
     imageUrl: result.url,
     imageKey: result.publicId
@@ -93,10 +92,10 @@ const uploadExerciseVideo = async (file, exerciseName = '') => {
 
   const folderSlug = slugify(exerciseName) || 'exercise';
   const folder = `fitness-app/exercises/${folderSlug}`;
-  
+
   // Upload video with resource_type: 'video'
   const result = await uploadToCloudinary(file.buffer, folder, { resource_type: 'video' });
-  
+
   return {
     videoUrl: result.url,
     videoKey: result.publicId
@@ -347,7 +346,7 @@ router.get('/exercise-categories/:id', adminAuth, async (req, res) => {
     if (!category) {
       return res.status(404).json({ message: 'Exercise category not found' });
     }
-    
+
     // Convert to snake_case for admin web compatibility
     const json = category.toJSON();
     const serialized = {
@@ -365,7 +364,7 @@ router.get('/exercise-categories/:id', adminAuth, async (req, res) => {
       createdAt: json.createdAt,
       updatedAt: json.updatedAt
     };
-    
+
     res.json(serialized);
   } catch (error) {
     console.error('Get exercise category error:', error);
@@ -375,10 +374,10 @@ router.get('/exercise-categories/:id', adminAuth, async (req, res) => {
 
 router.post('/exercise-categories', adminAuth, upload.single('image'), async (req, res) => {
   try {
-    const { 
-      slug: rawSlug, 
-      name, 
-      english_name, 
+    const {
+      slug: rawSlug,
+      name,
+      english_name,
       description,
       image_url,
       image_key,
@@ -387,7 +386,7 @@ router.post('/exercise-categories', adminAuth, upload.single('image'), async (re
       display_order,
       is_active
     } = req.body;
-    
+
     // Validate required field
     if (!name || name.trim() === '') {
       return res.status(400).json({ message: 'Name is required' });
@@ -395,7 +394,7 @@ router.post('/exercise-categories', adminAuth, upload.single('image'), async (re
 
     // Generate slug from available data
     const finalSlug = slugify(rawSlug || english_name || name);
-    
+
     if (!finalSlug) {
       return res.status(400).json({ message: 'Could not generate valid slug from provided data' });
     }
@@ -455,7 +454,7 @@ router.post('/exercise-categories', adminAuth, upload.single('image'), async (re
     });
   } catch (error) {
     console.error('Create exercise category error:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       message: 'Server error',
       error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
@@ -483,21 +482,21 @@ router.put('/exercise-categories/:id', adminAuth, upload.single('image'), async 
     // Handle englishName update (accept both snake_case and camelCase)
     const englishNameValue = req.body.english_name !== undefined ? req.body.english_name : req.body.englishName;
     if (englishNameValue !== undefined) {
-      updates.englishName = englishNameValue && englishNameValue.trim() 
-        ? englishNameValue.trim() 
+      updates.englishName = englishNameValue && englishNameValue.trim()
+        ? englishNameValue.trim()
         : null;
     }
 
     // Handle slug update
     if (req.body.slug !== undefined || req.body.name !== undefined || englishNameValue !== undefined) {
       const newSlug = slugify(
-        req.body.slug || 
-        englishNameValue || 
-        req.body.name || 
-        category.englishName || 
+        req.body.slug ||
+        englishNameValue ||
+        req.body.name ||
+        category.englishName ||
         category.name
       );
-      
+
       if (!newSlug) {
         return res.status(400).json({ message: 'Could not generate valid slug' });
       }
@@ -519,35 +518,35 @@ router.put('/exercise-categories/:id', adminAuth, upload.single('image'), async 
 
     // Handle optional text fields (accept both snake_case and camelCase)
     if (req.body.description !== undefined) {
-      updates.description = req.body.description && req.body.description.trim() 
-        ? req.body.description.trim() 
+      updates.description = req.body.description && req.body.description.trim()
+        ? req.body.description.trim()
         : null;
     }
 
     const imageUrlValue = req.body.image_url !== undefined ? req.body.image_url : req.body.imageUrl;
     if (imageUrlValue !== undefined) {
-      updates.imageUrl = imageUrlValue && imageUrlValue.trim() 
-        ? imageUrlValue.trim() 
+      updates.imageUrl = imageUrlValue && imageUrlValue.trim()
+        ? imageUrlValue.trim()
         : null;
     }
 
     const imageKeyValue = req.body.image_key !== undefined ? req.body.image_key : req.body.imageKey;
     if (imageKeyValue !== undefined) {
-      updates.imageKey = imageKeyValue && imageKeyValue.trim() 
-        ? imageKeyValue.trim() 
+      updates.imageKey = imageKeyValue && imageKeyValue.trim()
+        ? imageKeyValue.trim()
         : null;
     }
 
     if (req.body.icon !== undefined) {
-      updates.icon = req.body.icon && req.body.icon.trim() 
-        ? req.body.icon.trim() 
+      updates.icon = req.body.icon && req.body.icon.trim()
+        ? req.body.icon.trim()
         : null;
     }
 
     const backgroundColorValue = req.body.background_color !== undefined ? req.body.background_color : req.body.backgroundColor;
     if (backgroundColorValue !== undefined) {
-      updates.backgroundColor = backgroundColorValue && backgroundColorValue.trim() 
-        ? backgroundColorValue.trim() 
+      updates.backgroundColor = backgroundColorValue && backgroundColorValue.trim()
+        ? backgroundColorValue.trim()
         : null;
     }
 
@@ -577,7 +576,7 @@ router.put('/exercise-categories/:id', adminAuth, upload.single('image'), async 
         category.englishName ||
         category.name ||
         category.slug;
-      
+
       const uploaded = await uploadCategoryImage(req.file, folderSource);
       if (uploaded) {
         updates.imageUrl = uploaded.imageUrl;
@@ -611,7 +610,7 @@ router.put('/exercise-categories/:id', adminAuth, upload.single('image'), async 
     });
   } catch (error) {
     console.error('Update exercise category error:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       message: 'Server error',
       error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
@@ -627,7 +626,7 @@ router.delete('/exercise-categories/:id', adminAuth, async (req, res) => {
         attributes: ['id']
       }]
     });
-    
+
     if (!category) {
       return res.status(404).json({ message: 'Exercise category not found' });
     }
@@ -723,7 +722,7 @@ router.post('/exercises', adminAuth, upload.fields([
 ]), async (req, res) => {
   try {
     const { categoryIds, equipment, instructions, tips, ...exerciseData } = req.body;
-    
+
     // Parse JSON fields if they're strings
     const parsedEquipment = typeof equipment === 'string' ? JSON.parse(equipment) : equipment;
     const parsedInstructions = typeof instructions === 'string' ? JSON.parse(instructions) : instructions;
@@ -784,7 +783,7 @@ router.post('/exercises', adminAuth, upload.fields([
     });
   } catch (error) {
     console.error('Create exercise error:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       message: 'Server error',
       error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
@@ -803,7 +802,7 @@ router.put('/exercises/:id', adminAuth, upload.fields([
     }
 
     const { categoryIds, equipment, instructions, tips, ...exerciseData } = req.body;
-    
+
     // Parse JSON fields if they're strings
     const parsedEquipment = typeof equipment === 'string' ? JSON.parse(equipment) : equipment;
     const parsedInstructions = typeof instructions === 'string' ? JSON.parse(instructions) : instructions;
@@ -820,7 +819,7 @@ router.put('/exercises/:id', adminAuth, upload.fields([
           await deleteFromCloudinary(oldImageKey);
         }
       }
-      
+
       const uploaded = await uploadExerciseImage(req.files.image[0], exerciseData.name || exercise.name);
       if (uploaded) {
         imageUrl = uploaded.imageUrl;
@@ -837,13 +836,13 @@ router.put('/exercises/:id', adminAuth, upload.fields([
           await deleteFromCloudinary(oldVideoKey, 'video');
         }
       }
-      
+
       const uploaded = await uploadExerciseVideo(req.files.videoUrl[0], exerciseData.name || exercise.name);
       if (uploaded) {
         videoUrl = uploaded.videoUrl;
       }
     }
-    
+
     await exercise.update({
       ...exerciseData,
       equipment: parsedEquipment !== undefined ? parsedEquipment : exercise.equipment,
@@ -879,7 +878,7 @@ router.put('/exercises/:id', adminAuth, upload.fields([
     });
   } catch (error) {
     console.error('Update exercise error:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       message: 'Server error',
       error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
@@ -1105,107 +1104,107 @@ router.delete('/workout-plans/:id', adminAuth, async (req, res) => {
   }
 });
 
-// ==================== SYSTEM SETTINGS ====================
+// // ==================== SYSTEM SETTINGS ====================
 
-// Get all system settings
-router.get('/settings', adminAuth, async (req, res) => {
-  try {
-    const { category } = req.query;
-    const where = category ? { category } : {};
+// // Get all system settings
+// router.get('/settings', adminAuth, async (req, res) => {
+//   try {
+//     const { category } = req.query;
+//     const where = category ? { category } : {};
 
-    const settings = await SystemSettings.findAll({
-      where,
-      order: [['category', 'ASC'], ['key', 'ASC']]
-    });
+//     const settings = await SystemSettings.findAll({
+//       where,
+//       order: [['category', 'ASC'], ['key', 'ASC']]
+//     });
 
-    res.json(settings);
-  } catch (error) {
-    console.error('Get settings error:', error);
-    res.status(500).json({ message: 'Server error' });
-  }
-});
+//     res.json(settings);
+//   } catch (error) {
+//     console.error('Get settings error:', error);
+//     res.status(500).json({ message: 'Server error' });
+//   }
+// });
 
-// Get single setting
-router.get('/settings/:key', adminAuth, async (req, res) => {
-  try {
-    const setting = await SystemSettings.findOne({ where: { key: req.params.key } });
-    if (!setting) {
-      return res.status(404).json({ message: 'Setting not found' });
-    }
-    res.json(setting);
-  } catch (error) {
-    console.error('Get setting error:', error);
-    res.status(500).json({ message: 'Server error' });
-  }
-});
+// // Get single setting
+// router.get('/settings/:key', adminAuth, async (req, res) => {
+//   try {
+//     const setting = await SystemSettings.findOne({ where: { key: req.params.key } });
+//     if (!setting) {
+//       return res.status(404).json({ message: 'Setting not found' });
+//     }
+//     res.json(setting);
+//   } catch (error) {
+//     console.error('Get setting error:', error);
+//     res.status(500).json({ message: 'Server error' });
+//   }
+// });
 
-// Create or update setting
-router.post('/settings', adminAuth, async (req, res) => {
-  try {
-    const { key, value, type, category, description } = req.body;
+// // Create or update setting
+// router.post('/settings', adminAuth, async (req, res) => {
+//   try {
+//     const { key, value, type, category, description } = req.body;
 
-    const [setting, created] = await SystemSettings.upsert({
-      key,
-      value: String(value),
-      type: type || 'string',
-      category: category || 'general',
-      description
-    }, {
-      returning: true
-    });
+//     const [setting, created] = await SystemSettings.upsert({
+//       key,
+//       value: String(value),
+//       type: type || 'string',
+//       category: category || 'general',
+//       description
+//     }, {
+//       returning: true
+//     });
 
-    res.status(created ? 201 : 200).json({
-      message: created ? 'Setting created successfully' : 'Setting updated successfully',
-      setting
-    });
-  } catch (error) {
-    console.error('Create/Update setting error:', error);
-    res.status(500).json({ message: 'Server error' });
-  }
-});
+//     res.status(created ? 201 : 200).json({
+//       message: created ? 'Setting created successfully' : 'Setting updated successfully',
+//       setting
+//     });
+//   } catch (error) {
+//     console.error('Create/Update setting error:', error);
+//     res.status(500).json({ message: 'Server error' });
+//   }
+// });
 
-// Update setting
-router.put('/settings/:key', adminAuth, async (req, res) => {
-  try {
-    const setting = await SystemSettings.findOne({ where: { key: req.params.key } });
-    if (!setting) {
-      return res.status(404).json({ message: 'Setting not found' });
-    }
+// // Update setting
+// router.put('/settings/:key', adminAuth, async (req, res) => {
+//   try {
+//     const setting = await SystemSettings.findOne({ where: { key: req.params.key } });
+//     if (!setting) {
+//       return res.status(404).json({ message: 'Setting not found' });
+//     }
 
-    const { value, type, category, description } = req.body;
-    await setting.update({
-      value: value !== undefined ? String(value) : setting.value,
-      type: type || setting.type,
-      category: category || setting.category,
-      description: description !== undefined ? description : setting.description
-    });
+//     const { value, type, category, description } = req.body;
+//     await setting.update({
+//       value: value !== undefined ? String(value) : setting.value,
+//       type: type || setting.type,
+//       category: category || setting.category,
+//       description: description !== undefined ? description : setting.description
+//     });
 
-    res.json({
-      message: 'Setting updated successfully',
-      setting
-    });
-  } catch (error) {
-    console.error('Update setting error:', error);
-    res.status(500).json({ message: 'Server error' });
-  }
-});
+//     res.json({
+//       message: 'Setting updated successfully',
+//       setting
+//     });
+//   } catch (error) {
+//     console.error('Update setting error:', error);
+//     res.status(500).json({ message: 'Server error' });
+//   }
+// });
 
-// Delete setting
-router.delete('/settings/:key', adminAuth, async (req, res) => {
-  try {
-    const setting = await SystemSettings.findOne({ where: { key: req.params.key } });
-    if (!setting) {
-      return res.status(404).json({ message: 'Setting not found' });
-    }
+// // Delete setting
+// router.delete('/settings/:key', adminAuth, async (req, res) => {
+//   try {
+//     const setting = await SystemSettings.findOne({ where: { key: req.params.key } });
+//     if (!setting) {
+//       return res.status(404).json({ message: 'Setting not found' });
+//     }
 
-    await setting.destroy();
+//     await setting.destroy();
 
-    res.json({ message: 'Setting deleted successfully' });
-  } catch (error) {
-    console.error('Delete setting error:', error);
-    res.status(500).json({ message: 'Server error' });
-  }
-});
+//     res.json({ message: 'Setting deleted successfully' });
+//   } catch (error) {
+//     console.error('Delete setting error:', error);
+//     res.status(500).json({ message: 'Server error' });
+//   }
+// });
 
 // ==================== GOOGLE SHEETS IMPORT ====================
 
@@ -1230,8 +1229,8 @@ router.post('/exercises/import/validate', adminAuth, async (req, res) => {
       // Use environment variable API key
       const envApiKey = process.env.GOOGLE_SHEETS_API_KEY;
       if (!envApiKey) {
-        return res.status(400).json({ 
-          message: 'Google Sheets API key is required. Please provide it or set GOOGLE_SHEETS_API_KEY environment variable.' 
+        return res.status(400).json({
+          message: 'Google Sheets API key is required. Please provide it or set GOOGLE_SHEETS_API_KEY environment variable.'
         });
       }
       await googleSheetsService.initialize(envApiKey);
@@ -1243,9 +1242,9 @@ router.post('/exercises/import/validate', adminAuth, async (req, res) => {
     res.json(validation);
   } catch (error) {
     console.error('Validate sheet error:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       message: 'Failed to validate spreadsheet',
-      error: error.message 
+      error: error.message
     });
   }
 });
@@ -1269,8 +1268,8 @@ router.post('/exercises/import', adminAuth, async (req, res) => {
       // Use environment variable API key
       const envApiKey = process.env.GOOGLE_SHEETS_API_KEY;
       if (!envApiKey) {
-        return res.status(400).json({ 
-          message: 'Google Sheets API key is required. Please provide it or set GOOGLE_SHEETS_API_KEY environment variable.' 
+        return res.status(400).json({
+          message: 'Google Sheets API key is required. Please provide it or set GOOGLE_SHEETS_API_KEY environment variable.'
         });
       }
       await googleSheetsService.initialize(envApiKey);
@@ -1278,7 +1277,7 @@ router.post('/exercises/import', adminAuth, async (req, res) => {
 
     // Import exercises
     const results = await googleSheetsService.importExercises(
-      spreadsheetId, 
+      spreadsheetId,
       range || 'Sheet1',
       { updateExisting: updateExisting === true || updateExisting === 'true' }
     );
@@ -1289,9 +1288,9 @@ router.post('/exercises/import', adminAuth, async (req, res) => {
     });
   } catch (error) {
     console.error('Import exercises error:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       message: 'Failed to import exercises',
-      error: error.message 
+      error: error.message
     });
   }
 });
@@ -1436,7 +1435,7 @@ router.post('/exercises/import/validate', adminAuth, async (req, res) => {
     res.json(validation);
   } catch (error) {
     console.error('Validate sheet error:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       message: error.message || 'Failed to validate sheet',
       error: error.toString()
     });
@@ -1472,7 +1471,7 @@ router.post('/exercises/import', adminAuth, async (req, res) => {
     });
   } catch (error) {
     console.error('Import exercises error:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       message: error.message || 'Failed to import exercises',
       error: error.toString()
     });

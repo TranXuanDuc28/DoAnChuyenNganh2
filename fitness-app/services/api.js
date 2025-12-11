@@ -4,18 +4,8 @@ import { Platform } from 'react-native';
 
 // Determine a sensible default base URL for development environments.
 // - iOS simulator and web: localhost works
-// - Android emulator (AVD): use 10.0.2.2 to reach host machine
-// - Physical device: replace REACT_NATIVE_API_HOST with your machine IP (e.g. 192.168.x.x)
-const DEV_API_HOST = typeof process !== 'undefined' && process.env && process.env.REACT_NATIVE_API_HOST
-  ? process.env.REACT_NATIVE_API_HOST
-  : (Platform.OS === 'android' ? '10.0.2.2' : 'localhost');
 
-// NGROK URL for mobile testing - update this when ngrok restarts
-const NGROK_URL = 'https://unpriggish-conductorial-lilah.ngrok-free.dev';
-
-const BASE_URL = __DEV__
-  ? `${NGROK_URL}/api`  // Using ngrok for mobile device testing
-  : 'http://localhost:5000/api';
+const BASE_URL = process.env.EXPO_PUBLIC_API_URL;
 
 // Export BASE_URL for use in other files
 export const API_BASE_URL = BASE_URL;
@@ -214,6 +204,7 @@ export const aiAPI = {
 
 // Pose API
 export const poseAPI = {
+  getExercises: () => api.get('/pose/exercises'),
   evaluate: ({ user_id, exerciseName, imageBase64, keypoints }) =>
     api.post('/pose/evaluate', { user_id, exerciseName, imageBase64, keypoints }),
   evaluatePose: ({ imageBase64 }) => api.post('/pose/evaluate-pose', { imageBase64 }),
@@ -259,6 +250,13 @@ export const videoAnalysisAPI = {
 export const notificationAPI = {
   getNotifications: () => api.get('/notifications'),
   markAsRead: (notificationIds) => api.post('/notifications/mark-read', { notificationIds }),
+};
+
+// Dashboard API
+export const dashboardAPI = {
+  getStats: () => api.get('/dashboard/stats'),
+  getWeeklyProgress: () => api.get('/dashboard/weekly-progress'),
+  getRecommendations: () => api.get('/dashboard/recommendations'),
 };
 
 export default api;

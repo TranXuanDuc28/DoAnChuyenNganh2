@@ -10,6 +10,7 @@ import Workouts from './pages/Workouts';
 import WorkoutPlans from './pages/WorkoutPlans';
 import Settings from './pages/Settings';
 import ExerciseCategories from './pages/ExerciseCategories';
+import PoseExercises from './pages/PoseExercises';
 import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
 import './App.css';
@@ -34,6 +35,7 @@ function App() {
             <Route path="exercises" element={<Exercises />} />
             <Route path="exercises/import" element={<ImportExercises />} />
             <Route path="exercise-categories" element={<ExerciseCategories />} />
+            <Route path="pose-exercises" element={<PoseExercises />} />
             <Route path="workouts" element={<Workouts />} />
             <Route path="workout-plans" element={<WorkoutPlans />} />
             <Route path="settings" element={<Settings />} />

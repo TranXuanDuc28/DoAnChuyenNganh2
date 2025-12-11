@@ -48,16 +48,15 @@ const initializeDatabase = async () => {
     await testConnection();
     // Import all models to register them with Sequelize
     require('./models/User');
-    require('./models/Health');
     require('./models/Workout');
     require('./models/Nutrition');
     require('./models/AISuggestion');
     require('./models/Notification');
     require('./models/Pose');
-    require('./models/SystemSettings');
     require('./models/BodyMetricsHistory');
     require('./models/VideoAnalysis');
     require('./models/ImageEvaluation');
+    require('./models/PoseExercise');
 
     // Sync database (create tables if they don't exist)
     // Using alter: false to avoid index issues with many foreign keys
@@ -124,7 +123,6 @@ app.use('/api/users', require('./routes/users'));
 app.use('/api/workouts', require('./routes/workouts'));
 app.use('/api/workout-plans', require('./routes/workoutPlan'));
 app.use('/api/nutrition', require('./routes/nutrition'));
-app.use('/api/health', require('./routes/health'));
 app.use('/api/body-metrics', require('./routes/bodyMetrics'));
 app.use('/api/social', require('./routes/social'));
 app.use('/api/ai', require('./routes/ai'));
@@ -132,6 +130,8 @@ app.use('/api/notifications', require('./routes/notifications'));
 app.use('/api/pose', require('./routes/pose'));
 app.use('/api/push', require('./routes/push'));
 app.use('/api/admin', require('./routes/admin'));
+app.use('/api/admin/pose-exercises', require('./routes/adminExercises'));
+app.use('/api/dashboard', require('./routes/dashboard'));
 
 // Static serving for category images stored inside the fitness app image folder
 const categoryImagesDir = path.join(__dirname, '..', 'fitness-app', 'image');
@@ -141,11 +141,6 @@ app.use('/static/category-images', express.static(categoryImagesDir));
 app.use('/api/pose', require('./routes/poseScoring'));
 app.use('/api/push', require('./routes/push'));
 app.use('/api/video-analysis', require('./routes/videoAnalysis'));
-
-// Health check endpoint
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'OK', timestamp: new Date().toISOString() });
-});
 
 // Error handling middleware
 app.use((err, req, res, next) => {

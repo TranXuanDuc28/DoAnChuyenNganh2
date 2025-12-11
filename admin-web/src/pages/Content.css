@@ -129,6 +129,32 @@
   color: #991b1b;
 }
 
+/* Pose Exercise Mode Badges */
+.badge-info {
+  background: #e0e7ff;
+  color: #3730a3;
+}
+
+.badge-warning {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.badge-primary {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.badge-success {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.badge-secondary {
+  background: #f1f5f9;
+  color: #475569;
+}
+
 .action-buttons {
   display: flex;
   gap: 0.5rem;
@@ -277,5 +303,3 @@
   padding: 3rem;
   color: #64748b;
 }
-
-
