@@ -34,7 +34,11 @@ INSERT INTO `pose_exercises` (`exercise_id`, `name`, `description`, `icon`, `col
 ('Warrior_Pose', 'Warrior Pose', 'Tư thế chiến binh - tăng sức mạnh và độ bền', '⚔️', '#007bff', '#ffc107', '#ff9800', 'image', 1, 8),
 
 -- Dynamic exercises (video mode)
-('push-ups', 'Push Ups', 'Chống đẩy', '🏋️', '#007bff', '#343a40', '#007bff', 'video', 1, 9),
-('squats', 'Squats', 'Ngồi xổm', '🦵', '#007bff', '#343a40', '#007bff', 'video', 1, 10),
-('plank', 'Plank', 'Tư thế Tấm ván', '🤸', '#28a745', '#ffc107', '#ff9800', 'video', 1, 11),
-('jumping-jack', 'Jumping Jack', 'Nhảy dây', '🤸', '#007bff', '#343a40', '#007bff', 'video', 1, 12);
+('front_raise', 'Front Raise', 'Nâng tạ trước', '💪', '#ffc107', '#ff9800', '#ff5722', 'video', 1, 13),
+('pull_up', 'Pull Up', 'Hít xà đơn', '🧗', '#17a2b8', '#007bff', '#6610f2', 'video', 1, 14),
+('squat', 'Squat', 'Bài tập Squat', '🦵', '#28a745', '#20c997', '#28a745', 'video', 1, 15),
+('bench_pressing', 'Bench Press', 'Đẩy ngực nằm', '🏋️‍♂️', '#dc3545', '#c82333', '#bd2130', 'video', 1, 16),
+('jump_jack', 'Jump Jack', 'Bài tập Nhảy dây', '🤸', '#fd7e14', '#ffc107', '#fd7e14', 'video', 1, 17),
+('situp', 'Sit Up', 'Gập bụng', '🧘', '#6f42c1', '#6610f2', '#6f42c1', 'video', 1, 18),
+('push_up', 'Push Up', 'Bài tập Chống đẩy', '💪', '#e83e8c', '#d63384', '#e83e8c', 'video', 1, 19),
+('pommelhorse', 'Pommel Horse', 'Ngựa tay quay', '🤸‍♂️', '#20c997', '#007bff', '#17a2b8', 'video', 1, 20);

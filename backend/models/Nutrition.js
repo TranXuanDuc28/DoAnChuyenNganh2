@@ -200,7 +200,100 @@ const FoodLog = sequelize.define('FoodLog', {
 });
 
 
+// Water Intake Model
+const WaterIntake = sequelize.define('WaterIntake', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  userId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'users',
+      key: 'id'
+    }
+  },
+  amount: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 250, // Standard glass size in ml
+    comment: 'Amount in ml'
+  },
+  date: {
+    type: DataTypes.DATE,
+    allowNull: false,
+    defaultValue: DataTypes.NOW
+  }
+}, {
+  tableName: 'water_intakes',
+  underscored: true,
+  indexes: [
+    {
+      fields: ['user_id', 'date']
+    }
+  ]
+});
+
+
+// Meal Completion Model - Track completed meals
+const MealCompletion = sequelize.define('MealCompletion', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  userId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'users',
+      key: 'id'
+    }
+  },
+  mealPlanId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'meal_plans',
+      key: 'id'
+    }
+  },
+  mealId: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    comment: 'Format: dayNumber-mealType (e.g., "1-breakfast")'
+  },
+  completedAt: {
+    type: DataTypes.DATE,
+    allowNull: false,
+    defaultValue: DataTypes.NOW
+  }
+}, {
+  tableName: 'meal_completions',
+  underscored: true,
+  indexes: [
+    {
+      unique: true,
+      fields: ['user_id', 'meal_plan_id', 'meal_id'],
+      name: 'unique_user_meal'
+    },
+    {
+      fields: ['user_id', 'meal_plan_id'],
+      name: 'idx_user_meal_plan'
+    },
+    {
+      fields: ['completed_at'],
+      name: 'idx_completed_at'
+    }
+  ]
+});
+
+
 module.exports = {
   MealPlan,
   FoodLog,
+  WaterIntake,
+  MealCompletion,
 };

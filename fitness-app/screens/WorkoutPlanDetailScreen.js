@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { Ionicons as Icon } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useFocusEffect } from '@react-navigation/native';
 import colors from '../theme/colors';
 import { workoutAPI } from '../services/api';
 import { styles } from './styles/WorkoutPlanDetailScreen.styles';
@@ -70,6 +71,17 @@ const WorkoutPlanDetailScreen = ({ route, navigation }) => {
       }
     }
   }, []);
+
+  // Refresh day details when returning from exercise screen
+  useFocusEffect(
+    React.useCallback(() => {
+      // Reload day details when screen gains focus (e.g., after completing an exercise)
+      if (selectedDay) {
+        console.log('Screen focused, refreshing day details');
+        handleSelectDay(selectedDay);
+      }
+    }, [selectedDay])
+  );
 
   const handleSelectDay = async (day) => {
     setSelectedDay(day);
@@ -157,7 +169,7 @@ const WorkoutPlanDetailScreen = ({ route, navigation }) => {
     // Calculate current day number based on plan startDate
     const currentDayNumber = getCurrentDayNumber(planData.startDate, planData.duration);
     const isPastDay = currentDayNumber ? item.dayNumber < currentDayNumber : false;
-    const isDisabled = isPastDay && !isCompleted; // Disable past days that are not completed
+    const isDisabled = isPastDay && !isCompleted; // Only disable past days that are NOT completed
 
     return (
       <TouchableOpacity
@@ -168,10 +180,11 @@ const WorkoutPlanDetailScreen = ({ route, navigation }) => {
           isDisabled && { opacity: 0.5 },
         ]}
         onPress={() => {
-          if (isCompleted || isDisabled) return;
+          // Allow viewing completed days, only block incomplete past days
+          if (isDisabled) return;
           handleSelectDay(item);
         }}
-        activeOpacity={isCompleted || isDisabled ? 1 : 0.7}
+        activeOpacity={isDisabled ? 1 : 0.7}
         disabled={isDisabled}
       >
         <View style={styles.dayItemContent}>

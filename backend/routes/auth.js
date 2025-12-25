@@ -19,14 +19,14 @@ router.post('/register', async (req, res) => {
     // Parse nutrition preferences if they are strings
     let foodPreferences = [];
     let foodAllergies = [];
-    
+
     if (nutritionPreferences) {
       if (typeof nutritionPreferences.foodPreferences === 'string' && nutritionPreferences.foodPreferences.trim()) {
         foodPreferences = nutritionPreferences.foodPreferences.split(',').map(item => item.trim()).filter(item => item);
       } else if (Array.isArray(nutritionPreferences.foodPreferences)) {
         foodPreferences = nutritionPreferences.foodPreferences;
       }
-      
+
       if (typeof nutritionPreferences.foodAllergies === 'string' && nutritionPreferences.foodAllergies.trim()) {
         foodAllergies = nutritionPreferences.foodAllergies.split(',').map(item => item.trim()).filter(item => item);
       } else if (Array.isArray(nutritionPreferences.foodAllergies)) {
@@ -67,16 +67,13 @@ router.post('/register', async (req, res) => {
       { expiresIn: process.env.JWT_EXPIRE || '7d' }
     );
 
+    const userResponse = user.toJSON();
+    delete userResponse.password;
+
     res.status(201).json({
       message: 'User registered successfully',
       token,
-      user: {
-       id: user.id,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        onboardingCompleted: user.onboardingCompleted
-      }
+      user: userResponse
     });
   } catch (error) {
     console.error('Registration error:', error);
@@ -124,17 +121,13 @@ router.post('/login', async (req, res) => {
       { expiresIn: process.env.JWT_EXPIRE || '7d' }
     );
 
+    const userResponse = user.toJSON();
+    delete userResponse.password;
+
     res.json({
       message: 'Login successful',
       token,
-      user: {
-        id: user.id,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        role: user.role || 'user',
-        onboardingCompleted: user.onboardingCompleted,
-      }
+      user: userResponse
     });
   } catch (error) {
     console.error('Login error:', error);
@@ -158,9 +151,9 @@ router.put('/profile', auth, async (req, res) => {
   try {
     const user = await User.findByPk(req.user.id);
     if (!user) {
-        return res.status(404).json({ message: 'User not found' });
+      return res.status(404).json({ message: 'User not found' });
     }
-    
+
     const updatedUser = await user.update(req.body);
 
     res.json({
@@ -178,7 +171,7 @@ router.put('/onboarding', auth, async (req, res) => {
   try {
     const user = await User.findByPk(req.user.id);
     if (!user) {
-        return res.status(404).json({ message: 'User not found' });
+      return res.status(404).json({ message: 'User not found' });
     }
 
     const updatedBody = { ...req.body, onboardingCompleted: true };
@@ -222,16 +215,16 @@ router.post('/create-admin', async (req, res) => {
 
     // Validate required fields
     if (!email || !password || !firstName || !lastName) {
-      return res.status(400).json({ 
-        message: 'Email, password, firstName, and lastName are required' 
+      return res.status(400).json({
+        message: 'Email, password, firstName, and lastName are required'
       });
     }
 
     // Check if any admin already exists
     const existingAdmin = await User.findOne({ where: { role: 'admin' } });
     if (existingAdmin) {
-      return res.status(403).json({ 
-        message: 'Admin account already exists. Please use admin authentication to create additional admins.' 
+      return res.status(403).json({
+        message: 'Admin account already exists. Please use admin authentication to create additional admins.'
       });
     }
 
@@ -281,8 +274,8 @@ router.post('/create-admin-secure', async (req, res) => {
 
     // Validate required fields
     if (!email || !password || !firstName || !lastName || !secretKey) {
-      return res.status(400).json({ 
-        message: 'Email, password, firstName, lastName, and secretKey are required' 
+      return res.status(400).json({
+        message: 'Email, password, firstName, lastName, and secretKey are required'
       });
     }
 

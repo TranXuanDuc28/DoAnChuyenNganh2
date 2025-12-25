@@ -1,5 +1,5 @@
 const express = require('express');
-const { Food, NutritionEntry, NutritionGoal, MealPlan, WaterIntake, FoodLog } = require('../models/Nutrition');
+const { Food, NutritionEntry, NutritionGoal, MealPlan, WaterIntake, FoodLog, MealCompletion } = require('../models/Nutrition');
 const { auth } = require('../middleware/auth');
 const { Op } = require('sequelize');
 const mealPlanService = require('../services/mealPlanService');
@@ -273,7 +273,7 @@ router.get('/water', auth, async (req, res) => {
 
     const waterEntries = await WaterIntake.findAll({
       where,
-      order: [['loggedAt', 'DESC']]
+      order: [['date', 'DESC']]
     });
 
     const totalWater = waterEntries.reduce((sum, entry) => sum + entry.amount, 0);
@@ -651,6 +651,150 @@ router.put('/food-log/:id', auth, async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to update food log entry',
+      error: error.message
+    });
+  }
+});
+
+// ============================================
+// MEAL COMPLETION ROUTES
+// ============================================
+
+/**
+ * @route   POST /api/nutrition/meal-completions
+ * @desc    Mark a meal as completed
+ * @access  Private
+ */
+router.post('/meal-completions', auth, async (req, res) => {
+  try {
+    const { mealPlanId, mealId } = req.body;
+
+    // Validate required fields
+    if (!mealPlanId || !mealId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Meal plan ID and meal ID are required'
+      });
+    }
+
+    // Use findOrCreate to handle duplicates
+    const [completion, created] = await MealCompletion.findOrCreate({
+      where: {
+        userId: req.user.id,
+        mealPlanId,
+        mealId
+      },
+      defaults: {
+        userId: req.user.id,
+        mealPlanId,
+        mealId,
+        completedAt: new Date()
+      }
+    });
+
+    // If already exists, update the completedAt timestamp
+    if (!created) {
+      completion.completedAt = new Date();
+      await completion.save();
+    }
+
+    return res.status(created ? 201 : 200).json({
+      success: true,
+      message: 'Meal marked as completed',
+      data: completion
+    });
+
+  } catch (error) {
+    console.error('Mark meal completion error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to mark meal as completed',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * @route   GET /api/nutrition/meal-completions
+ * @desc    Get meal completion status for a meal plan
+ * @access  Private
+ */
+router.get('/meal-completions', auth, async (req, res) => {
+  try {
+    const { mealPlanId, date } = req.query;
+
+    const whereClause = { userId: req.user.id };
+
+    if (mealPlanId) {
+      whereClause.mealPlanId = mealPlanId;
+    }
+
+    if (date) {
+      // Filter by date if provided
+      const startOfDay = new Date(date);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(date);
+      endOfDay.setHours(23, 59, 59, 999);
+
+      whereClause.completedAt = {
+        [Op.between]: [startOfDay, endOfDay]
+      };
+    }
+
+    const completions = await MealCompletion.findAll({
+      where: whereClause,
+      order: [['completedAt', 'DESC']]
+    });
+
+    return res.json({
+      success: true,
+      data: completions
+    });
+
+  } catch (error) {
+    console.error('Get meal completions error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch meal completions',
+      error: error.message
+    });
+  }
+});
+
+/**
+ * @route   DELETE /api/nutrition/meal-completions/:mealPlanId/:mealId
+ * @desc    Unmark a meal (delete completion record)
+ * @access  Private
+ */
+router.delete('/meal-completions/:mealPlanId/:mealId', auth, async (req, res) => {
+  try {
+    const { mealPlanId, mealId } = req.params;
+
+    const deleted = await MealCompletion.destroy({
+      where: {
+        userId: req.user.id,
+        mealPlanId,
+        mealId
+      }
+    });
+
+    if (deleted === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Meal completion not found'
+      });
+    }
+
+    return res.json({
+      success: true,
+      message: 'Meal unmarked successfully'
+    });
+
+  } catch (error) {
+    console.error('Delete meal completion error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to unmark meal',
       error: error.message
     });
   }

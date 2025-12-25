@@ -86,6 +86,22 @@ const NutritionScreen = () => {
         console.log('Active meal plan:', activePlan.name);
         console.log('Current day number:', currentDayNumber);
 
+        // Fetch meal completion status from database
+        let completionStatusMap = {};
+        try {
+          const completionsResponse = await aiAPI.getMealCompletions({ mealPlanId: activePlan.id });
+          if (completionsResponse.data.success) {
+            // Create a map of mealId -> completion status
+            completionsResponse.data.data.forEach(completion => {
+              completionStatusMap[completion.mealId] = true;
+            });
+            console.log('Loaded meal completions:', completionStatusMap);
+          }
+        } catch (error) {
+          console.error('Error fetching meal completions:', error);
+          // Continue without completion data
+        }
+
         // Parse meals
         let meals = activePlan.meals;
         if (typeof meals === 'string') {
@@ -133,6 +149,7 @@ const NutritionScreen = () => {
               const mealId = `${currentDayNumber}-${type}`;
               mealsArray.push({
                 id: mealId,
+                mealPlanId: activePlan.id,
                 type: type.charAt(0).toUpperCase() + type.slice(1),
                 name: meal.name,
                 calories: meal.totalCalories || 0,
@@ -140,7 +157,7 @@ const NutritionScreen = () => {
                 carbs: meal.macros?.carbs || 0,
                 fat: meal.macros?.fat || 0,
                 time: meal.time || '',
-                completed: completedMeals[mealId] || false,
+                completed: completionStatusMap[mealId] || false,
               });
 
               // Sum up daily targets (total of all meals)
@@ -151,6 +168,8 @@ const NutritionScreen = () => {
             }
           });
 
+          // Update completedMeals state with loaded data
+          setCompletedMeals(completionStatusMap);
           setTodayMeals(mealsArray);
 
           // Calculate consumed based on completed meals
@@ -163,6 +182,18 @@ const NutritionScreen = () => {
             }
             return acc;
           }, { calories: 0, protein: 0, carbs: 0, fat: 0 });
+
+          // Fetch water intake for today
+          let waterConsumed = 0;
+          try {
+            const today = new Date().toISOString().split('T')[0];
+            const waterRes = await aiAPI.getWaterIntake({ date: today });
+            if (waterRes.data && waterRes.data.totalAmount) {
+              waterConsumed = waterRes.data.totalAmount;
+            }
+          } catch (err) {
+            console.error('Error fetching water intake:', err);
+          }
 
           // Update nutrition goals with targets from daily totals
           setNutritionGoals({
@@ -186,7 +217,7 @@ const NutritionScreen = () => {
               target: totalTarget.fat || activePlan.macronutrients?.fat?.grams || 67,
               unit: 'g'
             },
-            water: { consumed: 0, target: 8, unit: 'glasses' },
+            water: { consumed: waterConsumed, target: 2000, unit: 'ml' },
           });
         }
       }
@@ -290,43 +321,97 @@ const NutritionScreen = () => {
     );
   };
 
-  const toggleMealCompleted = (mealId) => {
-    setCompletedMeals(prev => {
-      const newCompleted = {
+  const toggleMealCompleted = async (mealId) => {
+    // Find the meal to get mealPlanId
+    const meal = todayMeals.find(m => m.id === mealId);
+    if (!meal) return;
+
+    const isCurrentlyCompleted = completedMeals[mealId] || false;
+    const newCompletedStatus = !isCurrentlyCompleted;
+
+    // Optimistically update UI first
+    setCompletedMeals(prev => ({
+      ...prev,
+      [mealId]: newCompletedStatus
+    }));
+
+    const updatedMeals = todayMeals.map(m =>
+      m.id === mealId
+        ? { ...m, completed: newCompletedStatus }
+        : m
+    );
+    setTodayMeals(updatedMeals);
+
+    // Recalculate consumed values
+    const totalConsumed = updatedMeals.reduce((acc, m) => {
+      if (m.completed) {
+        acc.calories += m.calories;
+        acc.protein += m.protein;
+        acc.carbs += m.carbs;
+        acc.fat += m.fat;
+      }
+      return acc;
+    }, { calories: 0, protein: 0, carbs: 0, fat: 0 });
+
+    // Update nutrition goals
+    setNutritionGoals(prev => ({
+      calories: { ...prev.calories, consumed: totalConsumed.calories },
+      protein: { ...prev.protein, consumed: totalConsumed.protein },
+      carbs: { ...prev.carbs, consumed: totalConsumed.carbs },
+      fat: { ...prev.fat, consumed: totalConsumed.fat },
+      water: prev.water,
+    }));
+
+    // Save to database
+    try {
+      if (newCompletedStatus) {
+        // Mark as completed
+        await aiAPI.toggleMealCompletion({
+          mealPlanId: meal.mealPlanId,
+          mealId: mealId
+        });
+        console.log('Meal marked as completed:', mealId);
+      } else {
+        // Unmark (delete completion)
+        await aiAPI.deleteMealCompletion(meal.mealPlanId, mealId);
+        console.log('Meal unmarked:', mealId);
+      }
+    } catch (error) {
+      console.error('Error saving meal completion:', error);
+      // Revert the optimistic update on error
+      setCompletedMeals(prev => ({
         ...prev,
-        [mealId]: !prev[mealId]
-      };
+        [mealId]: isCurrentlyCompleted
+      }));
 
-      // Update todayMeals state
-      const updatedMeals = todayMeals.map(meal =>
-        meal.id === mealId
-          ? { ...meal, completed: !meal.completed }
-          : meal
+      const revertedMeals = todayMeals.map(m =>
+        m.id === mealId
+          ? { ...m, completed: isCurrentlyCompleted }
+          : m
       );
-      setTodayMeals(updatedMeals);
+      setTodayMeals(revertedMeals);
 
-      // Recalculate consumed values
-      const totalConsumed = updatedMeals.reduce((acc, meal) => {
-        if (meal.completed) {
-          acc.calories += meal.calories;
-          acc.protein += meal.protein;
-          acc.carbs += meal.carbs;
-          acc.fat += meal.fat;
+      // Recalculate with reverted data
+      const revertedConsumed = revertedMeals.reduce((acc, m) => {
+        if (m.completed) {
+          acc.calories += m.calories;
+          acc.protein += m.protein;
+          acc.carbs += m.carbs;
+          acc.fat += m.fat;
         }
         return acc;
       }, { calories: 0, protein: 0, carbs: 0, fat: 0 });
 
-      // Update nutrition goals
       setNutritionGoals(prev => ({
-        calories: { ...prev.calories, consumed: totalConsumed.calories },
-        protein: { ...prev.protein, consumed: totalConsumed.protein },
-        carbs: { ...prev.carbs, consumed: totalConsumed.carbs },
-        fat: { ...prev.fat, consumed: totalConsumed.fat },
+        calories: { ...prev.calories, consumed: revertedConsumed.calories },
+        protein: { ...prev.protein, consumed: revertedConsumed.protein },
+        carbs: { ...prev.carbs, consumed: revertedConsumed.carbs },
+        fat: { ...prev.fat, consumed: revertedConsumed.fat },
         water: prev.water,
       }));
 
-      return newCompleted;
-    });
+      Alert.alert('Error', 'Failed to update meal status. Please try again.');
+    }
   };
 
   const handleBarcodeScanned = (foodData) => {
@@ -411,6 +496,31 @@ const NutritionScreen = () => {
     } catch (error) {
       console.error('Error adding food log:', error);
       Alert.alert('Error', 'Failed to add food to diary. Please try again.');
+    }
+  };
+
+  const handleWaterLog = async () => {
+    try {
+      const amount = 250; // Standard glass size
+      const response = await aiAPI.logWater({
+        amount: amount,
+        date: new Date().toISOString()
+      });
+
+      if (response.data) {
+        // Update local state for immediate feedback
+        setNutritionGoals(prev => ({
+          ...prev,
+          water: {
+            ...prev.water,
+            consumed: (prev.water?.consumed || 0) + amount
+          }
+        }));
+        Alert.alert('Success', 'Đã thêm 250ml nước! 💧');
+      }
+    } catch (error) {
+      console.error('Error logging water:', error);
+      Alert.alert('Error', 'Không thể lưu lượng nước. Vui lòng thử lại.');
     }
   };
 
@@ -901,11 +1011,17 @@ const NutritionScreen = () => {
 
                 {/* Quick Actions */}
                 <View style={styles.quickActions}>
-                  <TouchableOpacity style={styles.quickActionButton}>
+                  <TouchableOpacity
+                    style={styles.quickActionButton}
+                    onPress={() => setSelectedTab('log')}
+                  >
                     <Icon name="add" size={24} color="#007AFF" />
                     <Text style={styles.quickActionText}>Add Meal</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity style={styles.quickActionButton}>
+                  <TouchableOpacity
+                    style={styles.quickActionButton}
+                    onPress={handleWaterLog}
+                  >
                     <Icon name="water" size={24} color="#2196F3" />
                     <Text style={styles.quickActionText}>Log Water</Text>
                   </TouchableOpacity>

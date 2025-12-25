@@ -2,7 +2,12 @@ const express = require('express');
 const router = express.Router();
 const { auth } = require('../middleware/auth');
 const { sequelize } = require('../config/database');
-
+function formatDateLocal(date) {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+}
 // GET /api/dashboard/stats - Get today's dashboard statistics
 router.get('/stats', auth, async (req, res) => {
     try {
@@ -36,13 +41,26 @@ router.get('/stats', auth, async (req, res) => {
         // Mock steps data (would come from fitness tracker integration)
         const steps = Math.floor(Math.random() * 3000) + 7000; // 7000-10000
 
+        // Get today's water intake
+        const waterResult = await sequelize.query(`
+          SELECT COALESCE(SUM(amount), 0) as totalWater
+          FROM water_intakes
+          WHERE user_id = :userId
+          AND DATE(date) = CURDATE()
+        `, {
+            replacements: { userId },
+            type: sequelize.QueryTypes.SELECT
+        });
+
+        const currentWater = waterResult[0]?.totalWater || 0;
+
         res.json({
             success: true,
             stats: {
                 steps: steps,
                 calories: calories,
                 activeMinutes: Math.round(workoutResult.activeMinutes || 0),
-                water: 0, // Default value - would come from health tracking
+                water: parseInt(currentWater), // Real water data
                 sleep: 0, // Default value - would come from health tracking
                 heartRate: 0 // Default value - would come from health tracking
             }
@@ -86,11 +104,18 @@ router.get('/weekly-progress', auth, async (req, res) => {
         const minutesMap = {};
         const caloriesMap = {};
 
+        // Use JavaScript Date object for current date (server timezone)
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        console.log('[Dashboard] Today date:', formatDateLocal(today));
+
+        // Generate last 7 days including today (i=6 is 6 days ago, i=0 is today)
         for (let i = 6; i >= 0; i--) {
-            const date = new Date();
-            date.setDate(date.getDate() - i);
-            date.setHours(0, 0, 0, 0);
-            const dateStr = date.toISOString().split('T')[0];
+            const d = new Date(today);
+            d.setDate(today.getDate() - i);
+            const dateStr = formatDateLocal(d);
+
             last7Days.push(dateStr);
             minutesMap[dateStr] = 0;
             caloriesMap[dateStr] = 0;
@@ -102,7 +127,7 @@ router.get('/weekly-progress', auth, async (req, res) => {
         if (weeklyWorkouts && Array.isArray(weeklyWorkouts) && weeklyWorkouts.length > 0) {
             weeklyWorkouts.forEach(row => {
                 const rowDate = new Date(row.date);
-                const dateStr = rowDate.toISOString().split('T')[0];
+                const dateStr = formatDateLocal(rowDate);
 
                 console.log('[Dashboard] Processing row:', {
                     rawDate: row.date,

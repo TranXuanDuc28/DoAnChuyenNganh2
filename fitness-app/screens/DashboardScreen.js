@@ -258,11 +258,11 @@ const DashboardScreen = () => {
           <StatCard
             title="Water"
             value={todayStats.water}
-            unit=" gls"
+            unit=" ml"
             icon="water"
             color={colors.info}
             bgColor={colors.card}
-            progress={(todayStats.water / 8) * 100}
+            progress={(todayStats.water / 2000) * 100}
           />
         </View>
       </View>

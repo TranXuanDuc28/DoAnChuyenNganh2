@@ -11,10 +11,10 @@ const DEV_API_HOST = typeof process !== 'undefined' && process.env && process.en
   : (Platform.OS === 'android' ? '10.0.2.2' : 'localhost');
 
 // NGROK URL for mobile testing - update this when ngrok restarts
-const NGROK_URL = 'https://unpriggish-conductorial-lilah.ngrok-free.dev';
+const NGROK_URL = process.env.EXPO_PUBLIC_API_URL;
 
 const BASE_URL = __DEV__
-  ? `${NGROK_URL}/api`  // Using ngrok for mobile device testing
+  ? `${NGROK_URL}`  // Using ngrok for mobile device testing
   : 'http://localhost:5000/api';
 
 // Export BASE_URL for use in other files
@@ -210,6 +210,15 @@ export const aiAPI = {
   getFoodLogs: (params) => api.get('/nutrition/food-log', { params }),
   updateFoodLog: (id, foodData) => api.put(`/nutrition/food-log/${id}`, foodData),
   deleteFoodLog: (id) => api.delete(`/nutrition/food-log/${id}`),
+
+  // Meal Completions
+  toggleMealCompletion: (mealData) => api.post('/nutrition/meal-completions', mealData),
+  getMealCompletions: (params) => api.get('/nutrition/meal-completions', { params }),
+  deleteMealCompletion: (mealPlanId, mealId) => api.delete(`/nutrition/meal-completions/${mealPlanId}/${mealId}`),
+
+  // Water Intake
+  logWater: (data) => api.post('/nutrition/water', data),
+  getWaterIntake: (params) => api.get('/nutrition/water', { params }),
 };
 
 // Pose API
