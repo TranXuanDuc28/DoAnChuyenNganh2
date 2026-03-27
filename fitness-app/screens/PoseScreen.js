@@ -23,6 +23,17 @@ function detectMimeFromBase64(b64) {
   if (p.startsWith('/9j/')) return 'image/jpeg';
   return 'image/jpeg';
 }
+
+const EXERCISES = [
+  { id: 'squat', name: 'Squat', nameVi: 'Squat' },
+  { id: 'push_up', name: 'Push-up', nameVi: 'Hít đất' },
+  { id: 'jumping_jack', name: 'Jumping Jack', nameVi: 'Nhảy dang tay' },
+  { id: 'pull_up', name: 'Pull-up', nameVi: 'Hít xà' },
+  { id: 'front_raise', name: 'Front Raise', nameVi: 'Nâng tạ trước' },
+  { id: 'bench_pressing', name: 'Bench Press', nameVi: 'Đẩy ngực' },
+  { id: 'situp', name: 'Sit-up', nameVi: 'Gập bụng' },
+  { id: 'pommelhorse', name: 'Pommel Horse', nameVi: 'Ngựa tay quay' },
+];
 async function convertBase64PngToJpeg(pngBase64) {
   if (!pngBase64 || typeof pngBase64 !== 'string') throw new Error('Invalid base64 input');
   const encodingOption = FileSystem.EncodingType?.Base64 || 'base64';
@@ -274,6 +285,52 @@ const EvaluationResultModal = ({ visible, onClose, result }) => {
   );
 };
 
+
+const ExerciseSelectorModal = ({ visible, onClose, onSelect, currentExerciseId }) => {
+  return (
+    <Modal
+      visible={visible}
+      transparent={true}
+      animationType="slide"
+      onRequestClose={onClose}
+    >
+      <View style={modalStyles.overlay}>
+        <View style={modalStyles.container}>
+          <View style={modalStyles.header}>
+            <Text style={modalStyles.headerTitle}>Chọn bài tập</Text>
+            <TouchableOpacity onPress={onClose} style={modalStyles.closeBtn}>
+              <Icon name="close" size={28} color="#333" />
+            </TouchableOpacity>
+          </View>
+          <ScrollView contentContainerStyle={modalStyles.modalBody}>
+            {EXERCISES.map((item) => (
+              <TouchableOpacity
+                key={item.id}
+                style={[
+                  styles.exerciseItem,
+                  currentExerciseId === item.id && styles.activeExerciseItem
+                ]}
+                onPress={() => onSelect(item.id)}
+              >
+                <View style={styles.exerciseInfo}>
+                  <Text style={[
+                    styles.exerciseName,
+                    currentExerciseId === item.id && styles.activeExerciseName
+                  ]}>{item.name}</Text>
+                  <Text style={styles.exerciseNameVi}>{item.nameVi}</Text>
+                </View>
+                {currentExerciseId === item.id && (
+                  <Icon name="checkmark-circle" size={24} color={colors.primary} />
+                )}
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+      </View>
+    </Modal>
+  );
+};
+
 const PoseScreen = () => {
   const route = useRoute();
   const navigation = useNavigation();
@@ -285,8 +342,8 @@ const PoseScreen = () => {
   const [facing, setFacing] = useState('back');
   const [imageDimensions, setImageDimensions] = useState({ width: 0, height: 0 });
   const [originalImageDimensions, setOriginalImageDimensions] = useState({ width: 0, height: 0 });
-  const [currentExercise, setCurrentExercise] = useState(route.params?.exerciseName);
-  const [exerciseTitle, setExerciseTitle] = useState(route.params?.exerciseTitle || 'Squat');
+  const [currentExercise, setCurrentExercise] = useState("squat");
+  const [exerciseTitle, setExerciseTitle] = useState(route.params?.exerciseTitle || 'squat');
   const [isZoomed, setIsZoomed] = useState(false);
   const [zoomImageDimensions, setZoomImageDimensions] = useState({ width: 0, height: 0 });
   const [isRealTimeMode, setIsRealTimeMode] = useState(false);
@@ -324,6 +381,7 @@ const PoseScreen = () => {
   const { user } = useAuth();
   const [resultModalVisible, setResultModalVisible] = useState(false);
   const [evaluationResult, setEvaluationResult] = useState(null);
+  const [exerciseModalVisible, setExerciseModalVisible] = useState(false);
 
   useEffect(() => {
     // Only request permission once when component mounts
@@ -839,17 +897,19 @@ const PoseScreen = () => {
     setIsVideoMode(true);
   };
   // Nhấn icon play để bắt đầu nhận diện tư thế thời gian thực
-  const startRealTimeEvaluation = async () => {
+  const startRealTimeEvaluation = async (exerciseOverride = null) => {
     if (!cameraRef.current) {
       Alert.alert('Lỗi', 'Camera chưa sẵn sàng');
       return;
     }
 
+    const activeExercise = exerciseOverride || currentExercise;
+
     try {
       setIsProcessing(true);
       // Kết nối WebSocket và khởi tạo session
       await PoseWebSocket.connect();
-      PoseWebSocket.startSession(currentExercise);
+      PoseWebSocket.startSession(activeExercise);
     } catch (error) {
       console.error('[PoseScreen] Unable to start real-time (WS):', error);
       const message = error?.message || 'Không thể kết nối realtime socket. Vui lòng thử lại.';
@@ -913,7 +973,7 @@ const PoseScreen = () => {
         // } else {
         wsResult = await PoseWebSocket.evaluateFrame({
           user_id: user?.id,
-          exerciseName: currentExercise,
+          exerciseName: activeExercise,
           imageBase64,
         });
         // }
@@ -1135,14 +1195,14 @@ const PoseScreen = () => {
               }}
             />
 
-            {isRealTimeMode && currentPose?.keypoints?.length > 0 && (
+            {/* {isRealTimeMode && currentPose?.keypoints?.length > 0 && (
               <PoseOverlay
                 pose={currentPose}
                 containerWidth={Dimensions.get('window').width}
                 containerHeight={260}
                 flipHorizontal={facing === 'front'}
               />
-            )}
+            )} */}
             <View style={styles.switchRow}>
               <TouchableOpacity style={styles.switchBtn} onPress={() => setFacing((p) => (p === 'back' ? 'front' : 'back'))}>
                 <Icon name="camera-reverse" size={18} color={colors.iconDefault} />
@@ -1193,7 +1253,7 @@ const PoseScreen = () => {
 
                 <TouchableOpacity
                   style={[styles.captureBtn, styles.realTimeBtn, { marginTop: 10 }]}
-                  onPress={startRealTimeEvaluation}
+                  onPress={() => setExerciseModalVisible(true)}
                   disabled={isProcessing || !permission?.granted}
                 >
                   <Icon name="videocam" size={22} color={colors.textOnPrimary} />
@@ -1434,6 +1494,19 @@ const PoseScreen = () => {
         visible={resultModalVisible}
         onClose={() => setResultModalVisible(false)}
         result={evaluationResult}
+      />
+      <ExerciseSelectorModal
+        visible={exerciseModalVisible}
+        onClose={() => setExerciseModalVisible(false)}
+        currentExerciseId={currentExercise}
+        onSelect={(exerciseId) => {
+          setCurrentExercise(exerciseId);
+          setExerciseModalVisible(false);
+          // Slight delay to allow modal to close smoothly
+          setTimeout(() => {
+            startRealTimeEvaluation(exerciseId);
+          }, 500);
+        }}
       />
     </>
   );
@@ -1787,6 +1860,36 @@ const styles = StyleSheet.create({
     height: 250,
     borderRadius: 8,
     backgroundColor: '#f5f5f5',
+  },
+  // Exercise Selector styles
+  exerciseItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+    backgroundColor: '#fff',
+  },
+  activeExerciseItem: {
+    backgroundColor: '#F0F7FF',
+  },
+  exerciseInfo: {
+    flex: 1,
+  },
+  exerciseName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+  },
+  activeExerciseName: {
+    color: colors.primary,
+    fontWeight: '700',
+  },
+  exerciseNameVi: {
+    fontSize: 14,
+    color: '#666',
+    marginTop: 2,
   },
 });
 

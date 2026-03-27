@@ -15,8 +15,8 @@ PoseRAC: {
   alpha: 0.01
 }
 Action_trigger: {
-  enter_threshold: 0.78,
-  exit_threshold: 0.4,
+  enter_threshold: 0.5,
+  exit_threshold: 0.3,
   momentum: 0.4
 }
 trainer: {

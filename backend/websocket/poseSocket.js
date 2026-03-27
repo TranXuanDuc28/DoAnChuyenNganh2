@@ -69,62 +69,56 @@ module.exports = (io) => {
 
         if (imageBase64) {
           // Use Python-based PoseRAC evaluation
-          try {
-            let traditionalResult = null;
-            const sessionKey = `${socket.id}:${exerciseName}`;
-            traditionalResult = await evaluatePose({
-              user_id,
-              exerciseName,
-              imageBase64,
-              sessionKey
-            });
-            //console.log("Duc", traditionalResult);
+          let traditionalResult = null;
+          const sessionKey = `${socket.id}:${exerciseName}`;
+          traditionalResult = await evaluatePose({
+            user_id,
+            exerciseName,
+            imageBase64,
+            sessionKey
+          });
+          //console.log("Duc", traditionalResult);
 
-            // Combine results; if backend provided repCount include it
+          // Combine results; if backend provided repCount include it
 
 
-            // console.log(`[PoseSocket] Python evaluation completed for frame ${frameId}:`, {
-            //   best_action: pythonResult.best_action,
-            //   best_score: pythonResult.best_score,
-            //   phase: pythonResult.phase,
-            //   repCount: repState.repCount
-            // });
-            console.log(`[PoseSocket] Evaluation completed for frame ${frameId}:`, {
-              isCorrect: traditionalResult.isCorrect,
-              score: traditionalResult.score,
-              phase: traditionalResult.phase,
-              repCount: traditionalResult.repCount || 0
-            });
+          // console.log(`[PoseSocket] Python evaluation completed for frame ${frameId}:`, {
+          //   best_action: pythonResult.best_action,
+          //   best_score: pythonResult.best_score,
+          //   phase: pythonResult.phase,
+          //   repCount: repState.repCount
+          // });
+          console.log(`[PoseSocket] Evaluation completed for frame ${frameId}:`, {
+            isCorrect: traditionalResult.isCorrect,
+            score: traditionalResult.score,
+            phase: traditionalResult.phase,
+            repCount: traditionalResult.repCount || 0
+          });
 
-            // Send result back to client
-            socket.emit('pose:result', {
-              frameId,
-              success: true,
-              keypoints: traditionalResult.keypoints,
-              angles: traditionalResult.angles,
-              isCorrect: traditionalResult.isCorrect,
-              score: traditionalResult.score,
-              phase: traditionalResult.phase,
-              repCount: typeof traditionalResult?.repCount === 'number' ? traditionalResult.repCount : 0
-            });
+          // Send result back to client
+          socket.emit('pose:result', {
+            frameId,
+            success: true,
+            keypoints: traditionalResult.keypoints,
+            angles: traditionalResult.angles,
+            isCorrect: traditionalResult.isCorrect,
+            score: traditionalResult.score,
+            phase: traditionalResult.phase,
+            repCount: typeof traditionalResult?.repCount === 'number' ? traditionalResult.repCount : 0
+          });
 
-            //console.log(`[PoseSocket] Sent pose:result for frame ${frameId}`);
+          //console.log(`[PoseSocket] Sent pose:result for frame ${frameId}`);
 
-            // Clean up old session after 5 seconds of inactivity
-            if (frameId) {
-              setTimeout(() => {
-                const latestFrameId = activeSessions.get(sessionKey);
-                if (latestFrameId === frameId) {
-                  activeSessions.delete(sessionKey);
-                }
-              }, 5000);
-            }
-
-          } catch (pythonError) {
-            result.pythonError = pythonError.message;
+          // Clean up old session after 5 seconds of inactivity
+          if (frameId) {
+            setTimeout(() => {
+              const latestFrameId = activeSessions.get(sessionKey);
+              if (latestFrameId === frameId) {
+                activeSessions.delete(sessionKey);
+              }
+            }, 5000);
           }
         }
-
 
       } catch (error) {
         console.error('[PoseSocket] Error evaluating pose:', error);

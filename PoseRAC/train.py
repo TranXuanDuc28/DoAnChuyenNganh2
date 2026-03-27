@@ -15,6 +15,12 @@ torch.multiprocessing.set_sharing_strategy('file_system')
 
 # Normalization to improve training robustness.
 def normalize_landmarks(all_landmarks):
+    #pose = [
+    #[100, 200, 0.5],
+    #[120, 210, 0.6],
+    #[130, 250, 0.7],
+    #...
+    #]
     x_max = np.expand_dims(np.max(all_landmarks[:,:,0], axis=1), 1)
     x_min = np.expand_dims(np.min(all_landmarks[:,:,0], axis=1), 1)
 
@@ -38,16 +44,20 @@ def obtain_landmark_label(csv_path, all_landmarks, all_labels, label2index, num_
     file_separator=','
     n_landmarks = 33
     n_dimensions = 3
+    #Đọc từng dòng CSV
     with open(csv_path) as csv_file:
         csv_reader = csv.reader(csv_file, delimiter=file_separator)
+        #Lặp từng dòng
         for row in csv_reader:
             assert len(row) == n_landmarks * n_dimensions + 2, 'Wrong number of values: {}'.format(len(row))
             landmarks = np.array(row[2:], np.float32).reshape([n_landmarks, n_dimensions])
             all_landmarks.append(landmarks)
             label = label2index[row[1]]
-
+            #/data/squat/salient1/frame_001.jpg
+            #/data/squat/salient2/frame_001.jpg
             start_str = row[0].split('/')[-3]
             label_np = np.zeros(num_classes)
+            #[0, 0, 0, 0, 0, 0, 0, 0 ]
             if start_str == 'salient1':
                 label_np[label] = 1
             all_labels.append(label_np)
@@ -86,7 +96,10 @@ def main(args):
         one_data = label_pd.iloc[label_i]
         action = one_data['action']
         label = one_data['label']
+        #action = 'squat'
+        #label  = 0
         index_label_dict[label] = action
+        #{0: 'squat', 1: 'push_up'}
     num_classes = len(index_label_dict)
     action2index = {v: k for k, v in index_label_dict.items()}
 

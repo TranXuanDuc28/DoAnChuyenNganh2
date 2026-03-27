@@ -135,6 +135,18 @@ const POSE_TEMPLATES = {
     // Alias for squat
     return POSE_TEMPLATES.squat({ keypointsMap });
   },
+  'push_up': ({ keypointsMap }) => {
+    return POSE_TEMPLATES['push-up']({ keypointsMap });
+  },
+  'jumping_jack': ({ keypointsMap }) => {
+    return POSE_TEMPLATES['jumping-jack']({ keypointsMap });
+  },
+  // Placeholders for other exercises to prevent crashes
+  'pull_up': ({ keypointsMap }) => POSE_TEMPLATES['squat']({ keypointsMap }),
+  'front_raise': ({ keypointsMap }) => POSE_TEMPLATES['squat']({ keypointsMap }),
+  'bench_pressing': ({ keypointsMap }) => POSE_TEMPLATES['squat']({ keypointsMap }),
+  'situp': ({ keypointsMap }) => POSE_TEMPLATES['squat']({ keypointsMap }),
+  'pommelhorse': ({ keypointsMap }) => POSE_TEMPLATES['squat']({ keypointsMap }),
   plank: ({ keypointsMap }) => {
     const lHip = angleBetween(keypointsMap[JOINTS.leftShoulder], keypointsMap[JOINTS.leftHip], keypointsMap[JOINTS.leftKnee]);
     const rHip = angleBetween(keypointsMap[JOINTS.rightShoulder], keypointsMap[JOINTS.rightHip], keypointsMap[JOINTS.rightKnee]);
@@ -644,7 +656,14 @@ async function evaluatePose({ user_id, exerciseName = 'squat', imageBase64, sess
   // console.log("Duc", usedKeypoints)
 
   const keypointsMap = toKeypointMap(usedKeypoints);
-  const template = POSE_TEMPLATES[exerciseName];
+  let template = POSE_TEMPLATES[exerciseName];
+
+  // Fallback to squat if template not found to prevent crash
+  if (typeof template !== 'function') {
+    console.warn(`[PoseService] Template not found for exercise: ${exerciseName}, using squat as default`);
+    template = POSE_TEMPLATES.squat;
+  }
+
   const templateResult = template({ keypointsMap });
   const { isCorrect, score, angles, phase } = templateResult;
   //console.log("Duc", templateResult)
