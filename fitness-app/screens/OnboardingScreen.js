@@ -22,36 +22,36 @@ const OnboardingScreen = ({ navigation, route }) => {
   const { register } = useAuth();
   const [currentStep, setCurrentStep] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
-
+  
   // Get registration data from RegisterScreen
   const registrationData = route?.params?.registrationData || {};
-
+  
   const [formData, setFormData] = useState({
     // Personal Info (from RegisterScreen)
     firstName: registrationData.firstName || '',
     lastName: registrationData.lastName || '',
     email: registrationData.email || '',
     password: registrationData.password || '',
-
+    
     // Physical Info
     age: '',
     gender: 'male',
     height: '',
     weight: '',
-
+    
     // Fitness Info
     fitnessLevel: 'beginner',
     fitnessGoals: [],
     activityLevel: 'moderately_active',
     workoutDuration: '',
-
+    
     // Health Info
     targetWeight: '',
     waistCircumference: '',
     hipCircumference: '',
     bodyFatPercentage: '',
     muscleMass: '',
-
+    
     // Nutrition Preferences
     dailyMeals: '3',
     budgetLevel: 'medium',
@@ -140,7 +140,7 @@ const OnboardingScreen = ({ navigation, route }) => {
 
   // const validateForm = () => {
   //   const { firstName, lastName, email, password, confirmPassword, age, height, weight } = formData;
-
+    
   //   if (!firstName || !lastName || !email || !password) {
   //     Alert.alert('Error', 'Please fill in all required fields');
   //     return false;
@@ -175,11 +175,11 @@ const OnboardingScreen = ({ navigation, route }) => {
     }));
   };
 
-  const renderPhysicalInfoStep = () => (
+  const PhysicalInfoStep = () => (
     <ScrollView style={styles.stepContainer} showsVerticalScrollIndicator={false}>
       <Text style={styles.stepTitle}>{steps[currentStep].title}</Text>
       <Text style={styles.stepSubtitle}>{steps[currentStep].subtitle}</Text>
-
+      
       <View style={styles.inputContainer}>
         <Text style={styles.inputLabel}>Age *</Text>
         <TextInput
@@ -198,7 +198,6 @@ const OnboardingScreen = ({ navigation, route }) => {
             selectedValue={formData.gender}
             onValueChange={(value) => updateFormData('gender', value)}
             style={styles.picker}
-            itemStyle={{ height: 50, color: colors.textPrimary }}
           >
             <Picker.Item label="Male" value="male" />
             <Picker.Item label="Female" value="female" />
@@ -236,7 +235,6 @@ const OnboardingScreen = ({ navigation, route }) => {
             selectedValue={formData.fitnessLevel}
             onValueChange={(value) => updateFormData('fitnessLevel', value)}
             style={styles.picker}
-            itemStyle={{ height: 50, color: colors.textPrimary }}
           >
             <Picker.Item label="Beginner" value="beginner" />
             <Picker.Item label="Intermediate" value="intermediate" />
@@ -247,11 +245,11 @@ const OnboardingScreen = ({ navigation, route }) => {
     </ScrollView>
   );
 
-  const renderFitnessGoalsStep = () => (
+  const FitnessGoalsStep = () => (
     <ScrollView style={styles.stepContainer} showsVerticalScrollIndicator={false}>
       <Text style={styles.stepTitle}>{steps[currentStep].title}</Text>
       <Text style={styles.stepSubtitle}>{steps[currentStep].subtitle}</Text>
-
+      
       <View style={styles.goalsContainer}>
         {fitnessGoals.map((goal) => (
           <TouchableOpacity
@@ -262,10 +260,10 @@ const OnboardingScreen = ({ navigation, route }) => {
             ]}
             onPress={() => toggleFitnessGoal(goal.id)}
           >
-            <Icon
-              name={goal.icon}
-              size={30}
-              color={formData.fitnessGoals.includes(goal.id) ? colors.primary : colors.textSecondary}
+            <Icon 
+              name={goal.icon} 
+              size={30} 
+              color={formData.fitnessGoals.includes(goal.id) ? colors.primary : colors.textSecondary} 
             />
             <Text style={[
               styles.goalText,
@@ -284,7 +282,6 @@ const OnboardingScreen = ({ navigation, route }) => {
             selectedValue={formData.activityLevel}
             onValueChange={(value) => updateFormData('activityLevel', value)}
             style={styles.picker}
-            itemStyle={{ height: 50, color: colors.textPrimary }}
           >
             <Picker.Item label="Sedentary" value="sedentary" />
             <Picker.Item label="Lightly Active" value="lightly_active" />
@@ -311,14 +308,14 @@ const OnboardingScreen = ({ navigation, route }) => {
     </ScrollView>
   );
 
-  const renderHealthInfoStep = () => (
+  const HealthInfoStep = () => (
     <ScrollView style={styles.stepContainer} showsVerticalScrollIndicator={false}>
       <Text style={styles.stepTitle}>{steps[currentStep].title}</Text>
       <Text style={styles.stepSubtitle}>{steps[currentStep].subtitle}</Text>
       <Text style={styles.stepDescription}>
         This information helps us provide more accurate recommendations. You can update these later.
       </Text>
-
+      
       <View style={styles.inputContainer}>
         <Text style={styles.inputLabel}>Target Weight (kg)</Text>
         <TextInput
@@ -376,11 +373,11 @@ const OnboardingScreen = ({ navigation, route }) => {
     </ScrollView>
   );
 
-  const renderNutritionPreferencesStep = () => (
+  const NutritionPreferencesStep = () => (
     <ScrollView style={styles.stepContainer} showsVerticalScrollIndicator={false}>
       <Text style={styles.stepTitle}>{steps[currentStep].title}</Text>
       <Text style={styles.stepSubtitle}>{steps[currentStep].subtitle}</Text>
-
+      
       <View style={styles.inputContainer}>
         <Text style={styles.inputLabel}>Daily Meals</Text>
         <View style={styles.pickerContainer}>
@@ -388,7 +385,6 @@ const OnboardingScreen = ({ navigation, route }) => {
             selectedValue={formData.dailyMeals}
             onValueChange={(value) => updateFormData('dailyMeals', value)}
             style={styles.picker}
-            itemStyle={{ height: 50, color: colors.textPrimary }}
           >
             <Picker.Item label="2 meals per day" value="2" />
             <Picker.Item label="3 meals per day" value="3" />
@@ -406,7 +402,6 @@ const OnboardingScreen = ({ navigation, route }) => {
             selectedValue={formData.budgetLevel}
             onValueChange={(value) => updateFormData('budgetLevel', value)}
             style={styles.picker}
-            itemStyle={{ height: 50, color: colors.textPrimary }}
           >
             <Picker.Item label="Low Budget" value="low" />
             <Picker.Item label="Medium Budget" value="medium" />
@@ -451,22 +446,22 @@ const OnboardingScreen = ({ navigation, route }) => {
     {
       title: 'Physical Information',
       subtitle: 'Help us understand your body',
-      render: renderPhysicalInfoStep,
+      component: PhysicalInfoStep,
     },
     {
       title: 'Fitness Goals',
       subtitle: 'What do you want to achieve?',
-      render: renderFitnessGoalsStep,
+      component: FitnessGoalsStep,
     },
     {
       title: 'Nutrition Preferences',
       subtitle: 'Customize your meal plans',
-      render: renderNutritionPreferencesStep,
+      component: NutritionPreferencesStep,
     },
     {
       title: 'Health Information',
       subtitle: 'Current health metrics (Optional)',
-      render: renderHealthInfoStep,
+      component: HealthInfoStep,
     },
   ];
 
@@ -481,63 +476,63 @@ const OnboardingScreen = ({ navigation, route }) => {
         style={styles.gradient}
       >
         <View style={styles.content}>
-          <View style={styles.progressContainer}>
-            <View style={styles.progressBar}>
-              <View
-                style={[
-                  styles.progressFill,
-                  { width: `${((currentStep + 1) / steps.length) * 100}%` }
-                ]}
-              />
-            </View>
-            <Text style={styles.progressText}>
-              Step {currentStep + 1} of {steps.length}
-            </Text>
+        <View style={styles.progressContainer}>
+          <View style={styles.progressBar}>
+            <View 
+              style={[
+                styles.progressFill, 
+                { width: `${((currentStep + 1) / steps.length) * 100}%` }
+              ]} 
+            />
           </View>
-
-          <View style={styles.stepContent}>
-            {steps[currentStep].render()}
-          </View>
-
-          <View style={styles.buttonContainer}>
-            {currentStep > 0 ? (
-              <TouchableOpacity
-                style={styles.previousButton}
-                onPress={handlePrevious}
-              >
-                <Text style={styles.previousButtonText}>Previous</Text>
-              </TouchableOpacity>
-            ) : (
-              <TouchableOpacity
-                style={styles.previousButton}
-                onPress={() => navigation.goBack()}
-              >
-                <Icon name="arrow-back" size={20} color={colors.textSecondary} />
-                <Text style={styles.previousButtonText}>Back</Text>
-              </TouchableOpacity>
-            )}
-
-            {currentStep < steps.length - 1 ? (
-              <TouchableOpacity
-                style={styles.nextButton}
-                onPress={handleNext}
-              >
-                <Text style={styles.nextButtonText}>Next</Text>
-                <Icon name="arrow-forward" size={20} color={colors.textOnPrimary} />
-              </TouchableOpacity>
-            ) : (
-              <TouchableOpacity
-                style={[styles.completeButton, isLoading && styles.completeButtonDisabled]}
-                onPress={handleComplete}
-                disabled={isLoading}
-              >
-                <Text style={styles.completeButtonText}>
-                  {isLoading ? 'Creating Account...' : 'Complete Registration'}
-                </Text>
-              </TouchableOpacity>
-            )}
-          </View>
+          <Text style={styles.progressText}>
+            Step {currentStep + 1} of {steps.length}
+          </Text>
         </View>
+
+        <View style={styles.stepContent}>
+          {React.createElement(steps[currentStep].component)}
+        </View>
+
+        <View style={styles.buttonContainer}>
+          {currentStep > 0 ? (
+            <TouchableOpacity 
+              style={styles.previousButton}
+              onPress={handlePrevious}
+            >
+              <Text style={styles.previousButtonText}>Previous</Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity 
+              style={styles.previousButton}
+              onPress={() => navigation.goBack()}
+            >
+              <Icon name="arrow-back" size={20} color={colors.textSecondary} />
+              <Text style={styles.previousButtonText}>Back</Text>
+            </TouchableOpacity>
+          )}
+
+          {currentStep < steps.length - 1 ? (
+            <TouchableOpacity 
+              style={styles.nextButton}
+              onPress={handleNext}
+            >
+              <Text style={styles.nextButtonText}>Next</Text>
+              <Icon name="arrow-forward" size={20} color={colors.textOnPrimary} />
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity 
+              style={[styles.completeButton, isLoading && styles.completeButtonDisabled]}
+              onPress={handleComplete}
+              disabled={isLoading}
+            >
+              <Text style={styles.completeButtonText}>
+                {isLoading ? 'Creating Account...' : 'Complete Registration'}
+              </Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
       </LinearGradient>
     </ImageBackground>
   );

@@ -42,6 +42,7 @@ import SocialScreen from './screens/SocialScreen';
 import StatisticsScreen from './screens/StatisticsScreen';
 import PoseScreen from './screens/PoseScreen';
 import PoseHistory from './screens/PoseHistory';
+import WorkoutHistoryDetailScreen from './screens/WorkoutHistoryDetailScreen';
 
 // Import context
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -229,6 +230,13 @@ const AppNavigator = () => {
           <Stack.Screen
             name="WorkoutExerciseDetail"
             component={WorkoutExerciseDetailScreen}
+            options={{
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="WorkoutHistoryDetail"
+            component={WorkoutHistoryDetailScreen}
             options={{
               headerShown: false,
             }}

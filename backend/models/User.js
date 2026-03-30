@@ -147,12 +147,6 @@ const User = sequelize.define('User', {
     defaultValue: [],
     comment: 'Array of food allergies (e.g., seafood, dairy)'
   },
-  // Push Notifications
-  pushToken: {
-    type: DataTypes.STRING,
-    allowNull: true,
-    comment: 'Expo push notification token'
-  },
   // Status
   isActive: {
     type: DataTypes.BOOLEAN,
@@ -211,32 +205,32 @@ const User = sequelize.define('User', {
 });
 
 // Instance methods
-User.prototype.comparePassword = async function (candidatePassword) {
+User.prototype.comparePassword = async function(candidatePassword) {
   return bcrypt.compare(candidatePassword, this.password);
 };
 
-User.prototype.calculateBMI = function () {
+User.prototype.calculateBMI = function() {
   const heightInMeters = this.height / 100;
   return this.weight / (heightInMeters * heightInMeters);
 };
 
-User.prototype.calculateWHR = function () {
+User.prototype.calculateWHR = function() {
   if (!this.waistCircumference || !this.hipCircumference) {
     return null;
   }
   return this.waistCircumference / this.hipCircumference;
 };
 
-User.prototype.calculateDailyCalories = function () {
+User.prototype.calculateDailyCalories = function() {
   const { age, gender, weight, height, activityLevel } = this;
-
+  
   let bmr;
   if (gender === 'male') {
     bmr = 88.362 + (13.397 * weight) + (4.799 * height) - (5.677 * age);
   } else {
     bmr = 447.593 + (9.247 * weight) + (3.098 * height) - (4.330 * age);
   }
-
+  
   const activityMultipliers = {
     sedentary: 1.2,
     lightly_active: 1.375,
@@ -244,13 +238,13 @@ User.prototype.calculateDailyCalories = function () {
     very_active: 1.725,
     extremely_active: 1.9
   };
-
+  
   return Math.round(bmr * activityMultipliers[activityLevel]);
 };
 
 // Virtual for full name
 Object.defineProperty(User.prototype, 'fullName', {
-  get: function () {
+  get: function() {
     return `${this.firstName} ${this.lastName}`;
   }
 });
@@ -260,11 +254,6 @@ User.associate = (models) => {
   User.hasMany(models.BodyMetricsHistory, {
     foreignKey: 'userId',
     as: 'metricsHistory'
-  });
-
-  User.hasMany(models.Notification, {
-    foreignKey: 'userId',
-    as: 'notifications'
   });
 };
 
