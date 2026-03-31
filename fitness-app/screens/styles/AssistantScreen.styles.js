@@ -3,285 +3,329 @@ import colors from '../../theme/colors';
 
 const isWeb = Platform.OS === 'web';
 
+const localColors = {
+  background: '#ffffff',
+  card: '#f5f5f4', // the cool gray for bot text bubble
+  border: '#E5E9EB', // input border
+  text: '#2c2f31', // dark gray text
+  textSecondary: '#a8a29e', // timestamp text
+  primary: '#ff794a', // orange
+  primaryDark: '#a43609', // the dark red "RECOVERY PROTOCOL"
+  white: '#ffffff',
+  black: '#000000',
+  inputBg: '#e5e9eb',
+};
+
 export const styles = StyleSheet.create({
   container: {
     flex: 1,
-
-    backgroundColor: colors.background,
+    backgroundColor: localColors.background,
     ...(isWeb && {
       maxWidth: 1200,
       marginHorizontal: 'auto',
       width: '100%',
     }),
   },
+  // --- Header ---
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingBottom: 20,
+    paddingHorizontal: 24,
     paddingTop: 60,
-    backgroundColor: colors.card,
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 8,
+    paddingBottom: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
     zIndex: 10,
     ...(isWeb && {
       paddingHorizontal: 24,
       paddingVertical: 20,
     }),
   },
-  headerContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  backButton: {
+    marginRight: 16,
   },
   headerIcon: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: colors.primaryLight,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: localColors.primary,
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 2,
+    borderColor: localColors.primary,
+    overflow: 'hidden',
     marginRight: 12,
   },
-  headerText: {
+  headerAvatar: {
+    width: '100%',
+    height: '100%',
+  },
+  headerTextContainer: {
     flex: 1,
   },
   headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: colors.text,
-    marginBottom: 4,
-    ...(isWeb && {
-      fontSize: 22,
-    }),
-  },
-  statusContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  onlineIndicator: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: colors.iconSuccess,
-    marginRight: 6,
+    fontSize: 22,
+    fontWeight: '900',
+    color: '#ea580c', // Darker orange from figma
+    letterSpacing: -0.5,
   },
   statusText: {
-    fontSize: 14,
-    color: colors.iconSuccess,
-    fontWeight: '500',
+    fontSize: 10,
+    color: localColors.textSecondary,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    marginTop: 2,
   },
-  messagesList: {
-    paddingHorizontal: 16,
-    paddingVertical: 20,
-    paddingBottom: 20,
-    ...(isWeb && {
-      paddingHorizontal: 24,
-      paddingVertical: 24,
-    }),
-  },
-  messageContainer: {
+  headerActions: {
     flexDirection: 'row',
-    marginBottom: 16,
-    alignItems: 'flex-end',
+    alignItems: 'center',
+    gap: 16,
   },
-  botMessageContainer: {
+
+  // --- Chat List ---
+  messagesList: {
+    paddingHorizontal: 24,
+    paddingTop: 20,
+    paddingBottom: 40,
+  },
+  messageRow: {
+    flexDirection: 'row',
+    marginBottom: 24,
+    alignItems: 'flex-start',
+  },
+  botMessageRow: {
     justifyContent: 'flex-start',
   },
-  userMessageContainer: {
+  userMessageRow: {
     justifyContent: 'flex-end',
   },
-  botAvatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: colors.primary,
-    justifyContent: 'center',
+  botAvatarContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: localColors.primary,
+    marginRight: 12,
+    marginTop: 4,
+    overflow: 'hidden',
+    backgroundColor: localColors.primary,
     alignItems: 'center',
-    marginRight: 8,
+    justifyContent: 'center',
+  },
+  botAvatar: {
+    width: '100%',
+    height: '100%',
+  },
+  userAvatarContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(171, 173, 175, 0.2)',
+    marginLeft: 12,
+    marginTop: 4,
+    overflow: 'hidden',
+    backgroundColor: localColors.inputBg,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   userAvatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: colors.iconSuccess,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginLeft: 8,
+    width: '100%',
+    height: '100%',
+  },
+  bubbleWrapper: {
+    maxWidth: '75%',
   },
   messageBubble: {
-    maxWidth: '75%',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 20,
+    padding: 24,
     ...(isWeb && {
       maxWidth: '60%',
-      paddingHorizontal: 20,
-      paddingVertical: 14,
     }),
   },
   botBubble: {
-    backgroundColor: colors.card,
-    borderBottomLeftRadius: 4,
-    shadowColor: colors.black,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    backgroundColor: localColors.card,
+    borderTopLeftRadius: 0,
+    borderTopRightRadius: 48,
+    borderBottomRightRadius: 48,
+    borderBottomLeftRadius: 48,
+    borderWidth: 1,
+    borderColor: 'rgba(171, 173, 175, 0.1)',
   },
   userBubble: {
-    backgroundColor: colors.primary,
-    borderBottomRightRadius: 4,
+    backgroundColor: localColors.primary,
+    borderTopLeftRadius: 48,
+    borderTopRightRadius: 0,
+    borderBottomRightRadius: 48,
+    borderBottomLeftRadius: 48,
+    paddingVertical: 20,
   },
   messageText: {
     fontSize: 16,
-    lineHeight: 22,
-    ...(isWeb && {
-      fontSize: 17,
-      lineHeight: 24,
-    }),
+    lineHeight: 26,
   },
   botText: {
-    color: colors.text,
+    color: localColors.text,
   },
   userText: {
-    color: colors.textWhite,
+    color: localColors.white,
+    fontWeight: '500',
   },
-  timestamp: {
-    fontSize: 11,
-    marginTop: 6,
+  timestampContainer: {
+    marginTop: 8,
   },
   botTimestamp: {
-    color: colors.textSecondary,
+    fontSize: 10,
+    color: localColors.textSecondary,
+    fontWeight: '700',
+    marginLeft: 4,
   },
   userTimestamp: {
-    color: 'rgba(255, 255, 255, 0.7)',
+    fontSize: 10,
+    color: localColors.textSecondary,
+    fontWeight: '700',
+    marginRight: 4,
+    textAlign: 'right',
   },
-  quickQuestionsContainer: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: colors.card,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-    ...(isWeb && {
-      paddingHorizontal: 24,
-      paddingVertical: 16,
-    }),
+
+  // --- Dynamic Action Pills inside Bot Message ---
+  actionPillsContainer: {
+    marginTop: 16,
+    gap: 12,
   },
-  quickQuestionsTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.textSecondary,
-    marginBottom: 12,
-    ...(isWeb && {
-      fontSize: 15,
-    }),
-  },
-  quickQuestionsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  quickQuestionButton: {
+  actionPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.card,
-    paddingHorizontal: 12,
+    backgroundColor: localColors.white,
     paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: colors.primary,
-    marginRight: 8,
-    marginBottom: 8,
-    ...(isWeb && {
-      cursor: 'pointer',
-      transition: 'all 0.2s ease',
-    }),
+    paddingHorizontal: 16,
+    borderRadius: 999,
+    alignSelf: 'flex-start',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
   },
-  quickQuestionText: {
+  actionPillIconContainer: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: localColors.white,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+    marginRight: 10,
+  },
+  actionPillIcon: {
+    fontSize: 16,
+  },
+  actionPillText: {
     fontSize: 13,
-    color: colors.primary,
-    marginLeft: 6,
-    fontWeight: '500',
-    ...(isWeb && {
-      fontSize: 14,
-    }),
+    fontWeight: '700',
+    color: localColors.text,
   },
-  loadingContainer: {
+
+  // --- Recovery Protocol Custom Card ---
+  protocolContainer: {
+    marginTop: 8,
+  },
+  protocolTitle: {
+    fontSize: 20,
+    fontWeight: '900',
+    color: localColors.primaryDark,
+    marginBottom: 24,
+    textTransform: 'uppercase',
+  },
+  protocolItem: {
+    flexDirection: 'row',
+    marginBottom: 24,
+    alignItems: 'flex-start',
+  },
+  protocolIconWrapper: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 121, 74, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  protocolItemContent: {
+    flex: 1,
+  },
+  protocolItemTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: localColors.text,
+    marginBottom: 4,
+  },
+  protocolItemDesc: {
+    fontSize: 14,
+    lineHeight: 22,
+    color: '#595c5e',
+  },
+  protocolQuote: {
+    marginTop: 8,
+    paddingLeft: 16,
+    borderLeftWidth: 4,
+    borderLeftColor: localColors.primaryDark,
+  },
+  protocolQuoteText: {
+    fontSize: 12,
+    fontStyle: 'italic',
+    lineHeight: 18,
+    fontWeight: '500',
+    color: '#595c5e',
+  },
+
+  // --- Footer Input Area ---
+  footerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 12,
-    backgroundColor: colors.primaryLight,
-    marginHorizontal: 16,
-    marginBottom: 8,
-    borderRadius: 12,
-  },
-  loadingText: {
-    marginLeft: 8,
-    fontSize: 14,
-    color: colors.primary,
-    fontWeight: '500',
-  },
-  inputContainer: {
-    backgroundColor: colors.card,
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
     borderTopWidth: 1,
-    borderTopColor: colors.border,
-    shadowColor: colors.black,
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 5,
-    ...(isWeb && {
-      paddingHorizontal: 24,
-      paddingVertical: 16,
-    }),
+    borderTopColor: 'rgba(171, 173, 175, 0.1)',
+  },
+  iconButton: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: localColors.inputBg,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   inputWrapper: {
+    flex: 1,
     flexDirection: 'row',
-    alignItems: 'flex-end',
+    alignItems: 'center',
+    backgroundColor: localColors.inputBg,
+    borderRadius: 999,
+    paddingLeft: 24,
+    paddingRight: 4,
+    height: 48,
+    marginHorizontal: 12,
   },
   input: {
     flex: 1,
-    backgroundColor: colors.cardDarkLight,
-    borderRadius: 24,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontSize: 16,
-    maxHeight: 100,
-    marginRight: 8,
-    color: colors.text,
-    ...(isWeb && {
-      fontSize: 17,
-    }),
+    height: '60%',
+    fontSize: 14,
+    fontWeight: '500',
+    color: localColors.text,
   },
   sendButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: colors.primary,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: localColors.primary,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 3,
-    ...(isWeb && {
-      cursor: 'pointer',
-      transition: 'all 0.2s ease',
-    }),
   },
   sendButtonDisabled: {
-    backgroundColor: colors.cardDarkLight,
-    shadowOpacity: 0,
-    elevation: 0,
+    backgroundColor: '#cbd5e1',
   },
 });
-

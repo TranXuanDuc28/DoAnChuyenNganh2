@@ -7,258 +7,403 @@ const isWeb = Platform.OS === 'web';
 export const styles = StyleSheet.create({
   container: {
     flex: 1,
-
-    backgroundColor: colors.background,
+    backgroundColor: '#F5F7F9',
     ...(isWeb && {
-      maxWidth: 1200,
+      maxWidth: 600,
       marginHorizontal: 'auto',
       width: '100%',
     }),
   },
-  header: {
-    height: 240, // Increased height to accommodate padding
-    justifyContent: 'flex-end',
-    paddingBottom: 20,
-    paddingTop: Platform.OS === 'android' ? 40 : 20,
-    ...(isWeb && {
-      borderRadius: 24,
-      marginHorizontal: 16,
-      marginTop: 16,
-      overflow: 'hidden',
-      height: 200, // Keep original height for web
-    }),
-  },
-  headerImage: {
-    resizeMode: 'cover',
-  },
-  headerGradient: {
-    flex: 1,
-    justifyContent: 'flex-end',
+  scrollContent: {
+    paddingTop: Platform.OS === 'android' ? 60 : 60,
     paddingHorizontal: 24,
-    paddingBottom: 24,
+    paddingBottom: 60, // Extra padding for bottom navigation
   },
-  headerContent: {
+  // --- Top Header ---
+  topHeaderBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-end',
+    alignItems: 'center',
+    marginBottom: 32,
   },
-  greeting: {
-    fontSize: 16,
-    paddingHorizontal: 24,
-    color: 'rgba(255, 255, 255, 0.9)',
-    marginBottom: 4,
-    fontWeight: '500',
-    letterSpacing: 0.5,
+  topLeftGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
-  userName: {
-    fontSize: 28,
-    paddingHorizontal: 24,
-    fontWeight: '800',
-    color: colors.white,
-    letterSpacing: 0.5,
-    textShadowColor: 'rgba(0, 0, 0, 0.3)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 4,
-  },
-  notificationButton: {
+  avatarImage: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    alignItems: 'center',
+    marginRight: 12,
+  },
+  brandText: {
+    color: '#FF794A',
+    fontSize: 22,
+    fontWeight: '900',
+    letterSpacing: -0.5,
+  },
+  notificationIconBtn: {
+    width: 40,
+    height: 40,
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    alignItems: 'flex-end',
   },
-  notificationBadge: {
+  // --- Welcome Section ---
+  headerContainer: {
+    marginBottom: 16,
+    position: 'relative',
+  },
+  statusSubtitle: {
+    color: '#FF794A',
+    fontSize: 11,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    letterSpacing: 1.2,
+    marginBottom: 8,
+  },
+  welcomeTitle: {
+    color: '#2C2F31',
+    fontSize: 42,
+    fontWeight: '900',
+    lineHeight: 46,
+    width: '80%', // Leave space for the robot button
+  },
+  robotButtonContainer: {
     position: 'absolute',
-    top: 10,
-    right: 10,
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: colors.danger,
-    borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
+    top: 5,
+    right: 0,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#FF794A',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#FF794A',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 8,
   },
-  section: {
-    marginTop: 24,
-    marginHorizontal: 20,
-    ...(isWeb && {
-      marginHorizontal: 24,
-      marginTop: 32,
-    }),
-  },
-  sectionHeader: {
+
+  // --- Top Stats (Streak & Workouts) ---
+  topStatsRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    marginTop: 32,
+    gap: 16,
+  },
+  topStatCard: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 32,
+    padding: 24,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.03,
+    shadowRadius: 10,
+    elevation: 2,
+  },
+  topStatIconContainer: {
     marginBottom: 16,
   },
-  sectionTitle: {
-    fontSize: 20,
-    paddingBottom: 10,
-    fontWeight: '700',
-    color: colors.white,
+  topStatTitle: {
+    color: '#717578',
+    fontSize: 11,
+    fontWeight: '800',
+    textTransform: 'uppercase',
     letterSpacing: 0.5,
-    ...(isWeb && {
-      fontSize: 24,
-    }),
-  },
-  seeAllText: {
-    fontSize: 14,
-    color: colors.primary,
-    fontWeight: '600',
-  },
-  statsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    gap: 12,
-  },
-  statCard: {
-    borderRadius: 20,
-    padding: 16,
-    width: '48%',
-    backgroundColor: colors.card,
-    borderWidth: 1,
-    borderColor: colors.border,
-    marginBottom: 4, // handled by gap in modern RN/Web but fallback
-    ...(isWeb && {
-      width: 'calc(50% - 8px)',
-      cursor: 'pointer',
-      transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-      ':hover': {
-        transform: 'translateY(-2px)',
-        boxShadow: `0 8px 24px ${colors.primary}20`,
-      },
-    }),
-  },
-  statHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  statTitle: {
-    fontSize: 13,
-    color: colors.textSecondary,
-    marginLeft: 8,
-    fontWeight: '600',
-    flex: 1,
-  },
-  statValue: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: colors.white,
-    marginBottom: 12,
-  },
-  statUnit: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: colors.textTertiary,
-  },
-  progressBar: {
-    height: 6,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderRadius: 3,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    borderRadius: 3,
-  },
-  healthMetrics: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  healthCard: {
-    flex: 1,
-    backgroundColor: colors.card,
-    borderRadius: 20,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: colors.border,
-    alignItems: 'center',
-  },
-  healthLabel: {
-    fontSize: 13,
-    color: colors.textSecondary,
-    marginBottom: 8,
-    fontWeight: '600',
-  },
-  healthValue: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: colors.white,
     marginBottom: 4,
   },
-  healthSubtext: {
-    fontSize: 12,
-    color: colors.textTertiary,
-    fontWeight: '500',
+  topStatValue: {
+    color: '#2C2F31',
+    fontSize: 32,
+    fontWeight: '900',
   },
-  chartContainer: {
-    backgroundColor: colors.card,
-    borderRadius: 24,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: colors.border,
-    alignItems: 'center', // Center chart
+
+  // --- Your Pulse Gradient Card ---
+  pulseCardContainer: {
+    marginTop: 32,
+    borderRadius: 40,
+    overflow: 'hidden',
+    shadowColor: '#A43609',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    elevation: 10,
   },
-  chartSubtitle: {
+  pulseCardInner: {
+    padding: 32,
+  },
+  pulseHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  pulseTitle: {
+    color: '#FFEFEB',
+    fontSize: 26,
+    fontWeight: '900',
+  },
+  pulseSubtitle: {
+    color: 'rgba(255, 239, 235, 0.7)',
     fontSize: 14,
-    fontWeight: '600',
-    color: colors.textSecondary,
-    marginBottom: 8,
-    alignSelf: 'flex-start',
-    marginLeft: 10,
+    fontWeight: '500',
+    marginTop: 4,
   },
-  chart: {
-    borderRadius: 16,
-    marginVertical: 8,
+  pulseIconCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  recommendationsContainer: {
-    gap: 16,
-    paddingBottom: 40,
-  },
-  recommendationCard: {
-    backgroundColor: colors.card,
-    borderRadius: 20,
-    padding: 16,
+  pulseContentRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.border,
-    ...(isWeb && {
-      cursor: 'pointer',
-      transition: 'all 0.2s ease',
-    }),
+    marginTop: 32,
+    justifyContent: 'space-between',
   },
-  recommendationIcon: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    alignItems: 'center',
+  pulseRingsContainer: {
+    width: 140,
+    height: 140,
     justifyContent: 'center',
-    marginRight: 16,
-    shadowColor: colors.black,
+    alignItems: 'center',
+    position: 'relative',
+  },
+  pulseStatsCol: {
+    flex: 1,
+    marginLeft: 32,
+  },
+  pulseStatBlock: {
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  pulseStatBlockNoBorder: {
+    paddingVertical: 10,
+    borderBottomWidth: 0,
+  },
+  pulseStatLabel: {
+    color: 'rgba(255, 255, 255, 0.6)',
+    fontSize: 11,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 4,
+  },
+  pulseStatValueRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+  },
+  pulseStatValue: {
+    color: '#FFEFEB',
+    fontSize: 22,
+    fontWeight: '900',
+  },
+  pulseStatUnit: {
+    color: 'rgba(255, 255, 255, 0.6)',
+    fontSize: 13,
+    fontWeight: '500',
+    marginLeft: 4,
+  },
+
+  // --- Section Headers ---
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+    marginTop: 48,
+    marginBottom: 24,
+  },
+  sectionTitle: {
+    color: '#2C2F31',
+    fontSize: 24,
+    fontWeight: '900',
+  },
+  viewAllText: {
+    color: '#FF794A',
+    fontSize: 11,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    borderBottomWidth: 2,
+    borderBottomColor: '#FF794A',
+    paddingBottom: 2,
+    letterSpacing: 0.5,
+  },
+  biometricsAddCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#A43609',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#A43609',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
-    shadowRadius: 8,
+    shadowRadius: 6,
+    elevation: 3,
   },
-  recommendationContent: {
+
+  // --- Daily Challenge Image Card ---
+  challengeCard: {
+    height: 280,
+    borderRadius: 40,
+    overflow: 'hidden',
+    backgroundColor: '#1E293B',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.1,
+    shadowRadius: 16,
+    elevation: 6,
+  },
+  challengeImageCover: {
+    width: '100%',
+    height: '100%',
+  },
+  challengeOverlay: {
     flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.35)',
+    justifyContent: 'flex-end',
+    padding: 24,
   },
-  recommendationTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: colors.white,
-    marginBottom: 4,
+  liveBadge: {
+    backgroundColor: '#FF794A',
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 20,
+    alignSelf: 'flex-start',
+    marginBottom: 12,
   },
-  recommendationDescription: {
+  liveBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 10,
+    fontWeight: '900',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  challengeTitle: {
+    color: '#FFFFFF',
+    fontSize: 32,
+    fontWeight: '900',
+    lineHeight: 36,
+    marginBottom: 12,
+  },
+  challengeMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  challengeMetaItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 20,
+  },
+  challengeMetaText: {
+    color: 'rgba(255, 255, 255, 0.9)',
     fontSize: 13,
-    color: colors.textSecondary,
-    lineHeight: 18,
+    fontWeight: '600',
+    marginLeft: 6,
+  },
+
+  // --- Biometrics Section ---
+  biometricsGridRow: {
+    flexDirection: 'row',
+    gap: 16,
+    marginBottom: 16,
+  },
+  bioCard: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 32,
+    padding: 20,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.03,
+    shadowRadius: 10,
+    elevation: 2,
+  },
+  bioCardHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 24,
+  },
+  bioIconCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  bioBadgeLiveText: {
+    color: '#D92D20',
+    fontSize: 10,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    marginTop: 4,
+  },
+  bioLabel: {
+    color: '#8E9295',
+    fontSize: 11,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 6,
+  },
+  bioValueRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+  },
+  bioValueNum: {
+    color: '#2C2F31',
+    fontSize: 32,
+    fontWeight: '900',
+  },
+  bioValueUnit: {
+    color: '#8E9295',
+    fontSize: 13,
+    fontWeight: '700',
+    marginLeft: 4,
+  },
+  progressBarBg: {
+    height: 6,
+    backgroundColor: '#F0F2F5',
+    borderRadius: 3,
+    marginTop: 12,
+    overflow: 'hidden',
+  },
+  progressBarFill: {
+    height: 6,
+    backgroundColor: '#FF794A',
+    borderRadius: 3,
+  },
+
+  // Hydration Card (Full Width)
+  bioFullCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 32,
+    padding: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.03,
+    shadowRadius: 10,
+    elevation: 2,
+  },
+  bioHydrationInfo: {
+    flex: 1,
+    marginLeft: 16,
+  },
+  bioHydrationAddPill: {
+    backgroundColor: '#E2E6EC',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
+  },
+  bioHydrationAddText: {
+    color: '#2C2F31',
+    fontSize: 12,
+    fontWeight: '800',
   },
 });
-
