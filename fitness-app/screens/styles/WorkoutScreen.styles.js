@@ -222,4 +222,39 @@ export const styles = StyleSheet.create({
   emptyStateText: { fontSize: 16, color: fitlifeColors.grayText, textAlign: 'center', marginTop: 24, marginBottom: 36, lineHeight: 24 },
   generateButton: { flexDirection: 'row', alignItems: 'center', backgroundColor: fitlifeColors.brandOrange, paddingVertical: 16, paddingHorizontal: 32, borderRadius: 24, gap: 12, shadowColor: fitlifeColors.brandOrange, shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.2, shadowRadius: 20, elevation: 8 },
   generateButtonText: { color: 'white', fontSize: 17, fontWeight: '800' },
+  
+  // High-Fidelity Generate Button (Custom Snippet)
+  generateNewPlanContainer: {
+    paddingHorizontal: 24,
+    paddingVertical: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  generateNewPlanButton: {
+    width: '100%',
+    height: 52,
+    paddingHorizontal: 32,
+    backgroundColor: 'rgba(168, 57, 13, 0.05)',
+    borderRadius: 9999,
+    borderWidth: 2,
+    borderColor: 'rgba(168, 57, 13, 0.30)',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 12,
+  },
+  squareIcon: {
+    width: 16.5,
+    height: 16.5,
+    backgroundColor: '#A8390D',
+  },
+  generateNewPlanText: {
+    textAlign: 'center',
+    color: '#A8390D',
+    fontSize: 14,
+    fontFamily: Platform.OS === 'ios' ? 'Inter' : 'sans-serif-medium',
+    fontWeight: '700',
+    lineHeight: 20,
+    letterSpacing: 0.35,
+  },
 });

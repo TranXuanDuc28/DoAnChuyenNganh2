@@ -43,6 +43,9 @@ import StatisticsScreen from './screens/StatisticsScreen';
 import PoseScreen from './screens/PoseScreen';
 import PoseHistory from './screens/PoseHistory';
 import WorkoutHistoryDetailScreen from './screens/WorkoutHistoryDetailScreen';
+import WorkoutCompleteScreen from './screens/WorkoutCompleteScreen';
+import WorkoutReviewScreen from './screens/WorkoutReviewScreen';
+import LogMealScreen from './screens/LogMealScreen';
 
 // Import context
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -185,16 +188,15 @@ const AppNavigator = () => {
       {user ? (
         <Stack.Navigator screenOptions={{ headerShown: false }}>
           <Stack.Screen name="MainTabs" component={TabNavigator} />
-          <Stack.Screen
-            name="Pose"
-            component={PoseScreen}
-            options={{
-              headerShown: true,
-              headerStyle: { backgroundColor: colors.primary },
-              headerTintColor: colors.textWhite,
-              headerTitleStyle: { fontWeight: 'bold' },
-            }}
+          <Stack.Screen 
+            name="Pose" 
+            component={PoseScreen} 
+            options={{ 
+              headerShown: false,
+              header: () => null 
+            }} 
           />
+          
           <Stack.Screen
             name="PoseHistory"
             component={PoseHistory}
@@ -237,6 +239,27 @@ const AppNavigator = () => {
           <Stack.Screen
             name="WorkoutHistoryDetail"
             component={WorkoutHistoryDetailScreen}
+            options={{
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="WorkoutComplete"
+            component={WorkoutCompleteScreen}
+            options={{
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="WorkoutReview"
+            component={WorkoutReviewScreen}
+            options={{
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="LogMeal"
+            component={LogMealScreen}
             options={{
               headerShown: false,
             }}

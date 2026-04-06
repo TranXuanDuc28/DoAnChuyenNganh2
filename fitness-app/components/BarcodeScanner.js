@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -18,17 +18,21 @@ const BarcodeScanner = ({ visible, onClose, onBarcodeScanned }) => {
   const [permission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
   const [loading, setLoading] = useState(false);
+  const isScanning = useRef(false);
 
   useEffect(() => {
     if (visible) {
       setScanned(false);
       setLoading(false);
+      isScanning.current = false;
     }
   }, [visible]);
 
   const handleBarCodeScanned = async ({ type, data }) => {
-    if (scanned || loading) return;
+    // Synchronous lock to prevent multiple rapid scans
+    if (isScanning.current || scanned || loading) return;
     
+    isScanning.current = true;
     setScanned(true);
     setLoading(true);
 
@@ -37,7 +41,19 @@ const BarcodeScanner = ({ visible, onClose, onBarcodeScanned }) => {
       
       // Fetch food data from OpenFoodFacts API
       const response = await fetch(`https://world.openfoodfacts.org/api/v0/product/${data}.json`);
-      const result = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const text = await response.text();
+      let result;
+      try {
+        result = JSON.parse(text);
+      } catch (e) {
+        console.error('Failed to parse JSON:', text.substring(0, 50));
+        throw new Error('Invalid response from server');
+      }
 
       if (result.status === 1 && result.product) {
         const product = result.product;
@@ -59,22 +75,36 @@ const BarcodeScanner = ({ visible, onClose, onBarcodeScanned }) => {
           ingredients: product.ingredients_text || '',
         };
 
-        console.log('Food data:', foodData);
+        console.log('Food data found:', foodData.name);
         onBarcodeScanned(foodData);
         onClose();
       } else {
         Alert.alert(
           'Product Not Found',
           'This barcode is not in our database. Try another product or add food manually.',
-          [{ text: 'OK', onPress: () => setScanned(false) }]
+          [{ text: 'OK', onPress: () => {
+            setScanned(false);
+            setLoading(false);
+            isScanning.current = false;
+          }}]
         );
       }
     } catch (error) {
-      console.error('Error fetching food data:', error);
+      // Ignore 429 if the first scan already succeeded (cleanup)
+      if (error.message.includes('429')) {
+        console.log('Rate limit ignored for redundant scan');
+        return;
+      }
+
+      console.error('Error fetching food data:', error.message);
       Alert.alert(
-        'Error',
-        'Failed to fetch food information. Please try again.',
-        [{ text: 'OK', onPress: () => setScanned(false) }]
+        'Scan Error',
+        'Failed to fetch food information. Please try again or check your connection.',
+        [{ text: 'OK', onPress: () => {
+          setScanned(false);
+          setLoading(false);
+          isScanning.current = false;
+        }}]
       );
     } finally {
       setLoading(false);

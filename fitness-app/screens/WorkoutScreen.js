@@ -335,6 +335,24 @@ const WorkoutScreen = ({ navigation }) => {
             />
           </View>
         )}
+        {/* Persistent High-Fidelity Generate New Plan Button */}
+        <View style={styles.generateNewPlanContainer}>
+          <TouchableOpacity 
+            style={styles.generateNewPlanButton} 
+            activeOpacity={0.7}
+            onPress={handleGenerateWorkoutPlan}
+            disabled={generatingPlan}
+          >
+            {generatingPlan ? (
+              <ActivityIndicator color="#A8390D" size="small" />
+            ) : (
+              <>
+                <Icon name="sparkles" size={18} color="#A8390D" />
+                <Text style={styles.generateNewPlanText}>GENERATED NEW PLAN</Text>
+              </>
+            )}
+          </TouchableOpacity>
+        </View>
       </ScrollView>
     </View>
   );
