@@ -6,17 +6,21 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Image,
+  ScrollView
 } from 'react-native';
 import { Ionicons as Icon } from '@expo/vector-icons';
 import colors from '../theme/colors';
 import { workoutAPI } from '../services/api';
 import { styles } from './styles/CategoryExercisesScreen.styles';
 
+const FILTERS = ['All Workouts', 'Beginner', 'Intermediate', 'Advanced'];
+
 const CategoryExercisesScreen = ({ route, navigation }) => {
   const { category } = route.params;
   const [exercises, setExercises] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [activeFilter, setActiveFilter] = useState('All Workouts');
 
   useEffect(() => {
     fetchExercises();
@@ -37,353 +41,167 @@ const CategoryExercisesScreen = ({ route, navigation }) => {
     }
   };
 
-  const getDifficultyColor = (difficulty) => {
+  const getDifficultyLabel = (difficulty) => {
     switch (difficulty?.toLowerCase()) {
-      case 'beginner':
-        return colors.iconSuccess;
-      case 'intermediate':
-        return colors.iconWarning;
-      case 'advanced':
-        return colors.iconDanger;
-      default:
-        return colors.textSecondary;
+      case 'beginner': return 'Easy';
+      case 'intermediate': return 'Med';
+      case 'advanced': return 'Hard';
+      case 'hardcore': return 'Extreme';
+      default: return difficulty || 'N/A';
     }
   };
 
-  const getDifficultyLabel = (difficulty) => {
-    switch (difficulty?.toLowerCase()) {
-      case 'beginner':
-        return 'Cơ bản';
-      case 'intermediate':
-        return 'Trung bình';
-      case 'advanced':
-        return 'Nâng cao';
-      default:
-        return difficulty;
-    }
-  };
+  // Filter exercises
+  const filteredExercises = exercises.filter(ex => {
+    if (activeFilter === 'All Workouts') return true;
+    if (activeFilter === 'Beginner' && ex.difficulty?.toLowerCase() === 'beginner') return true;
+    if (activeFilter === 'Intermediate' && ex.difficulty?.toLowerCase() === 'intermediate') return true;
+    if (activeFilter === 'Advanced' && ex.difficulty?.toLowerCase() === 'advanced') return true;
+    return false;
+  });
 
   const renderExerciseItem = ({ item }) => (
     <TouchableOpacity
       style={styles.exerciseCard}
-      onPress={() => {
-        navigation.navigate('ExerciseDetail', { exercise: item });
-      }}
+      onPress={() => navigation.navigate('ExerciseDetail', { exercise: item })}
+      activeOpacity={0.8}
     >
-      <View style={styles.exerciseImageContainer}>
+      <View style={styles.exerciseCardImageContainer}>
         {item.imageUrl ? (
-          <Image
-            source={{ uri: item.imageUrl }}
-            style={styles.exerciseImage}
-            resizeMode="cover"
-          />
+          <Image source={{ uri: item.imageUrl }} style={styles.exerciseImage} resizeMode="cover" />
         ) : (
-          <View style={styles.exerciseImagePlaceholder}>
-            <Icon name="fitness-outline" size={32} color={colors.textSecondary} />
+          <View style={[styles.exerciseImage, { backgroundColor: '#1E293B', justifyContent: 'center', alignItems: 'center' }]}>
+            <Icon name="image-outline" size={48} color="#475569" />
+          </View>
+        )}
+        
+        {/* Difficulty Badge overlay */}
+        {item.difficulty && (
+          <View style={styles.difficultyBadgeImage}>
+            <Text style={styles.difficultyBadgeTextImage}>{item.difficulty}</Text>
           </View>
         )}
       </View>
 
       <View style={styles.exerciseInfo}>
-        <Text style={styles.exerciseName}>{item.name}</Text>
+        <Text style={styles.exerciseName} numberOfLines={1}>{item.name}</Text>
         
-        {item.description && (
-          <Text style={styles.exerciseDescription} numberOfLines={2}>
-            {item.description}
-          </Text>
-        )}
-
         <View style={styles.exerciseMeta}>
-          {item.difficulty && (
-            <View style={styles.metaItem}>
-              <Icon
-                name="speedometer-outline"
-                size={14}
-                color={getDifficultyColor(item.difficulty)}
-              />
-              <Text style={[styles.metaText, { color: getDifficultyColor(item.difficulty) }]}>
-                {getDifficultyLabel(item.difficulty)}
-              </Text>
-            </View>
-          )}
-
-          {item.sets && item.reps && (
-            <View style={styles.metaItem}>
-              <Icon name="repeat-outline" size={14} color={colors.textSecondary} />
-              <Text style={styles.metaText}>
-                {item.sets} × {item.reps}
-              </Text>
-            </View>
-          )}
-
-          {item.duration > 0 && (
-            <View style={styles.metaItem}>
-              <Icon name="time-outline" size={14} color={colors.textSecondary} />
-              <Text style={styles.metaText}>{item.duration}s</Text>
-            </View>
-          )}
-
-          {item.caloriesPerMinute > 0 && (
-            <View style={styles.metaItem}>
-              <Icon name="flame-outline" size={14} color={colors.iconWarning} />
-              <Text style={styles.metaText}>
-                {item.caloriesPerMinute} cal/phút
-              </Text>
-            </View>
-          )}
-        </View>
-
-        {item.equipment && Array.isArray(item.equipment) && item.equipment.length > 0 && (
-          <View style={styles.equipmentContainer}>
-            <Icon name="barbell-outline" size={12} color={colors.textSecondary} />
-            <Text style={styles.equipmentText} numberOfLines={1}>
-              {item.equipment.join(', ')}
+          <View style={styles.metaItem}>
+            <Icon name="time-outline" size={16} color="#FF794A" />
+            <Text style={styles.metaText}>
+              {item.duration > 0 ? `${Math.floor(item.duration / 60)} MIN` : '15 MIN'}
             </Text>
           </View>
-        )}
+          
+          <View style={styles.metaItem}>
+            <Icon name="flame-outline" size={16} color="#FF794A" />
+            <Text style={styles.metaText}>
+              {item.caloriesPerMinute ? `${Math.floor(item.caloriesPerMinute * (item.duration > 0 ? item.duration / 60 : 15))} KCAL` : '320 KCAL'}
+            </Text>
+          </View>
+
+          <View style={styles.metaItem}>
+            <Icon name="barbell-outline" size={16} color="#FF794A" />
+            <Text style={styles.metaText}>{getDifficultyLabel(item.difficulty)}</Text>
+          </View>
+        </View>
+      </View>
+    </TouchableOpacity>
+  );
+
+  const renderHeader = () => (
+    <View style={{ marginBottom: 8 }}>
+      {/* Hero Banner */}
+      <View style={styles.heroCard}>
+        <Text style={styles.heroBackgroundText}>HIIT</Text>
+        <View style={styles.heroContent}>
+          <View style={styles.categoryBadge}>
+            <Text style={styles.categoryBadgeText}>CATEGORY</Text>
+          </View>
+          <Text style={styles.heroTitle}>{category.name}</Text>
+          <Text style={styles.heroDesc}>
+            {category.description || 'High Intensity Interval Training designed to push your limits and maximize caloric burn in record time.'}
+          </Text>
+          <View style={styles.heroLinkContainer}>
+            <Text style={styles.heroLinkText}>
+              {category.englishName || 'HIITWORK.COM'}
+            </Text>
+          </View>
+        </View>
       </View>
 
-      <Icon name="chevron-forward" size={20} color={colors.textSecondary} />
-    </TouchableOpacity>
+      {/* Filters */}
+      <View style={styles.filtersContainer}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingRight: 20 }}>
+          {FILTERS.map((filter, index) => (
+            <TouchableOpacity 
+              key={index}
+              style={[styles.filterPill, activeFilter === filter && styles.filterPillActive]}
+              onPress={() => setActiveFilter(filter)}
+              activeOpacity={0.8}
+            >
+              <Text style={[styles.filterText, activeFilter === filter && styles.filterTextActive]}>
+                {filter}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </View>
+    </View>
   );
 
   return (
     <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <Icon name="arrow-back" size={24} color={colors.text} />
+      {/* Top Header */}
+      <View style={styles.topHeader}>
+        <TouchableOpacity style={styles.backIconRow} onPress={() => navigation.goBack()} activeOpacity={0.7}>
+          <Icon name="arrow-back" size={24} color="#FF794A" />
+          <Text style={styles.brandText}>FITLIFE</Text>
         </TouchableOpacity>
         
-        <View style={styles.headerContent}>
-          <Text style={styles.headerTitle}>{category.name}</Text>
-          {category.englishName && (
-            <Text style={styles.headerSubtitle}>{category.englishName}</Text>
-          )}
-        </View>
-
-        <TouchableOpacity style={styles.headerButton} onPress={fetchExercises}>
-          <Icon name="refresh" size={24} color={colors.primary} />
+        <TouchableOpacity style={styles.notificationBtn} activeOpacity={0.7}>
+          <Icon name="notifications-outline" size={22} color="#64748B" />
         </TouchableOpacity>
       </View>
 
       {/* Content */}
       {loading ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={styles.loadingText}>Đang tải bài tập...</Text>
+          <ActivityIndicator size="large" color="#FF794A" />
+          <Text style={styles.emptyText}>Đang tải bài tập...</Text>
         </View>
       ) : error ? (
         <View style={styles.errorContainer}>
-          <Icon name="alert-circle-outline" size={48} color={colors.iconDanger} />
-          <Text style={styles.errorText}>{error}</Text>
-          <TouchableOpacity style={styles.retryButton} onPress={fetchExercises}>
-            <Text style={styles.retryButtonText}>Thử lại</Text>
+          <Icon name="alert-circle-outline" size={48} color="#EF4444" />
+          <Text style={styles.emptyText}>{error}</Text>
+          <TouchableOpacity style={{ marginTop: 16 }} onPress={fetchExercises}>
+            <Text style={{ color: '#FF794A', fontWeight: 'bold' }}>Thử lại</Text>
           </TouchableOpacity>
         </View>
       ) : (
         <FlatList
-          data={exercises}
+          data={filteredExercises}
           renderItem={renderExerciseItem}
           keyExtractor={(item) => item.id.toString()}
           contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+          ListHeaderComponent={renderHeader}
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
-              <Icon name="fitness-outline" size={64} color={colors.textSecondary} />
-              <Text style={styles.emptyText}>
-                Chưa có bài tập nào trong danh mục này
-              </Text>
+              <Icon name="fitness-outline" size={64} color="#94A3B8" />
+              <Text style={styles.emptyText}>Không tìm thấy bài tập nào.</Text>
             </View>
-          }
-          ListHeaderComponent={
-            exercises.length > 0 ? (
-              <View style={styles.listHeader}>
-                <Text style={styles.listHeaderText}>
-                  {exercises.length} bài tập
-                </Text>
-              </View>
-            ) : null
           }
         />
       )}
+
+      {/* FAB */}
+      <TouchableOpacity style={styles.fab} activeOpacity={0.8}>
+        <Icon name="add" size={32} color="#FFFFFF" />
+      </TouchableOpacity>
     </View>
   );
 };
 
 export default CategoryExercisesScreen;
-
-/*
-// Styles moved to ./styles/CategoryExercisesScreen.styles.js
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    backgroundColor: colors.card,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  backButton: {
-    padding: 8,
-    marginRight: 12,
-  },
-  headerContent: {
-    flex: 1,
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: colors.text,
-  },
-  headerSubtitle: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    marginTop: 2,
-  },
-  headerButton: {
-    padding: 8,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  loadingText: {
-    marginTop: 12,
-    fontSize: 14,
-    color: colors.textSecondary,
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  errorText: {
-    marginTop: 16,
-    fontSize: 16,
-    color: colors.textSecondary,
-    textAlign: 'center',
-  },
-  retryButton: {
-    marginTop: 16,
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    backgroundColor: colors.primary,
-    borderRadius: 8,
-  },
-  retryButtonText: {
-    color: colors.text,
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  listContent: {
-    padding: 20,
-  },
-  listHeader: {
-    marginBottom: 12,
-  },
-  listHeaderText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.textSecondary,
-  },
-  exerciseCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.card,
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: colors.border,
-    shadowColor: colors.black,
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 2,
-  },
-  exerciseImageContainer: {
-    marginRight: 12,
-  },
-  exerciseImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 8,
-  },
-  exerciseImagePlaceholder: {
-    width: 80,
-    height: 80,
-    borderRadius: 8,
-    backgroundColor: colors.cardDarkLight,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  exerciseInfo: {
-    flex: 1,
-  },
-  exerciseName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.text,
-    marginBottom: 4,
-  },
-  exerciseDescription: {
-    fontSize: 13,
-    color: colors.textSecondary,
-    marginBottom: 8,
-    lineHeight: 18,
-  },
-  exerciseMeta: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-    marginBottom: 6,
-  },
-  metaItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  metaText: {
-    fontSize: 12,
-    color: colors.textSecondary,
-  },
-  equipmentContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    marginTop: 4,
-  },
-  equipmentText: {
-    fontSize: 11,
-    color: colors.textSecondary,
-    fontStyle: 'italic',
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 60,
-  },
-  emptyText: {
-    marginTop: 16,
-    fontSize: 16,
-    color: colors.textSecondary,
-    textAlign: 'center',
-  },
-});
-*/
-

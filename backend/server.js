@@ -18,13 +18,7 @@ app.use(helmet());
 app.use(cors({
   origin: process.env.NODE_ENV === 'production'
     ? process.env.CORS_ORIGIN_PROD?.split(',') || ['https://yourdomain.com']
-    : [
-      'http://localhost:3000',  // React Native web
-      'http://localhost:3001',  // Admin web
-      'http://localhost:8081',  // Expo
-      /\.ngrok-free\.dev$/,     // Ngrok tunnels
-      /\.ngrok\.io$/            // Ngrok tunnels (old domain)
-    ],
+    : process.env.CORS_ORIGIN_DEV?.split(',') || ['http://localhost:3000'],
   credentials: true
 }));
 
@@ -48,6 +42,7 @@ const initializeDatabase = async () => {
     await testConnection();
     // Import all models to register them with Sequelize
     require('./models/User');
+    require('./models/Health');
     require('./models/Workout');
     require('./models/Nutrition');
     require('./models/AISuggestion');
@@ -56,14 +51,13 @@ const initializeDatabase = async () => {
     require('./models/BodyMetricsHistory');
     require('./models/VideoAnalysis');
     require('./models/ImageEvaluation');
-    require('./models/PoseExercise');
 
     // Sync database (create tables if they don't exist)
     // Using alter: false to avoid index issues with many foreign keys
     // Tables will be created if they don't exist, but won't be altered
     await sequelize.sync({ alter: false });
     console.log('Database synchronized successfully');
-
+    
     // Manually ensure unique constraint on email if needed
     // This handles the case where the table exists but doesn't have the unique constraint
     try {
@@ -74,7 +68,7 @@ const initializeDatabase = async () => {
         AND TABLE_NAME = 'users' 
         AND INDEX_NAME = 'users_email_unique'
       `);
-
+      
       if (results[0].count === 0) {
         // Check current key count before attempting to add
         const [keyCount] = await sequelize.query(`
@@ -83,7 +77,7 @@ const initializeDatabase = async () => {
           WHERE TABLE_SCHEMA = DATABASE()
           AND TABLE_NAME = 'users'
         `);
-
+        
         if (keyCount[0].key_count < 64) {
           await sequelize.query(`
             CREATE UNIQUE INDEX users_email_unique ON users(email)
@@ -103,7 +97,7 @@ const initializeDatabase = async () => {
         console.warn('Could not create unique index on email:', error.message);
       }
     }
-
+    
     // Seed database if in development mode
     if (process.env.NODE_ENV === 'development' && process.argv.includes('--seed')) {
       const { seedDatabase } = require('./seedData');
@@ -130,8 +124,6 @@ app.use('/api/notifications', require('./routes/notifications'));
 app.use('/api/pose', require('./routes/pose'));
 app.use('/api/push', require('./routes/push'));
 app.use('/api/admin', require('./routes/admin'));
-app.use('/api/admin/pose-exercises', require('./routes/adminExercises'));
-app.use('/api/dashboard', require('./routes/dashboard'));
 
 // Static serving for category images stored inside the fitness app image folder
 const categoryImagesDir = path.join(__dirname, '..', 'fitness-app', 'image');
@@ -142,10 +134,15 @@ app.use('/api/pose', require('./routes/poseScoring'));
 app.use('/api/push', require('./routes/push'));
 app.use('/api/video-analysis', require('./routes/videoAnalysis'));
 
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'OK', timestamp: new Date().toISOString() });
+});
+
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).json({
+  res.status(500).json({ 
     message: 'Something went wrong!',
     error: process.env.NODE_ENV === 'development' ? err.message : {}
   });
@@ -171,37 +168,10 @@ const io = new Server(httpServer, {
 // Import and setup WebSocket handlers
 require('./websocket/poseSocket')(io);
 
-// Setup cron jobs for automated tasks
-const cron = require('node-cron');
-const reminderService = require('./services/reminderService');
-
-// Run workout reminder check every 2 minutes (FOR TESTING)
-// Change to '0 9 * * *' for daily at 9:00 AM in production
-cron.schedule('*/2 * * * *', async () => {
-  console.log('Running scheduled workout reminder check...');
-  try {
-    await reminderService.scheduleReminders();
-  } catch (error) {
-    console.error('Error in scheduled reminder check:', error);
-  }
-}, {
-  timezone: "Asia/Ho_Chi_Minh" // Vietnam timezone
-});
-
-console.log('Cron jobs initialized - Workout reminders will run every 2 minutes (TESTING MODE)');
-
 const PORT = process.env.PORT || 5000;
-
-// Set server timeout to 5 minutes (300 seconds) for long-running AI operations
-// This allows Gemini AI to complete workout/meal plan generation without timeout
-httpServer.timeout = 300000; // 5 minutes in milliseconds
-httpServer.keepAliveTimeout = 310000; // Slightly longer than timeout
-httpServer.headersTimeout = 320000; // Slightly longer than keepAliveTimeout
-
 httpServer.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   console.log(`WebSocket server ready for connections`);
-  console.log(`Server timeout set to 5 minutes for AI operations`);
 });
 
 module.exports = { app, io };

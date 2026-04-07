@@ -8,35 +8,38 @@ import {
   Dimensions,
   Modal,
   Animated,
+  StatusBar,
+  Platform,
+  Alert,
 } from 'react-native';
 import { VideoView, useVideoPlayer } from 'expo-video';
 import { Ionicons as Icon } from '@expo/vector-icons';
-import colors from '../theme/colors';
+import { LinearGradient } from 'expo-linear-gradient';
 import { styles } from './styles/WorkoutExerciseDetailScreen.styles';
 import { workoutAPI } from '../services/api';
-import { Alert } from 'react-native';
 
 const { width } = Dimensions.get('window');
 
 const WorkoutExerciseDetailScreen = ({ route, navigation }) => {
   const { exercise, workoutExercise, dayExerciseId } = route.params;
-  // workoutExercise contains: sets, reps, duration, restSeconds, weight, notes
-  // dayExerciseId is the ID from workout_plan_day_exercises table
-
-  const [activeTab, setActiveTab] = useState('instructions');
+  
+  const [activeTab, setActiveTab] = useState(null); 
   const [currentSet, setCurrentSet] = useState(1);
   const [completedSets, setCompletedSets] = useState([]);
+  const [actualReps, setActualReps] = useState(parseInt(workoutExercise.reps) || 12);
+  
   const [isResting, setIsResting] = useState(false);
   const [restTimeLeft, setRestTimeLeft] = useState(0);
   const [timerInterval, setTimerInterval] = useState(null);
 
-  // Animation for timer
+  // Animation for timer pulse
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
   // Create video player instance only if videoUrl exists
   const player = exercise.videoUrl
     ? useVideoPlayer(exercise.videoUrl, player => {
       player.loop = true;
+      player.play(); // Auto-play fix
     })
     : null;
 
@@ -54,13 +57,14 @@ const WorkoutExerciseDetailScreen = ({ route, navigation }) => {
     setRestTimeLeft(restSeconds);
     setIsResting(true);
 
+    if (timerInterval) clearInterval(timerInterval);
+
     const interval = setInterval(() => {
       setRestTimeLeft((prev) => {
         if (prev <= 1) {
           clearInterval(interval);
           setIsResting(false);
           setTimerInterval(null);
-          // Play completion sound or vibration here
           return 0;
         }
         return prev - 1;
@@ -69,31 +73,12 @@ const WorkoutExerciseDetailScreen = ({ route, navigation }) => {
 
     setTimerInterval(interval);
 
-    // Pulse animation
     Animated.loop(
       Animated.sequence([
-        Animated.timing(scaleAnim, {
-          toValue: 1.1,
-          duration: 500,
-          useNativeDriver: true,
-        }),
-        Animated.timing(scaleAnim, {
-          toValue: 1,
-          duration: 500,
-          useNativeDriver: true,
-        }),
+        Animated.timing(scaleAnim, { toValue: 1.05, duration: 800, useNativeDriver: true }),
+        Animated.timing(scaleAnim, { toValue: 1, duration: 800, useNativeDriver: true }),
       ])
     ).start();
-  };
-
-  const stopRestTimer = () => {
-    if (timerInterval) {
-      clearInterval(timerInterval);
-      setTimerInterval(null);
-    }
-    setIsResting(false);
-    setRestTimeLeft(0);
-    scaleAnim.setValue(1);
   };
 
   const handleCompleteSet = () => {
@@ -103,17 +88,40 @@ const WorkoutExerciseDetailScreen = ({ route, navigation }) => {
     const totalSets = workoutExercise.sets || 3;
 
     if (currentSet < totalSets) {
-      // Start rest timer
       startRestTimer();
       setCurrentSet(currentSet + 1);
+      setActualReps(parseInt(workoutExercise.reps) || 12);
     } else {
-      // All sets completed
-      // You can navigate back or show completion message
+      completeAll();
+    }
+  };
+
+  const completeAll = async () => {
+    try {
+      if (dayExerciseId) {
+        await workoutAPI.completeExercise(dayExerciseId);
+        Alert.alert('Perfect! 🎉', 'You completed this exercise.');
+      }
+      navigation.goBack();
+    } catch (error) {
+      console.error('Error completing exercise:', error);
+      Alert.alert('Error', 'Failed to save progress.');
+      navigation.goBack();
     }
   };
 
   const handleSkipRest = () => {
-    stopRestTimer();
+    if (timerInterval) {
+      clearInterval(timerInterval);
+      setTimerInterval(null);
+    }
+    setIsResting(false);
+    setRestTimeLeft(0);
+    scaleAnim.setValue(1);
+  };
+
+  const handleExtendRest = () => {
+    setRestTimeLeft(prev => prev + 15);
   };
 
   const formatTime = (seconds) => {
@@ -122,65 +130,65 @@ const WorkoutExerciseDetailScreen = ({ route, navigation }) => {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const getDifficultyColor = (difficulty) => {
-    switch (difficulty?.toLowerCase()) {
-      case 'beginner':
-        return colors.iconSuccess;
-      case 'intermediate':
-        return colors.iconWarning;
-      case 'advanced':
-        return colors.iconDanger;
-      default:
-        return colors.textSecondary;
-    }
-  };
+  const totalSets = workoutExercise.sets || 1;
+  const hasReps = workoutExercise.reps && parseInt(workoutExercise.reps) > 0;
 
-  const getDifficultyLabel = (difficulty) => {
-    switch (difficulty?.toLowerCase()) {
-      case 'beginner':
-        return 'Cơ bản';
-      case 'intermediate':
-        return 'Trung bình';
-      case 'advanced':
-        return 'Nâng cao';
-      default:
-        return difficulty;
-    }
+  const renderDots = () => {
+    return (
+      <View style={styles.dotsRow}>
+        {Array.from({ length: totalSets }, (_, i) => i + 1).map((num) => {
+          const isDone = completedSets.includes(num);
+          const isActive = currentSet === num;
+          
+          return (
+            <View 
+              key={num} 
+              style={[
+                styles.progressDot, 
+                isDone && styles.progressDotCompleted,
+                isActive && styles.progressDotActive
+              ]}
+            >
+              {isDone ? (
+                <Icon name="checkmark" size={14} color="white" />
+              ) : isActive ? (
+                <View style={styles.progressDotInner} />
+              ) : null}
+            </View>
+          );
+        })}
+      </View>
+    );
   };
-
-  // Use actual values from database, no defaults
-  const totalSets = workoutExercise.sets || 0;
-  const reps = workoutExercise.reps || '';
-  const weight = workoutExercise.weight;
-  const duration = workoutExercise.duration || 0;
 
   return (
     <View style={styles.container}>
+      <StatusBar barStyle="dark-content" />
+      
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => navigation.goBack()}
         >
-          <Icon name="arrow-back" size={24} color={colors.text} />
+          <Icon name="chevron-back" size={20} color="white" />
         </TouchableOpacity>
-
-        <Text style={styles.headerTitle}>Bài tập</Text>
-
-        <TouchableOpacity style={styles.headerButton}>
-          <Icon name="heart-outline" size={24} color={colors.primary} />
-        </TouchableOpacity>
+        <Text style={styles.headerTitle} numberOfLines={1}>{exercise.name || 'Exercise Detail'}</Text>
       </View>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Exercise Video */}
+      <ScrollView 
+        style={styles.content} 
+        contentContainerStyle={styles.contentContainer}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Media Block */}
         <View style={styles.videoContainer}>
-          {exercise.videoUrl && player ? (
+           {exercise.videoUrl && player ? (
             <VideoView
               player={player}
               style={styles.exerciseVideo}
               contentFit="contain"
-              nativeControls
+              nativeControls={true}
             />
           ) : exercise.imageUrl ? (
             <Image
@@ -189,304 +197,168 @@ const WorkoutExerciseDetailScreen = ({ route, navigation }) => {
               resizeMode="cover"
             />
           ) : (
-            <View style={styles.videoPlaceholder}>
-              <Icon name="videocam-outline" size={80} color={colors.textSecondary} />
-              <Text style={styles.placeholderText}>Chưa có video hướng dẫn</Text>
+            <View style={[styles.exerciseVideo, { justifyContent: 'center', alignItems: 'center' }]}>
+               <Icon name="fitness" size={80} color="#A8390D" style={{ opacity: 0.1 }} />
             </View>
           )}
         </View>
 
-        {/* Exercise Info */}
-        <View style={styles.infoSection}>
-          <Text style={styles.exerciseName}>{exercise.name}</Text>
+        {/* Tab Selection */}
+        <View style={styles.tabRow}>
+           <TouchableOpacity 
+             style={[styles.tabCard, activeTab === 'instructions' && styles.tabCardActive]}
+             onPress={() => setActiveTab(activeTab === 'instructions' ? null : 'instructions')}
+           >
+              <Text style={styles.tabCardText}>Instructions</Text>
+           </TouchableOpacity>
+           <TouchableOpacity 
+             style={[styles.tabCard, activeTab === 'recognition' && styles.tabCardActive]}
+             onPress={() => setActiveTab(activeTab === 'recognition' ? null : 'recognition')}
+           >
+              <Text style={styles.tabCardText}>Recognition</Text>
+           </TouchableOpacity>
+        </View>
 
-          {exercise.description && (
-            <Text style={styles.exerciseDescription}>{exercise.description}</Text>
-          )}
+        {/* Tab Content Display */}
+        {activeTab && (
+          <View style={styles.infoOverlay}>
+             <Text style={styles.infoText}>
+               {activeTab === 'instructions' 
+                 ? (Array.isArray(exercise.instructions) ? exercise.instructions.join('\n') : exercise.instructions)
+                 : (Array.isArray(exercise.tips) ? exercise.tips.join('\n') : (exercise.tips || 'Tips help correct form and prevent injury.'))}
+             </Text>
+          </View>
+        )}
 
-          {/* Workout Plan Info */}
-          <View style={styles.workoutInfoContainer}>
-            <View style={styles.workoutInfoRow}>
-              {/* Show Sets if exercise has sets */}
-              {workoutExercise.sets && workoutExercise.sets > 0 && (
-                <View style={styles.workoutInfoItem}>
-                  <Icon name="repeat-outline" size={24} color={colors.primary} />
-                  <Text style={styles.workoutInfoLabel}>Sets</Text>
-                  <Text style={styles.workoutInfoValue}>{totalSets}</Text>
-                </View>
-              )}
+        {/* Stats Card */}
+        <View style={styles.statsCard}>
+           <View style={styles.statColumn}>
+              <View style={styles.statIconBox}>
+                 <Icon name="list" size={18} color="#A8390D" />
+              </View>
+              <Text style={styles.statLabel}>Sets</Text>
+              <Text style={styles.statValue}>{totalSets}</Text>
+           </View>
+           <View style={styles.statColumn}>
+              <View style={styles.statIconBox}>
+                 <Icon name="fitness" size={18} color="#A8390D" />
+              </View>
+              <Text style={styles.statLabel}>Reps</Text>
+              <Text style={styles.statValue}>{workoutExercise.reps || 12}</Text>
+           </View>
+           <View style={styles.statColumn}>
+              <View style={styles.statIconBox}>
+                 <Icon name="timer-outline" size={18} color="#A8390D" />
+              </View>
+              <Text style={styles.statLabel}>Rest</Text>
+              <Text style={styles.statValue}>{workoutExercise.restSeconds || 60}"</Text>
+           </View>
+        </View>
 
-              {/* Show Reps if exercise has reps */}
-              {workoutExercise.reps && (
-                <View style={styles.workoutInfoItem}>
-                  <Icon name="fitness-outline" size={24} color={colors.primary} />
-                  <Text style={styles.workoutInfoLabel}>Reps</Text>
-                  <Text style={styles.workoutInfoValue}>{reps}</Text>
-                </View>
-              )}
+        {/* Current Set Header */}
+        <View style={styles.progressSection}>
+           <Text style={styles.progressLabel}>Set {currentSet} of {totalSets}</Text>
+           {renderDots()}
+        </View>
 
-              {/* Show Duration if exercise has duration */}
-              {workoutExercise.duration && workoutExercise.duration > 0 && (
-                <View style={styles.workoutInfoItem}>
-                  <Icon name="timer-outline" size={24} color={colors.primary} />
-                  <Text style={styles.workoutInfoLabel}>Thời gian</Text>
-                  <Text style={styles.workoutInfoValue}>{workoutExercise.duration}s</Text>
-                </View>
-              )}
-
-              {/* Show Weight if exists */}
-              {weight && (
-                <View style={styles.workoutInfoItem}>
-                  <Icon name="barbell-outline" size={24} color={colors.primary} />
-                  <Text style={styles.workoutInfoLabel}>Tải</Text>
-                  <Text style={styles.workoutInfoValue}>{weight}kg</Text>
-                </View>
-              )}
-
-              {/* Show Rest time if exists */}
-              {workoutExercise.restSeconds && (
-                <View style={styles.workoutInfoItem}>
-                  <Icon name="time-outline" size={24} color={colors.primary} />
-                  <Text style={styles.workoutInfoLabel}>Nghỉ</Text>
-                  <Text style={styles.workoutInfoValue}>{workoutExercise.restSeconds}s</Text>
-                </View>
-              )}
+        {/* Main Counter (Conditional) */}
+        {hasReps && (
+          <View style={styles.counterSection}>
+            <Text style={styles.repNumber}>{actualReps}</Text>
+            <Text style={styles.repLabel}>Reps Completed</Text>
+            
+            <View style={styles.adjustmentRow}>
+                <TouchableOpacity 
+                  style={styles.adjButton}
+                  onPress={() => setActualReps(Math.max(0, actualReps - 1))}
+                >
+                  <Icon name="remove" size={28} color="#A8390D" />
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={styles.adjButton}
+                  onPress={() => setActualReps(actualReps + 1)}
+                >
+                  <Icon name="add" size={28} color="#A8390D" />
+                </TouchableOpacity>
             </View>
           </View>
+        )}
 
-
-          {/* Set Progress - Only show for exercises with sets (strength training) */}
-          {workoutExercise.sets && workoutExercise.sets > 0 && (
-            <View style={styles.setProgressContainer}>
-              <Text style={styles.setProgressTitle}>Tiến độ Sets</Text>
-              <View style={styles.setProgressRow}>
-                {Array.from({ length: totalSets }, (_, i) => i + 1).map((setNum) => (
-                  <View
-                    key={setNum}
-                    style={[
-                      styles.setIndicator,
-                      completedSets.includes(setNum) && styles.setIndicatorCompleted,
-                      currentSet === setNum && !completedSets.includes(setNum) && styles.setIndicatorActive,
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.setIndicatorText,
-                        completedSets.includes(setNum) && styles.setIndicatorTextCompleted,
-                        currentSet === setNum && !completedSets.includes(setNum) && styles.setIndicatorTextActive,
-                      ]}
-                    >
-                      {setNum}
-                    </Text>
-                    {completedSets.includes(setNum) && (
-                      <Icon name="checkmark-circle" size={16} color={colors.success} style={styles.setCheckmark} />
-                    )}
-                  </View>
-                ))}
-              </View>
-              <Text style={styles.setProgressSubtitle}>
-                Set {currentSet} / {totalSets}
-              </Text>
-            </View>
-          )}
-
-          {/* Workout Notes */}
-          {workoutExercise.notes && (
-            <View style={styles.workoutNotes}>
-              <Icon name="information-circle" size={20} color={colors.iconWarning} />
-              <Text style={styles.workoutNotesText}>{workoutExercise.notes}</Text>
-            </View>
-          )}
-
-          {/* Stats Row */}
-          <View style={styles.statsContainer}>
-            {exercise.difficulty && (
-              <View style={styles.statItem}>
-                <Icon
-                  name="speedometer-outline"
-                  size={20}
-                  color={getDifficultyColor(exercise.difficulty)}
-                />
-                <Text style={[styles.statLabel, { color: getDifficultyColor(exercise.difficulty) }]}>
-                  {getDifficultyLabel(exercise.difficulty)}
-                </Text>
-              </View>
-            )}
-
-            {exercise.equipment && Array.isArray(exercise.equipment) && exercise.equipment.length > 0 && (
-              <View style={styles.statItem}>
-                <Icon name="barbell-outline" size={20} color={colors.textSecondary} />
-                <Text style={styles.statLabel}>
-                  {exercise.equipment.join(', ')}
-                </Text>
-              </View>
-            )}
-          </View>
-
-          {/* Muscle Groups */}
-          {exercise.muscleGroups && Array.isArray(exercise.muscleGroups) && exercise.muscleGroups.length > 0 && (
-            <View style={styles.muscleSection}>
-              <Text style={styles.sectionTitle}>Nhóm cơ</Text>
-              <View style={styles.muscleTagsContainer}>
-                {exercise.muscleGroups.map((muscle, index) => (
-                  <View key={index} style={styles.muscleTag}>
-                    <Text style={styles.muscleTagText}>{muscle}</Text>
-                  </View>
-                ))}
-              </View>
-            </View>
-          )}
-        </View>
-
-        {/* Tabs */}
-        <View style={styles.tabContainer}>
-          <TouchableOpacity
-            style={[styles.tab, activeTab === 'instructions' && styles.activeTab]}
-            onPress={() => setActiveTab('instructions')}
-          >
-            <Text style={[styles.tabText, activeTab === 'instructions' && styles.activeTabText]}>
-              Hướng dẫn
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.tab, activeTab === 'tips' && styles.activeTab]}
-            onPress={() => setActiveTab('tips')}
-          >
-            <Text style={[styles.tabText, activeTab === 'tips' && styles.activeTabText]}>
-              Lưu ý
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Tab Content */}
-        <View style={styles.tabContent}>
-          {activeTab === 'instructions' && (
-            <View>
-              {exercise.instructions && Array.isArray(exercise.instructions) && exercise.instructions.length > 0 ? (
-                exercise.instructions.map((instruction, index) => (
-                  <View key={index} style={styles.instructionItem}>
-                    <View style={styles.instructionNumber}>
-                      <Text style={styles.instructionNumberText}>{index + 1}</Text>
-                    </View>
-                    <Text style={styles.instructionText}>{instruction}</Text>
-                  </View>
-                ))
-              ) : (
-                <Text style={styles.emptyText}>Chưa có hướng dẫn chi tiết</Text>
-              )}
-            </View>
-          )}
-
-          {activeTab === 'tips' && (
-            <View>
-              {exercise.tips && Array.isArray(exercise.tips) && exercise.tips.length > 0 ? (
-                exercise.tips.map((tip, index) => (
-                  <View key={index} style={styles.tipItem}>
-                    <Icon name="checkmark-circle" size={20} color={colors.iconSuccess} />
-                    <Text style={styles.tipText}>{tip}</Text>
-                  </View>
-                ))
-              ) : (
-                <Text style={styles.emptyText}>Chưa có lưu ý nào</Text>
-              )}
-            </View>
-          )}
-        </View>
       </ScrollView>
 
-      {/* Complete Set Button */}
-      <View style={styles.bottomContainer}>
-        {/* For exercises WITH sets (strength training) */}
-        {workoutExercise.sets && workoutExercise.sets > 0 ? (
-          completedSets.length < totalSets ? (
-            <TouchableOpacity
-              style={styles.completeSetButton}
-              onPress={handleCompleteSet}
-              disabled={isResting}
-            >
-              <Icon name="checkmark-circle" size={24} color="#fff" />
-              <Text style={styles.completeSetButtonText}>
-                Hoàn thành Set {currentSet}
-              </Text>
-            </TouchableOpacity>
-          ) : (
-            <TouchableOpacity
-              style={[styles.completeSetButton, styles.allSetsCompleteButton]}
-              onPress={async () => {
-                try {
-                  // Mark exercise as completed in database
-                  if (dayExerciseId) {
-                    await workoutAPI.completeExercise(dayExerciseId);
-                    Alert.alert('Hoàn thành!', 'Bài tập đã được đánh dấu hoàn thành.');
-                  }
-                  navigation.goBack();
-                } catch (error) {
-                  console.error('Error completing exercise:', error);
-                  Alert.alert('Lỗi', 'Không thể lưu tiến độ. Vui lòng thử lại.');
-                  navigation.goBack();
-                }
-              }}
-            >
-              <Icon name="checkmark-done-circle" size={24} color="#fff" />
-              <Text style={styles.completeSetButtonText}>
-                Hoàn thành tất cả! Quay lại
-              </Text>
-            </TouchableOpacity>
-          )
-        ) : (
-          /* For exercises WITHOUT sets (cardio, yoga, etc.) - just complete button */
-          <TouchableOpacity
-            style={[styles.completeSetButton, styles.allSetsCompleteButton]}
-            onPress={async () => {
-              try {
-                // Mark exercise as completed in database
-                if (dayExerciseId) {
-                  await workoutAPI.completeExercise(dayExerciseId);
-                  Alert.alert('Hoàn thành!', 'Bài tập đã được đánh dấu hoàn thành.');
-                }
-                navigation.goBack();
-              } catch (error) {
-                console.error('Error completing exercise:', error);
-                Alert.alert('Lỗi', 'Không thể lưu tiến độ. Vui lòng thử lại.');
-                navigation.goBack();
-              }
-            }}
+      {/* Sticky Footer Actions */}
+      <View style={styles.actionContainer}>
+          <TouchableOpacity 
+            style={styles.nextSetButton}
+            onPress={handleCompleteSet}
           >
-            <Icon name="checkmark-done-circle" size={24} color="#fff" />
-            <Text style={styles.completeSetButtonText}>
-              Hoàn thành! Quay lại
-            </Text>
+            <Text style={styles.nextSetText}>Next Set</Text>
+            <Icon name="arrow-forward" size={18} color="#681C00" />
           </TouchableOpacity>
-        )}
+          
+          <TouchableOpacity 
+            style={styles.skipButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Text style={styles.skipText}>Skip Set</Text>
+          </TouchableOpacity>
       </View>
 
-      {/* Rest Timer Modal */}
+      {/* Rest Timer Modal - REDESIGNED */}
       <Modal
         visible={isResting}
-        transparent={true}
-        animationType="fade"
+        transparent={false}
+        animationType="slide"
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.timerModal}>
-            <Icon name="moon" size={48} color={colors.primary} />
-            <Text style={styles.timerTitle}>Thời gian nghỉ</Text>
+        <LinearGradient
+          colors={['#FFE8E1', '#FBF8FC']}
+          style={styles.timerModalOverlay}
+        >
+          <View style={styles.timerFullContainer}>
 
-            <Animated.View style={[styles.timerCircle, { transform: [{ scale: scaleAnim }] }]}>
-              <Text style={styles.timerText}>{formatTime(restTimeLeft)}</Text>
-            </Animated.View>
 
-            <Text style={styles.timerSubtitle}>
-              Chuẩn bị cho Set {currentSet}
-            </Text>
+            {/* Labels */}
+            <View style={styles.timerLabelSet}>
+               <Text style={styles.timerRestTag}>Rest</Text>
+               <Text style={styles.timerRecoverTitle}>Recovering</Text>
+            </View>
 
-            <TouchableOpacity
-              style={styles.skipButton}
-              onPress={handleSkipRest}
-            >
-              <Text style={styles.skipButtonText}>Bỏ qua nghỉ</Text>
-            </TouchableOpacity>
+            {/* Timer Circle */}
+            <View style={styles.timerCircleWrapper}>
+               <View style={styles.timerCircleOuter} />
+               <Animated.View style={[styles.timerCircleInner, { transform: [{ scale: scaleAnim }] }]}>
+                  <Text style={styles.timerBigText}>{formatTime(restTimeLeft)}</Text>
+               </Animated.View>
+            </View>
+
+            {/* Exercise Info */}
+            <View style={styles.timerEmojiInfo}>
+               <View style={styles.timerExerciseInfo}>
+                  <Text style={styles.timerExerciseName}>{exercise.name || 'Next Set'}</Text>
+                  <Text style={styles.timerExerciseSummary}>{totalSets} sets × {workoutExercise.reps || 12} reps</Text>
+               </View>
+            </View>
+
+            {/* Actions */}
+            <View style={styles.timerActions}>
+               <TouchableOpacity 
+                 style={styles.extendButton}
+                 onPress={handleExtendRest}
+               >
+                  <Icon name="add-circle" size={20} color="#681C00" />
+                  <Text style={styles.extendButtonText}>Extend +15s</Text>
+               </TouchableOpacity>
+
+               <TouchableOpacity 
+                 style={styles.skipRestBtn}
+                 onPress={handleSkipRest}
+               >
+                  <Text style={styles.skipRestBtnText}>Skip Rest</Text>
+                  <Icon name="play-skip-forward" size={16} color="#A8390D" />
+               </TouchableOpacity>
+            </View>
           </View>
-        </View>
+        </LinearGradient>
       </Modal>
     </View>
   );

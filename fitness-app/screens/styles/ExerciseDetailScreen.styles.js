@@ -1,243 +1,329 @@
-import { StyleSheet, Dimensions } from 'react-native';
-import colors from '../../theme/colors';
+import { StyleSheet, Platform, Dimensions } from 'react-native';
 
 const { width } = Dimensions.get('window');
 
 export const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: '#F5F7F9', // Light gray background from UIDL
   },
-  header: {
+  // --- Header ---
+  topHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 60,
-    paddingBottom: 20,
-    backgroundColor: colors.card,
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 8,
+    justifyContent: 'space-between',
+    paddingHorizontal: 24,
+    paddingTop: Platform.OS === 'android' ? 60 : 50,
+    backgroundColor: 'transparent',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
     zIndex: 10,
   },
-  backButton: {
-    padding: 8,
+  brandRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.8)',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
   },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: colors.text,
-    flex: 1,
-    textAlign: 'center',
+  brandText: {
+    color: '#FF6B35',
+    fontSize: 20,
+    fontWeight: '900',
+    marginLeft: 8,
+    letterSpacing: 1,
   },
-  headerButton: {
-    padding: 8,
+  headerIconBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255,255,255,0.8)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
+
   content: {
     flex: 1,
   },
-  videoContainer: {
-    width: width,
-    height: width * 0.75,
-    backgroundColor: colors.cardDarkLight,
+  scrollContent: {
+    paddingBottom: 150,
   },
-  exerciseVideo: {
+
+  // --- Hero Section ---
+  heroSection: {
+    width: '100%',
+    height: 460,
+    backgroundColor: '#000',
+  },
+  heroImage: {
     width: '100%',
     height: '100%',
   },
-  videoPlaceholder: {
-    width: '100%',
-    height: '100%',
-    justifyContent: 'center',
+  heroGradient: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'flex-end',
+    padding: 24,
+  },
+  tagRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.cardDarkLight,
+    marginBottom: 16,
   },
-  placeholderText: {
-    marginTop: 12,
-    fontSize: 14,
-    color: colors.textSecondary,
+  strengthTag: {
+    backgroundColor: '#FF6B35',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderTopLeftRadius: 10,
+    borderBottomRightRadius: 10,
+    marginRight: 12,
   },
-  infoSection: {
-    padding: 20,
-    backgroundColor: colors.card,
+  strengthTagText: {
+    color: '#FFF',
+    fontSize: 12,
+    fontWeight: '800',
+    textTransform: 'uppercase',
   },
-  exerciseName: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: colors.text,
-    marginBottom: 8,
+  metaItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 16,
   },
-  exerciseDescription: {
+  metaText: {
+    color: '#FFF',
+    fontSize: 13,
+    fontWeight: '700',
+    marginLeft: 6,
+  },
+  workoutTitle: {
+    color: '#FFF',
+    fontSize: 42,
+    fontWeight: '900',
+    textTransform: 'uppercase',
+    lineHeight: 44,
+    letterSpacing: -1,
+  },
+
+  // --- Objective Card ---
+  objectiveContainer: {
+    marginTop: -40, // Pull up over hero
+    paddingHorizontal: 24,
+  },
+  objectiveCard: {
+    backgroundColor: '#FFF',
+    borderRadius: 40,
+    padding: 32,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.05,
+    shadowRadius: 20,
+    elevation: 5,
+  },
+  sectionLabel: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#FF6B35',
+    textTransform: 'uppercase',
+    marginBottom: 12,
+    letterSpacing: 1,
+  },
+  objectiveBody: {
     fontSize: 15,
-    color: colors.textSecondary,
-    lineHeight: 22,
-    marginBottom: 16,
+    color: '#4B5563',
+    lineHeight: 24,
+    fontWeight: '500',
   },
-  statsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 20,
-    marginBottom: 16,
-    paddingVertical: 16,
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: colors.border,
+  highlightText: {
+    color: '#111827',
+    fontWeight: '700',
   },
-  statItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+
+  // --- Intensity & Focus Area ---
+  intensitySection: {
+    padding: 24,
   },
-  statLabel: {
-    fontSize: 14,
-    fontWeight: '600',
+  intensityCard: {
+    backgroundColor: '#E5E7EB',
+    borderRadius: 30,
+    padding: 24,
   },
-  statValue: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.text,
-  },
-  infoRow: {
+  intensityRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    marginBottom: 12,
+    marginBottom: 16,
   },
-  infoText: {
-    fontSize: 14,
-    color: colors.textSecondary,
+  intensityLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#374151',
+    textTransform: 'uppercase',
+    width: 80,
   },
-  muscleSection: {
-    marginTop: 16,
-    paddingTop: 16,
-    borderTopWidth: 1,
-    borderColor: colors.border,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.text,
-    marginBottom: 12,
-  },
-  muscleTagsContainer: {
+  intensityBarContainer: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
+    gap: 4,
   },
-  muscleTag: {
+  intensityBar: {
+    width: 24,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#D1D5DB',
+  },
+  intensityBarActive: {
+    backgroundColor: '#FF6B35',
+  },
+  focusRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 8,
+  },
+  focusTag: {
+    backgroundColor: '#F3F4F6',
     paddingHorizontal: 12,
     paddingVertical: 6,
-    backgroundColor: colors.card,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: colors.primary,
+    borderRadius: 15,
   },
-  muscleTagText: {
-    fontSize: 13,
-    color: colors.primary,
-    fontWeight: '500',
+  focusTagText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#111827',
+    textTransform: 'uppercase',
   },
-  tabContainer: {
+
+  // --- Equipment ---
+  equipmentSection: {
+    paddingHorizontal: 24,
+    marginBottom: 32,
+  },
+  equipmentHeader: {
     flexDirection: 'row',
-    backgroundColor: colors.card,
-    marginTop: 8,
-    paddingHorizontal: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  tab: {
-    flex: 1,
-    paddingVertical: 16,
-    alignItems: 'center',
-    borderBottomWidth: 2,
-    borderBottomColor: 'transparent',
-  },
-  activeTab: {
-    borderBottomColor: colors.primary,
-  },
-  tabText: {
-    fontSize: 15,
-    fontWeight: '500',
-    color: colors.textSecondary,
-  },
-  activeTabText: {
-    color: colors.primary,
-    fontWeight: '600',
-  },
-  tabContent: {
-    padding: 20,
-    backgroundColor: colors.card,
-    minHeight: 200,
-  },
-  instructionItem: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'baseline',
     marginBottom: 16,
   },
-  instructionNumber: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-    marginTop: 2,
+  sectionTitle: {
+    fontSize: 24,
+    fontWeight: '900',
+    color: '#111827',
+    textTransform: 'uppercase',
   },
-  instructionNumberText: {
+  itemCount: {
     fontSize: 14,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontWeight: '700',
+    color: '#923512',
+    marginLeft: 8,
   },
-  instructionText: {
-    flex: 1,
-    fontSize: 15,
-    color: colors.text,
-    lineHeight: 22,
-  },
-  tipItem: {
+  equipmentGrid: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: 12,
-    gap: 10,
+    flexWrap: 'wrap',
+    gap: 12,
   },
-  tipText: {
-    flex: 1,
-    fontSize: 14,
-    color: colors.text,
-    lineHeight: 20,
-  },
-  emptyText: {
-    fontSize: 14,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    paddingVertical: 20,
-  },
-  bottomContainer: {
+  equipmentItem: {
+    width: (width - 60) / 2,
+    backgroundColor: '#F3F4F6',
+    borderRadius: 24,
     padding: 20,
-    backgroundColor: colors.card,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
+    alignItems: 'center',
   },
-  startButton: {
+  equipmentIcon: {
+    marginBottom: 12,
+  },
+  equipmentName: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#111827',
+    textTransform: 'uppercase',
+    textAlign: 'center',
+  },
+
+  // --- The Program ---
+  programSection: {
+    paddingHorizontal: 24,
+  },
+  exerciseCard: {
+    backgroundColor: '#FFF',
+    borderRadius: 32,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  exerciseThumb: {
+    width: 90,
+    height: 90,
+    borderRadius: 24,
+    backgroundColor: '#000',
+  },
+  exerciseInfo: {
+    flex: 1,
+    paddingHorizontal: 16,
+  },
+  exerciseTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  exerciseName: {
+    fontSize: 16,
+    fontWeight: '900',
+    color: '#111827',
+    textTransform: 'uppercase',
+    flex: 1,
+  },
+  exerciseNumber: {
+    fontSize: 18,
+    fontWeight: '900',
+    color: '#FF6B35',
+    opacity: 0.8,
+  },
+  exerciseStats: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#6B7280',
+    marginBottom: 4,
+  },
+  exerciseTip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  exerciseTipText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#923512',
+    textTransform: 'uppercase',
+    marginLeft: 4,
+  },
+
+  // --- Footer ---
+  footer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: 24,
+    paddingBottom: Platform.OS === 'ios' ? 40 : 24,
+  },
+  startBtn: {
+    backgroundColor: '#FF6B35',
+    height: 70,
+    borderRadius: 35,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.primary,
-    paddingVertical: 16,
-    borderRadius: 12,
-    gap: 8,
+    shadowColor: '#FF6B35',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 10,
   },
-  startButtonText: {
-    color: '#fff',
+  startBtnText: {
+    color: '#FFF',
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: '900',
+    textTransform: 'uppercase',
+    letterSpacing: 1.5,
+    marginRight: 10,
   },
 });
-
-
-
-
-

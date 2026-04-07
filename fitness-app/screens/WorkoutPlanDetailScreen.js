@@ -7,49 +7,29 @@ import {
   FlatList,
   ActivityIndicator,
   Alert,
+  Image,
+  Platform,
+  StatusBar,
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons as Icon } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useFocusEffect } from '@react-navigation/native';
-import colors from '../theme/colors';
 import { workoutAPI } from '../services/api';
 import { styles } from './styles/WorkoutPlanDetailScreen.styles';
 
-// Helper function to format duration
-const formatDuration = (seconds) => {
-  if (!seconds) return null;
-  if (seconds >= 60) {
-    const minutes = Math.floor(seconds / 60);
-    return `${minutes} phút`;
-  }
-  return `${seconds} giây`;
-};
+const DAYS_OF_WEEK = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-// Helper function to calculate current day number based on plan startDate
-const getCurrentDayNumber = (startDate, duration) => {
-  if (!startDate) return null;
-
-  const today = new Date();
+// Helper to get formatted day info for calendar
+const getDayDetailsForCalendar = (dayNumber, startDate) => {
+  if (!startDate) return { dayName: `D${dayNumber}`, dateNum: dayNumber };
   const start = new Date(startDate);
+  const targetDate = new Date(start);
+  targetDate.setDate(start.getDate() + (dayNumber - 1));
 
-  // Reset time parts for accurate day calculation
-  today.setHours(0, 0, 0, 0);
-  start.setHours(0, 0, 0, 0);
-
-  const diffTime = today - start;
-  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
-  // Day number is 1-indexed
-  const dayNumber = diffDays + 1;
-
-  // Check if within plan duration
-  const totalDays = duration * 7; // duration is in weeks
-
-  if (dayNumber < 1 || dayNumber > totalDays) {
-    return null; // Outside plan range
-  }
-
-  return dayNumber;
+  return {
+    dayName: DAYS_OF_WEEK[targetDate.getDay()],
+    dateNum: targetDate.getDate()
+  };
 };
 
 const WorkoutPlanDetailScreen = ({ route, navigation }) => {
@@ -57,8 +37,7 @@ const WorkoutPlanDetailScreen = ({ route, navigation }) => {
   const [selectedDay, setSelectedDay] = useState(null);
   const [dayDetails, setDayDetails] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
-  const [planData, setPlanData] = useState(plan); // Store mutable plan data
+  const [planData, setPlanData] = useState(plan);
 
   useEffect(() => {
     // Auto-select current day or first incomplete day
@@ -68,6 +47,8 @@ const WorkoutPlanDetailScreen = ({ route, navigation }) => {
       const firstIncompleteDay = planData.days.find(d => !d.isCompleted);
       if (firstIncompleteDay) {
         handleSelectDay(firstIncompleteDay);
+      } else {
+        handleSelectDay(planData.days[0]);
       }
     }
   }, []);
@@ -93,7 +74,7 @@ const WorkoutPlanDetailScreen = ({ route, navigation }) => {
       }
     } catch (error) {
       console.error('Failed to load day details:', error);
-      Alert.alert('Lỗi', 'Không thể tải chi tiết ngày tập');
+      Alert.alert('Error', 'Unable to load day details');
     } finally {
       setLoading(false);
     }
@@ -103,55 +84,36 @@ const WorkoutPlanDetailScreen = ({ route, navigation }) => {
     if (!selectedDay) return;
 
     Alert.alert(
-      'Hoàn thành buổi tập',
-      'Bạn đã hoàn thành buổi tập này?',
+      'Complete Workout',
+      'Have you finished today\'s session?',
       [
-        { text: 'Hủy', style: 'cancel' },
+        { text: 'Cancel', style: 'cancel' },
         {
-          text: 'Hoàn thành',
+          text: 'Complete',
           onPress: async () => {
             try {
               setLoading(true);
               const response = await workoutAPI.completeWorkoutDay(selectedDay.id);
               if (response.data.success) {
-                // Update local state immediately
                 const updatedDay = { ...selectedDay, isCompleted: true, completedAt: new Date().toISOString() };
                 setSelectedDay(updatedDay);
 
-                // Update plan days
                 const updatedDays = planData.days.map(day =>
-                  day.id === selectedDay.id
-                    ? updatedDay
-                    : day
+                  day.id === selectedDay.id ? updatedDay : day
                 );
                 setPlanData({ ...planData, days: updatedDays });
 
-                // Reload day details to get updated exercise completion status
+                // Reload day details
                 const dayResponse = await workoutAPI.getWorkoutPlanDay(selectedDay.id);
                 if (dayResponse.data.success) {
                   setDayDetails(dayResponse.data.data);
                 }
 
-                Alert.alert(
-                  'Chúc mừng! 🎉',
-                  'Bạn đã hoàn thành buổi tập!\n\nTiếp tục phát huy nhé! 💪',
-                  [
-                    {
-                      text: 'OK',
-                      onPress: () => {
-                        // Find next incomplete day
-                        const nextDay = updatedDays.find(d => !d.isCompleted && d.dayNumber > selectedDay.dayNumber);
-                        if (nextDay) {
-                          handleSelectDay(nextDay);
-                        }
-                      }
-                    }
-                  ]
-                );
+                Alert.alert('Congratulations! 🎉', 'Session completed! Keep it up! 💪');
               }
             } catch (error) {
               console.error('Failed to complete day:', error);
-              Alert.alert('Lỗi', 'Không thể hoàn thành buổi tập. Vui lòng thử lại.');
+              Alert.alert('Error', 'Unable to complete session. Please try again.');
             } finally {
               setLoading(false);
             }
@@ -161,89 +123,40 @@ const WorkoutPlanDetailScreen = ({ route, navigation }) => {
     );
   };
 
-  const renderDayItem = ({ item }) => {
+  const renderDayCapsule = ({ item }) => {
     const isSelected = selectedDay?.id === item.id;
     const isCompleted = item.isCompleted;
-    const isRestDay = item.isRestDay;
-
-    // Calculate current day number based on plan startDate
-    const currentDayNumber = getCurrentDayNumber(planData.startDate, planData.duration);
-    const isPastDay = currentDayNumber ? item.dayNumber < currentDayNumber : false;
-    const isDisabled = isPastDay && !isCompleted; // Only disable past days that are NOT completed
+    const { dayName, dateNum } = getDayDetailsForCalendar(item.dayNumber, planData.startDate);
 
     return (
       <TouchableOpacity
         style={[
-          styles.dayItem,
-          isSelected && styles.dayItemSelected,
-          isCompleted && styles.dayItemCompleted,
-          isDisabled && { opacity: 0.5 },
+          styles.dayCapsule,
+          isSelected && styles.dayCapsuleSelected,
+          isCompleted && styles.dayCapsuleCompleted,
         ]}
-        onPress={() => {
-          // Allow viewing completed days, only block incomplete past days
-          if (isDisabled) return;
-          handleSelectDay(item);
-        }}
-        activeOpacity={isDisabled ? 1 : 0.7}
-        disabled={isDisabled}
+        onPress={() => handleSelectDay(item)}
       >
-        <View style={styles.dayItemContent}>
-          <View style={styles.dayItemHeader}>
-            <Text style={[
-              styles.dayNumber,
-              isSelected && styles.dayNumberSelected,
-              isCompleted && styles.dayNumberCompleted,
-              isDisabled && { color: colors.textSecondary },
-            ]}>
-              {item.dayNumber}
-            </Text>
-            {isCompleted && (
-              <Icon name="checkmark-circle" size={16} color={colors.success} style={{ marginLeft: 4 }} />
-            )}
-            {isRestDay && (
-              <Icon name="moon" size={14} color={colors.textSecondary} style={{ marginLeft: 4 }} />
-            )}
-            {isDisabled && !isCompleted && (
-              <Icon name="lock-closed" size={14} color={colors.textSecondary} style={{ marginLeft: 4 }} />
-            )}
+        <Text style={[styles.dayName, isSelected && styles.dayNameSelected]}>{dayName}</Text>
+        <Text style={[styles.dateNumber, isSelected && styles.dateNumberSelected]}>{dateNum}</Text>
+        {isSelected && <View style={styles.todayIndicator} />}
+        {isCompleted && !isSelected && (
+          <View style={{ marginTop: 2 }}>
+            <Icon name="checkmark-circle" size={12} color="#16A34A" />
           </View>
-          <Text
-            style={[
-              styles.dayItemText,
-              isSelected && styles.dayItemTextSelected,
-              isDisabled && { color: colors.textSecondary },
-            ]}
-            numberOfLines={1}
-          >
-            {isRestDay ? 'Nghỉ' : item.focusArea || 'Tập'}
-          </Text>
-        </View>
+        )}
       </TouchableOpacity>
     );
   };
 
-  const renderExerciseItem = ({ item, index }) => {
+  const renderExerciseItem = ({ item }) => {
     const exercise = item.exerciseDetails;
-    const isCompleted = item.isCompleted; // Check if exercise is completed
-
-    // Check if this is a past day
-    const currentDayNumber = getCurrentDayNumber(planData.startDate, planData.duration);
-    const isPastDay = currentDayNumber && selectedDay ? selectedDay.dayNumber < currentDayNumber : false;
-    const isDisabled = (isPastDay && !isCompleted) || isCompleted; // Disable if past day (and not completed) or already completed
+    const isCompleted = item.isCompleted;
 
     return (
       <TouchableOpacity
-        style={[
-          styles.exerciseItem,
-          isCompleted && styles.exerciseItemCompleted,
-          isPastDay && !isCompleted && { opacity: 0.5 },
-        ]}
+        style={[styles.exerciseItem, isCompleted && styles.exerciseItemCompleted]}
         onPress={() => {
-          // Don't allow clicking on completed or past day exercises
-          if (isDisabled) {
-            return;
-          }
-
           if (exercise) {
             navigation.navigate('WorkoutExerciseDetail', {
               exercise: exercise,
@@ -255,230 +168,172 @@ const WorkoutPlanDetailScreen = ({ route, navigation }) => {
                 weight: item.weight,
                 notes: item.notes,
               },
-              dayExerciseId: item.id_dayExercise // ID from workout_plan_day_exercises table
+              dayExerciseId: item.id_dayExercise
             });
           }
         }}
-        activeOpacity={isDisabled ? 1 : 0.7} // No opacity change if disabled
-        disabled={isDisabled} // Disable touch if disabled
       >
-        <View style={styles.exerciseNumber}>
-          <Text style={styles.exerciseNumberText}>{index + 1}</Text>
-        </View>
-        <View style={styles.exerciseContent}>
-          <View style={styles.exerciseNameRow}>
-            <Text style={[
-              styles.exerciseName,
-              isCompleted && styles.exerciseNameCompleted
-            ]}>
-              {item.exerciseName}
-            </Text>
-            {isCompleted && (
-              <Icon name="checkmark-circle" size={24} color={colors.success} />
-            )}
-          </View>
-
-          {exercise && (
-            <>
-              {exercise.description && (
-                <Text style={styles.exerciseDescription} numberOfLines={2}>
-                  {exercise.description}
-                </Text>
-              )}
-
-              <View style={styles.exerciseMeta}>
-                {exercise.muscleGroups && exercise.muscleGroups.length > 0 && (
-                  <View style={styles.exerciseMetaItem}>
-                    <Icon name="body-outline" size={14} color={colors.textSecondary} />
-                    <Text style={styles.exerciseMetaText}>
-                      {exercise.muscleGroups.join(', ')}
-                    </Text>
-                  </View>
-                )}
-                {exercise.difficulty && (
-                  <View style={styles.exerciseMetaItem}>
-                    <Icon name="speedometer-outline" size={14} color={colors.textSecondary} />
-                    <Text style={styles.exerciseMetaText}>{exercise.difficulty}</Text>
-                  </View>
-                )}
-              </View>
-            </>
-          )}
-
-          <View style={styles.exerciseDetails}>
-            {item.sets && item.reps ? (
-              <View style={styles.exerciseDetailItem}>
-                <Icon name="repeat-outline" size={16} color={colors.textOnPrimary} />
-                <Text style={styles.exerciseDetailText}>
-                  {item.sets} sets × {item.reps} reps
-                </Text>
-              </View>
-            ) : item.duration ? (
-              <View style={styles.exerciseDetailItem}>
-                <Icon name="time-outline" size={16} color={colors.textOnPrimary} />
-                <Text style={styles.exerciseDetailText}>{formatDuration(item.duration)}</Text>
-              </View>
-            ) : null}
-
-            {item.caloriesBurned && (
-              <View style={[styles.exerciseDetailItem, { backgroundColor: 'rgba(255, 152, 0, 0.15)' }]}>
-                <Icon name="flame-outline" size={16} color={colors.warning} />
-                <Text style={[styles.exerciseDetailText, { color: colors.warning }]}>
-                  {item.caloriesBurned} cal
-                </Text>
-              </View>
-            )}
-
-            {item.restSeconds && (
-              <View style={[styles.exerciseDetailItem, { backgroundColor: 'rgba(255, 255, 255, 0.1)' }]}>
-                <Icon name="pause-outline" size={16} color={colors.textSecondary} />
-                <Text style={[styles.exerciseDetailText, { color: colors.textSecondary }]}>
-                  Nghỉ {item.restSeconds}s
-                </Text>
-              </View>
-            )}
-          </View>
-
-          {item.notes && (
-            <View style={styles.exerciseNotes}>
-              <Icon name="information-circle-outline" size={14} color={colors.iconWarning} />
-              <Text style={styles.exerciseNotesText}>{item.notes}</Text>
+        <View style={styles.exerciseInfo}>
+          <View style={styles.exerciseMetaRow}>
+            <View style={styles.exerciseBadge}>
+              <Text style={styles.exerciseBadgeText}>{exercise?.category || 'Strength'}</Text>
             </View>
-          )}
+            {isCompleted && <Icon name="checkmark-circle" size={16} color="#16A34A" />}
+          </View>
+
+          <Text style={styles.exerciseName} numberOfLines={1}>{item.exerciseName}</Text>
+
+          <View style={styles.exerciseStatsRow}>
+            <View style={styles.exerciseStat}>
+              <Icon name="time" size={14} color="#3F3F46" />
+              <Text style={styles.exerciseStatText}>
+                {item.duration ? `${Math.floor(item.duration / 60)} MIN` : `${item.sets || 3} SETS`}
+              </Text>
+            </View>
+            <View style={styles.exerciseStat}>
+              <Icon name="flame" size={14} color="#3F3F46" />
+              <Text style={styles.exerciseStatText}>{item.caloriesBurned || 150} KCAL</Text>
+            </View>
+          </View>
         </View>
 
-        {/* Navigation Arrow */}
-        <Icon name="chevron-forward" size={20} color={colors.textSecondary} />
+        {exercise?.imageUrl ? (
+          <Image source={{ uri: exercise.imageUrl }} style={styles.exerciseImage} />
+        ) : (
+          <View style={[styles.exerciseImage, { justifyContent: 'center', alignItems: 'center' }]}>
+            <Icon name="fitness" size={24} color="#A8390D" style={{ opacity: 0.3 }} />
+          </View>
+        )}
       </TouchableOpacity>
     );
   };
 
   return (
     <View style={styles.container}>
+      <StatusBar barStyle="dark-content" />
+
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => navigation.goBack()}
         >
-          <Icon name="arrow-back" size={24} color={colors.text} />
+          <Icon name="chevron-back" size={20} color="white" />
         </TouchableOpacity>
-        <View style={styles.headerTitleContainer}>
-          <Text style={styles.headerTitle}>{planData.name}</Text>
-          <Text style={styles.headerSubtitle}>
-            {planData.duration} tuần • {planData.frequency} buổi/tuần
-          </Text>
-        </View>
+        <Text style={styles.headerTitle} numberOfLines={1}>Monthly Plan</Text>
       </View>
 
-      {/* Days Horizontal List */}
-      <View style={styles.daysContainer}>
+      {/* Calendar Bar */}
+      <View style={styles.calendarContainer}>
         <FlatList
           horizontal
           data={planData.days || []}
-          renderItem={renderDayItem}
+          renderItem={renderDayCapsule}
           keyExtractor={(item) => item.id.toString()}
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.daysList}
-          extraData={planData.days} // Re-render when days change
+          contentContainerStyle={styles.calendarList}
         />
       </View>
 
-      {/* Day Details */}
-      <ScrollView style={styles.content}>
+      <ScrollView
+        style={styles.content}
+        contentContainerStyle={styles.contentContainer}
+        showsVerticalScrollIndicator={false}
+      >
         {loading ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={colors.primary} />
+            <ActivityIndicator size="large" color="#A8390D" />
           </View>
         ) : dayDetails ? (
           <View>
-            {/* Day Header */}
-            <View style={styles.dayHeader}>
-              <Text style={styles.dayTitle}>{dayDetails.dayName}</Text>
-              {dayDetails.focusArea && (
-                <Text style={styles.dayFocus}>{dayDetails.focusArea}</Text>
-              )}
+            {/* Main Day Header Card */}
+            <View style={styles.dayHeaderCard}>
+              <View style={styles.cardTopRow}>
+                <View style={{ flex: 1, marginRight: 16 }}>
+                  <View style={styles.badge}>
+                    <Text style={styles.badgeText}>{dayDetails.focusArea || 'Full Body'}</Text>
+                  </View>
+                  <Text style={styles.dayTitle}>{dayDetails.dayName}</Text>
+                  <Text style={styles.dayDescription}>
+                    {dayDetails.notes || 'Focus on compound movements and proper form for maximum efficiency.'}
+                  </Text>
+                </View>
 
-              <View style={styles.dayStats}>
-                <View style={styles.dayStat}>
-                  <Icon name="time-outline" size={24} color={colors.primary} />
-                  <Text style={styles.dayStatValue}>{dayDetails.totalDuration}</Text>
-                  <Text style={styles.dayStatLabel}>phút</Text>
+                {/* Oval Play Button */}
+                <TouchableOpacity
+                  style={styles.playButton}
+                  onPress={() => {/* Start Session logic */ }}
+                >
+                  <Icon name="play" size={14} color="#A8390D" />
+                </TouchableOpacity>
+              </View>
+
+              {/* Stats Row */}
+              <View style={styles.statsContainer}>
+                <View style={styles.statItem}>
+                  <View style={styles.statIconBox}>
+                    <Icon name="time" size={20} color="#A8390D" />
+                  </View>
+                  <Text style={styles.statValue}>{dayDetails.totalDuration || 60} min</Text>
+                  <Text style={styles.statLabel}>Time</Text>
                 </View>
-                <View style={styles.dayStat}>
-                  <Icon name="flame-outline" size={24} color={colors.warning} />
-                  <Text style={styles.dayStatValue}>{dayDetails.estimatedCalories}</Text>
-                  <Text style={styles.dayStatLabel}>cal</Text>
+                <View style={styles.statItem}>
+                  <View style={styles.statIconBox}>
+                    <Icon name="flame" size={19} color="#A8390D" />
+                  </View>
+                  <Text style={styles.statValue}>{dayDetails.estimatedCalories || 400} cal</Text>
+                  <Text style={styles.statLabel}>Burn</Text>
                 </View>
-                <View style={styles.dayStat}>
-                  <Icon name="barbell-outline" size={24} color={colors.success} />
-                  <Text style={styles.dayStatValue}>{dayDetails.exercises?.length || 0}</Text>
-                  <Text style={styles.dayStatLabel}>bài tập</Text>
+                <View style={styles.statItem}>
+                  <View style={styles.statIconBox}>
+                    <Icon name="list" size={20} color="#A8390D" />
+                  </View>
+                  <Text style={styles.statValue}>{dayDetails.exercises?.length || 5} exercises</Text>
+                  <Text style={styles.statLabel}>Total</Text>
                 </View>
               </View>
             </View>
 
-            {/* Rest Day Message */}
+            {/* Rest Day view */}
             {dayDetails.isRestDay ? (
-              <View style={styles.restDayContainer}>
-                <Icon name="moon" size={64} color={colors.textSecondary} />
-                <Text style={styles.restDayTitle}>Ngày nghỉ ngơi</Text>
+              <View style={styles.restDayCard}>
+                <Icon name="moon" size={64} color="#A8390D" style={{ opacity: 0.5 }} />
+                <Text style={styles.restDayTitle}>Recovery Day</Text>
                 <Text style={styles.restDayText}>
-                  Hãy nghỉ ngơi để cơ thể phục hồi và phát triển
+                  Rest is when your muscles grow. Take it easy today!
                 </Text>
               </View>
             ) : (
-              <>
-                {/* Notes */}
-                {dayDetails.notes && (
-                  <View style={styles.notesContainer}>
-                    <Icon name="information-circle" size={20} color={colors.white} />
-                    <Text style={styles.notesText}>{dayDetails.notes}</Text>
-                  </View>
-                )}
-
-                {/* Exercises List */}
-                <View style={styles.exercisesSection}>
-                  <Text style={styles.sectionTitle}>Bài tập</Text>
-                  <FlatList
-                    data={dayDetails.exercises || []}
-                    renderItem={renderExerciseItem}
-                    keyExtractor={(item, index) => index.toString()}
-                    scrollEnabled={false}
-                  />
-                </View>
-              </>
+              <View>
+                <Text style={styles.sectionTitle}>Exercises</Text>
+                <FlatList
+                  data={dayDetails.exercises || []}
+                  renderItem={renderExerciseItem}
+                  keyExtractor={(item, index) => index.toString()}
+                  scrollEnabled={false}
+                />
+              </View>
             )}
           </View>
         ) : (
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>Chọn một ngày để xem chi tiết</Text>
+            <Text style={styles.emptyText}>Select a day to see details</Text>
           </View>
         )}
       </ScrollView>
 
-      {/* Complete Button */}
-      {selectedDay && !selectedDay.isCompleted && (() => {
-        // Check if this is a past day
-        const currentDayNumber = getCurrentDayNumber(planData.startDate, planData.duration);
-        const isPastDay = currentDayNumber ? selectedDay.dayNumber < currentDayNumber : false;
-
-        // Don't show complete button for past days
-        if (isPastDay) return null;
-
-        return (
-          <View style={styles.footer}>
-            <TouchableOpacity
-              style={styles.completeButton}
-              onPress={handleCompleteDay}
-              activeOpacity={0.8}
-            >
-              <Icon name="checkmark-circle" size={24} color={colors.white} />
-              <Text style={styles.completeButtonText}>Hoàn thành buổi tập</Text>
-            </TouchableOpacity>
-          </View>
-        );
-      })()}
+      {/* Sticky Footer */}
+      {selectedDay && !selectedDay.isCompleted && !dayDetails?.isRestDay && (
+        <View style={styles.footer}>
+          <TouchableOpacity
+            style={styles.completeButton}
+            onPress={handleCompleteDay}
+          >
+            <Icon name="checkmark-circle" size={30} color="white" />
+            <Text style={styles.completeButtonText}>Completed Session</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
 };

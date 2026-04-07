@@ -235,10 +235,10 @@ export const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#A43609',
+    backgroundColor: '#FF794A',
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#A43609',
+    shadowColor: '#FF794A',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 6,
@@ -303,6 +303,42 @@ export const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
     marginLeft: 6,
+  },
+
+  // --- Recommendation Section ---
+  recommendationOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+    justifyContent: 'flex-end',
+    padding: 24,
+  },
+  recommendationBadge: {
+    backgroundColor: '#FF794A',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    alignSelf: 'flex-start',
+    marginBottom: 8,
+  },
+  recommendationBadgeText: {
+    color: '#000000',
+    fontSize: 10,
+    fontWeight: '900',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  recommendationTitle: {
+    color: '#FFFFFF',
+    fontSize: 42,
+    fontWeight: '900',
+    lineHeight: 42,
+    marginBottom: 12,
+    letterSpacing: -1,
+  },
+  recommendationSubtitle: {
+    color: 'rgba(255, 255, 255, 0.8)',
+    fontSize: 15,
+    fontWeight: '500',
   },
 
   // --- Biometrics Section ---

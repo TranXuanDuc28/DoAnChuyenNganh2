@@ -8,6 +8,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import { Ionicons as Icon } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
@@ -155,7 +156,7 @@ const AssistantScreen = () => {
             <View style={[styles.messageBubble, styles.botBubble]}>
               <View style={styles.protocolContainer}>
                 <Text style={styles.protocolTitle}>RECOVERY PROTOCOL</Text>
-                
+
                 <View style={styles.protocolItem}>
                   <View style={styles.protocolIconWrapper}>
                     <Icon name="restaurant" size={20} color="#a43609" />
@@ -217,7 +218,10 @@ const AssistantScreen = () => {
         </View>
         {!isBot && (
           <View style={styles.userAvatarContainer}>
-            <Icon name="person" size={18} color="#a8a29e" />
+            <Image
+              source={{ uri: user?.profileImage }}
+              style={styles.avatarImage}
+            />
           </View>
         )}
       </View>
@@ -235,16 +239,16 @@ const AssistantScreen = () => {
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Icon name="arrow-back" size={24} color="#2c2f31" />
         </TouchableOpacity>
-        
+
         <View style={styles.headerIcon}>
           <Icon name="fitness" size={22} color="#fff" />
         </View>
-        
+
         <View style={styles.headerTextContainer}>
-          <Text style={styles.headerTitle}>FITNESS AI</Text>
+          <Text style={styles.headerTitle}>FITLIFE AI</Text>
           <Text style={styles.statusText}>AI Coach Active</Text>
         </View>
-        
+
         <View style={styles.headerActions}>
           <Icon name="notifications-outline" size={24} color="#a8a29e" />
           <Icon name="ellipsis-vertical" size={24} color="#a8a29e" />
@@ -277,7 +281,7 @@ const AssistantScreen = () => {
         <TouchableOpacity style={styles.iconButton}>
           <Icon name="add" size={24} color="#78716c" />
         </TouchableOpacity>
-        
+
         <View style={styles.inputWrapper}>
           <TextInput
             style={styles.input}

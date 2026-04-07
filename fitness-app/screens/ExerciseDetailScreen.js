@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,246 +6,256 @@ import {
   TouchableOpacity,
   Image,
   Dimensions,
+  Platform,
+  StatusBar,
+  ActivityIndicator,
 } from 'react-native';
-import { VideoView, useVideoPlayer } from 'expo-video';
 import { Ionicons as Icon } from '@expo/vector-icons';
-import colors from '../theme/colors';
+import { LinearGradient } from 'expo-linear-gradient';
+import { workoutAPI } from '../services/api';
 import { styles } from './styles/ExerciseDetailScreen.styles';
 
-const { width } = Dimensions.get('window');
+// Fallback images if backend doesn't provide one
+const FALLBACK_HERO = { uri: 'file:///C:/Users/MSI/.gemini/antigravity/brain/7647c6b0-d41e-4c7a-b9d1-e8b86eacb17e/workout_hero_muscular_1775410935179.png' };
+const FALLBACK_THUMB = { uri: 'file:///C:/Users/MSI/.gemini/antigravity/brain/7647c6b0-d41e-4c7a-b9d1-e8b86eacb17e/exercise_squat_thumb_1775410955415.png' };
+
+const EQUIPMENT_ICONS = {
+  'dumbbells': 'barbell',
+  'barbell': 'remove',
+  'bench': 'square-outline',
+  'resistance band': 'infinite',
+  'kettlebell': 'medical',
+  'mat': 'reorder-four',
+  'pull-up bar': 'stats-chart',
+};
 
 const ExerciseDetailScreen = ({ route, navigation }) => {
   const { exercise } = route.params;
-  const [activeTab, setActiveTab] = useState('instructions'); // instructions, tips
+  const [relatedExercises, setRelatedExercises] = useState([]);
+  const [loadingRelated, setLoadingRelated] = useState(false);
 
-  // Debug: Log exercise data to check if instructions and tips exist
-  console.log('Exercise data:', {
-    name: exercise.name,
-    hasInstructions: !!exercise.instructions,
-    instructionsLength: exercise.instructions?.length || 0,
-    instructions: exercise.instructions,
-    hasTips: !!exercise.tips,
-    tipsLength: exercise.tips?.length || 0,
-    tips: exercise.tips
-  });
+  useEffect(() => {
+    fetchRelatedExercises();
+  }, [exercise.id]);
 
-  // Create video player instance only if videoUrl exists
-  const player = exercise.videoUrl
-    ? useVideoPlayer(exercise.videoUrl, player => {
-      player.loop = true;
-    })
-    : null;
+  const fetchRelatedExercises = async () => {
+    // Try to find a valid category ID
+    const categoryId = exercise.exerciseCategoryId || (exercise.categories && exercise.categories[0]?.id);
+    
+    if (!categoryId) return;
 
-  const getDifficultyColor = (difficulty) => {
-    switch (difficulty?.toLowerCase()) {
-      case 'beginner':
-        return colors.iconSuccess;
-      case 'intermediate':
-        return colors.iconWarning;
-      case 'advanced':
-        return colors.iconDanger;
-      default:
-        return colors.textSecondary;
+    setLoadingRelated(true);
+    try {
+      const { data } = await workoutAPI.getExercises({ categoryId, limit: 10 });
+      // Filter out current exercise and take top 4
+      const filtered = (data || [])
+        .filter(ex => ex.id !== exercise.id)
+        .slice(0, 4);
+      setRelatedExercises(filtered);
+    } catch (error) {
+      console.error('Failed to load related exercises:', error);
+    } finally {
+      setLoadingRelated(false);
     }
   };
 
-  const getDifficultyLabel = (difficulty) => {
-    switch (difficulty?.toLowerCase()) {
-      case 'beginner':
-        return 'Cơ bản';
-      case 'intermediate':
-        return 'Trung bình';
-      case 'advanced':
-        return 'Nâng cao';
-      default:
-        return difficulty;
-    }
+  const renderHeader = () => (
+    <View style={styles.topHeader}>
+      <TouchableOpacity style={styles.brandRow} onPress={() => navigation.goBack()} activeOpacity={0.7}>
+        <Icon name="arrow-back" size={22} color="#FF6B35" />
+        <Text style={styles.brandText}>FITLIFE</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity style={styles.headerIconBtn} activeOpacity={0.7}>
+        <Icon name="notifications-outline" size={24} color="#111827" />
+      </TouchableOpacity>
+    </View>
+  );
+
+  const renderHero = () => {
+    const calories = exercise.caloriesPerMinute
+      ? Math.floor(exercise.caloriesPerMinute * (exercise.duration || 15))
+      : 320;
+
+    return (
+      <View style={styles.heroSection}>
+        <Image
+          source={exercise.imageUrl ? { uri: exercise.imageUrl } : FALLBACK_HERO}
+          style={styles.heroImage}
+        />
+        <LinearGradient
+          colors={['transparent', 'rgba(15, 23, 42, 0.8)']}
+          style={styles.heroGradient}
+        >
+          <View style={styles.tagRow}>
+            <View style={styles.strengthTag}>
+              <Text style={styles.strengthTagText}>
+                {(exercise.difficulty || 'BEGINNER').toUpperCase()} STRENGTH
+              </Text>
+            </View>
+            <View style={styles.metaItem}>
+              <Icon name="time-outline" size={16} color="#FFF" />
+              <Text style={styles.metaText}>{exercise.duration || 15} MINS</Text>
+            </View>
+            <View style={styles.metaItem}>
+              <Icon name="flame-outline" size={16} color="#FFF" />
+              <Text style={styles.metaText}>{calories} KCAL</Text>
+            </View>
+          </View>
+          <Text style={styles.workoutTitle}>{exercise.name?.toUpperCase() || 'EXERCISE'}</Text>
+        </LinearGradient>
+      </View>
+    );
   };
+
+  const renderObjective = () => (
+    <View style={styles.objectiveContainer}>
+      <View style={styles.objectiveCard}>
+        <Text style={styles.sectionLabel}>THE OBJECTIVE</Text>
+        <Text style={styles.objectiveBody}>
+          {exercise.description || 'A targeted session designed to maximize results through perfect form and controlled execution. We focus on efficiency and peak muscle activation.'}
+        </Text>
+      </View>
+    </View>
+  );
+
+  const renderIntensity = () => {
+    const focusAreas = Array.isArray(exercise.muscleGroups) ? exercise.muscleGroups : ['FULL BODY'];
+    const barCount = exercise.difficulty?.toLowerCase() === 'advanced' ? 5 : exercise.difficulty?.toLowerCase() === 'intermediate' ? 3 : 1;
+
+    return (
+      <View style={styles.intensitySection}>
+        <View style={styles.intensityCard}>
+          <View style={styles.intensityRow}>
+            <Text style={styles.intensityLabel}>DIFFICULTY</Text>
+            <View style={styles.intensityBarContainer}>
+              {[1, 2, 3, 4, 5].map((idx) => (
+                <View
+                  key={idx}
+                  style={[styles.intensityBar, idx <= barCount && styles.intensityBarActive]}
+                />
+              ))}
+            </View>
+          </View>
+
+          <View style={styles.intensityRow}>
+            <Text style={styles.intensityLabel}>FOCUS AREAS</Text>
+            <View style={styles.focusRow}>
+              {focusAreas.map(tag => (
+                <View key={tag} style={styles.focusTag}>
+                  <Text style={styles.focusTagText}>{tag.toUpperCase()}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        </View>
+      </View>
+    );
+  };
+
+  const renderEquipment = () => {
+    const equipment = Array.isArray(exercise.equipment) ? exercise.equipment : [];
+
+    return (
+      <View style={styles.equipmentSection}>
+        <View style={styles.equipmentHeader}>
+          <Text style={styles.sectionTitle}>EQUIPMENT NEEDED</Text>
+          <Text style={styles.itemCount}>{equipment.length} Items</Text>
+        </View>
+
+        <View style={styles.equipmentGrid}>
+          {equipment.length > 0 ? (
+            equipment.map((name, index) => (
+              <View key={index} style={styles.equipmentItem}>
+                <Icon
+                  name={EQUIPMENT_ICONS[name.toLowerCase()] || 'fitness'}
+                  size={28}
+                  color="#FF6B35"
+                  style={styles.equipmentIcon}
+                />
+                <Text style={styles.equipmentName}>{name.toUpperCase()}</Text>
+              </View>
+            ))
+          ) : (
+            <View style={styles.equipmentItem}>
+              <Icon name="checkmark-circle-outline" size={28} color="#FF6B35" style={styles.equipmentIcon} />
+              <Text style={styles.equipmentName}>NO EQUIPMENT</Text>
+            </View>
+          )}
+        </View>
+      </View>
+    );
+  };
+
+  const renderProgram = () => {
+    if (relatedExercises.length === 0 && !loadingRelated) return null;
+
+    return (
+      <View style={styles.programSection}>
+        <Text style={[styles.sectionTitle, { marginBottom: 20 }]}>RECOMMENDED WORKOUTS</Text>
+
+        {relatedExercises.map((item, index) => (
+          <TouchableOpacity
+            key={item.id}
+            style={styles.exerciseCard}
+            activeOpacity={0.9}
+            onPress={() => navigation.push('ExerciseDetail', { exercise: item })}
+          >
+            <Image
+              source={item.imageUrl ? { uri: item.imageUrl } : FALLBACK_THUMB}
+              style={styles.exerciseThumb}
+              resizeMode="cover"
+            />
+            <View style={styles.exerciseInfo}>
+              <View style={styles.exerciseTopRow}>
+                <Text style={styles.exerciseName} numberOfLines={1}>{item.name}</Text>
+                <Text style={styles.exerciseNumber}>{index + 1 < 10 ? `0${index + 1}` : index + 1}</Text>
+              </View>
+              <Text style={styles.exerciseStats}>
+                {item.duration || 15} MIN • {item.difficulty?.toUpperCase() || 'MODERATE'}
+              </Text>
+              <View style={styles.exerciseTip}>
+                <Icon name="radio-button-on" size={10} color="#FF6B35" />
+                <Text style={styles.exerciseTipText}>
+                  {Array.isArray(item.tips) && item.tips.length > 0 ? item.tips[0] : 'FOCUS ON PERFECT FORM'}
+                </Text>
+              </View>
+            </View>
+          </TouchableOpacity>
+        ))}
+        {loadingRelated && <ActivityIndicator color="#FF6B35" style={{ marginTop: 10 }} />}
+      </View>
+    );
+  };
+   
 
   return (
     <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <Icon name="arrow-back" size={24} color={colors.text} />
-        </TouchableOpacity>
+      <StatusBar barStyle="light-content" translucent />
+      {renderHeader()}
 
-        <Text style={styles.headerTitle}>Chi tiết bài tập</Text>
-
-        <TouchableOpacity style={styles.headerButton}>
-          <Icon name="heart-outline" size={24} color={colors.primary} />
-        </TouchableOpacity>
-      </View>
-
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Exercise Video */}
-        <View style={styles.videoContainer}>
-          {exercise.videoUrl && player ? (
-            <VideoView
-              player={player}
-              style={styles.exerciseVideo}
-              contentFit="contain"
-              nativeControls
-            />
-          ) : exercise.imageUrl ? (
-            <Image
-              source={{ uri: exercise.imageUrl }}
-              style={styles.exerciseVideo}
-              resizeMode="cover"
-            />
-          ) : (
-            <View style={styles.videoPlaceholder}>
-              <Icon name="videocam-outline" size={80} color={colors.textSecondary} />
-              <Text style={styles.placeholderText}>Chưa có video hướng dẫn</Text>
-            </View>
-          )}
-        </View>
-
-        {/* Exercise Info */}
-        <View style={styles.infoSection}>
-          <Text style={styles.exerciseName}>{exercise.name}</Text>
-
-          {exercise.description && (
-            <Text style={styles.exerciseDescription}>{exercise.description}</Text>
-          )}
-
-          {/* Stats Row */}
-          <View style={styles.statsContainer}>
-            {exercise.difficulty && (
-              <View style={styles.statItem}>
-                <Icon
-                  name="speedometer-outline"
-                  size={20}
-                  color={getDifficultyColor(exercise.difficulty)}
-                />
-                <Text style={[styles.statLabel, { color: getDifficultyColor(exercise.difficulty) }]}>
-                  {getDifficultyLabel(exercise.difficulty)}
-                </Text>
-              </View>
-            )}
-
-            {exercise.sets && exercise.reps && (
-              <View style={styles.statItem}>
-                <Icon name="repeat-outline" size={20} color={colors.primary} />
-                <Text style={styles.statValue}>
-                  {exercise.sets} × {exercise.reps}
-                </Text>
-              </View>
-            )}
-
-            {exercise.duration > 0 && (
-              <View style={styles.statItem}>
-                <Icon name="time-outline" size={20} color={colors.primary} />
-                <Text style={styles.statValue}>{exercise.duration}s</Text>
-              </View>
-            )}
-          </View>
-
-          {/* Additional Info */}
-          {exercise.restTime > 0 && (
-            <View style={styles.infoRow}>
-              <Icon name="pause-circle-outline" size={18} color={colors.textSecondary} />
-              <Text style={styles.infoText}>Thời gian nghỉ: {exercise.restTime}s</Text>
-            </View>
-          )}
-
-          {exercise.caloriesPerMinute > 0 && (
-            <View style={styles.infoRow}>
-              <Icon name="flame-outline" size={18} color={colors.iconWarning} />
-              <Text style={styles.infoText}>
-                Calories: ~{exercise.caloriesPerMinute} cal/phút
-              </Text>
-            </View>
-          )}
-
-          {exercise.equipment && Array.isArray(exercise.equipment) && exercise.equipment.length > 0 && (
-            <View style={styles.infoRow}>
-              <Icon name="barbell-outline" size={18} color={colors.textSecondary} />
-              <Text style={styles.infoText}>
-                Thiết bị: {exercise.equipment.join(', ')}
-              </Text>
-            </View>
-          )}
-
-          {/* Muscle Groups */}
-          {exercise.categories && Array.isArray(exercise.categories) && exercise.categories.length > 0 && (
-            <View style={styles.muscleSection}>
-              <Text style={styles.sectionTitle}>Nhóm cơ</Text>
-              <View style={styles.muscleTagsContainer}>
-                {exercise.categories.map((category) => (
-                  <View key={category.id} style={styles.muscleTag}>
-                    <Text style={styles.muscleTagText}>{category.name}</Text>
-                  </View>
-                ))}
-              </View>
-            </View>
-          )}
-        </View>
-
-        {/* Tabs */}
-        <View style={styles.tabContainer}>
-          <TouchableOpacity
-            style={[styles.tab, activeTab === 'instructions' && styles.activeTab]}
-            onPress={() => setActiveTab('instructions')}
-          >
-            <Text style={[styles.tabText, activeTab === 'instructions' && styles.activeTabText]}>
-              Hướng dẫn
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.tab, activeTab === 'tips' && styles.activeTab]}
-            onPress={() => setActiveTab('tips')}
-          >
-            <Text style={[styles.tabText, activeTab === 'tips' && styles.activeTabText]}>
-              Lưu ý
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Tab Content */}
-        <View style={styles.tabContent}>
-          {activeTab === 'instructions' && (
-            <View>
-              {exercise.instructions && Array.isArray(exercise.instructions) && exercise.instructions.length > 0 ? (
-                exercise.instructions.map((instruction, index) => (
-                  <View key={index} style={styles.instructionItem}>
-                    <View style={styles.instructionNumber}>
-                      <Text style={styles.instructionNumberText}>{index + 1}</Text>
-                    </View>
-                    <Text style={styles.instructionText}>{instruction}</Text>
-                  </View>
-                ))
-              ) : (
-                <Text style={styles.emptyText}>Chưa có hướng dẫn chi tiết</Text>
-              )}
-            </View>
-          )}
-
-          {activeTab === 'tips' && (
-            <View>
-              {exercise.tips && Array.isArray(exercise.tips) && exercise.tips.length > 0 ? (
-                exercise.tips.map((tip, index) => (
-                  <View key={index} style={styles.tipItem}>
-                    <Icon name="checkmark-circle" size={20} color={colors.iconSuccess} />
-                    <Text style={styles.tipText}>{tip}</Text>
-                  </View>
-                ))
-              ) : (
-                <Text style={styles.emptyText}>Chưa có lưu ý nào</Text>
-              )}
-            </View>
-          )}
-        </View>
+      <ScrollView
+        vertical
+        style={styles.content}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
+        {renderHero()}
+        {renderObjective()}
+        {renderIntensity()}
+        {renderEquipment()}
+        {renderProgram()}
       </ScrollView>
 
-      {/* Start Button */}
-      <View style={styles.bottomContainer}>
-        <TouchableOpacity style={styles.startButton}>
-          <Icon name="play" size={24} color="#fff" />
-          <Text style={styles.startButtonText}>Bắt đầu tập luyện</Text>
+      {/* Floating Action Button */}
+      <View style={styles.footer}>
+        <TouchableOpacity
+          style={styles.startBtn}
+          activeOpacity={0.8}
+          onPress={() => navigation.navigate('PoseGuide', { exercise })}
+        >
+          <Text style={styles.startBtnText}>START WORKOUT</Text>
+          <Icon name="play-forward" size={24} color="#FFF" />
         </TouchableOpacity>
       </View>
     </View>
@@ -253,4 +263,3 @@ const ExerciseDetailScreen = ({ route, navigation }) => {
 };
 
 export default ExerciseDetailScreen;
-

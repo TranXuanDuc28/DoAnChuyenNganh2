@@ -42,6 +42,9 @@ import SocialScreen from './screens/SocialScreen';
 import StatisticsScreen from './screens/StatisticsScreen';
 import PoseScreen from './screens/PoseScreen';
 import PoseHistory from './screens/PoseHistory';
+import WorkoutHistoryDetailScreen from './screens/WorkoutHistoryDetailScreen';
+import PoseGuideScreen from './screens/PoseGuideScreen';
+import VideoPlayerScreen from './screens/VideoPlayerScreen';
 
 // Import context
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -231,6 +234,29 @@ const AppNavigator = () => {
             component={WorkoutExerciseDetailScreen}
             options={{
               headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="WorkoutHistoryDetail"
+            component={WorkoutHistoryDetailScreen}
+            options={{
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="PoseGuide"
+            component={PoseGuideScreen}
+            options={{
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="VideoPlayer"
+            component={VideoPlayerScreen}
+            options={{
+              headerShown: false,
+              presentation: 'modal',
+              animation: 'fade_from_bottom',
             }}
           />
         </Stack.Navigator>

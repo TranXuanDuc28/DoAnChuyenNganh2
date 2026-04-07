@@ -22,17 +22,16 @@ const { width } = Dimensions.get('window');
 
 const DashboardScreen = () => {
   const { user } = useAuth();
-  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
   const [todayStats, setTodayStats] = useState({
-    steps: 0,
-    calories: 0,
-    activeMinutes: 0,
-    water: 0,
-    sleep: 0,
-    heartRate: 0,
+    steps: 8450,
+    calories: 320,
+    activeMinutes: 45,
+    water: 6,
+    sleep: 7.5,
+    heartRate: 72,
   });
 
   const fetchDashboardData = async () => {
@@ -60,7 +59,10 @@ const DashboardScreen = () => {
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await fetchDashboardData();
+    // Simulate API call
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 1000);
   };
 
   if (loading) {
@@ -90,7 +92,7 @@ const DashboardScreen = () => {
         <View style={styles.topHeaderBar}>
           <View style={styles.topLeftGroup}>
             <Image
-              source={{ uri: 'https://i.pravatar.cc/100' }}
+              source={{ uri: user?.profileImage }}
               style={styles.avatarImage}
             />
             <Text style={styles.brandText}>FITLIFE</Text>
@@ -134,7 +136,7 @@ const DashboardScreen = () => {
         {/* Your Pulse Section */}
         <View style={styles.pulseCardContainer}>
           <LinearGradient
-            colors={['#C44211', '#983006']}
+            colors={['#FF794A', '#C44211']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.pulseCardInner}
@@ -220,6 +222,28 @@ const DashboardScreen = () => {
                 <Text style={styles.challengeMetaText}>Expert</Text>
               </View>
             </View>
+          </View>
+        </ImageBackground>
+
+        {/* Recommendation Section */}
+        <View style={styles.sectionHeaderRow}>
+          <Text style={styles.sectionTitle}>Recommendation</Text>
+          <TouchableOpacity>
+            <Text style={styles.viewAllText}>View All</Text>
+          </TouchableOpacity>
+        </View>
+
+        <ImageBackground
+          source={require('../image/banner1.jpg')}
+          style={styles.challengeCard}
+          imageStyle={styles.challengeImageCover}
+        >
+          <View style={styles.recommendationOverlay}>
+            <View style={styles.recommendationBadge}>
+              <Text style={styles.recommendationBadgeText}>Intermediate</Text>
+            </View>
+            <Text style={styles.recommendationTitle}>ENDURANCE{'\n'}BUILDER</Text>
+            <Text style={styles.recommendationSubtitle}>The Kinetic Protocol Series</Text>
           </View>
         </ImageBackground>
 

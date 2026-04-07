@@ -11,43 +11,88 @@ const { MealPlan } = require('../models/Nutrition');
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 /**
- * Calculate recommended daily calories based on user data
+ * Calculate BMR (Basal Metabolic Rate) using Mifflin-St Jeor Equation
  * @param {User} user - User instance
- * @returns {number} Recommended daily calories
+ * @returns {number} BMR in calories
  */
-const calculateDailyCalories = (user) => {
-  // Use Mifflin-St Jeor Equation
+const calculateBMR = (user) => {
   let bmr;
   if (user.gender === 'male') {
     bmr = 10 * user.weight + 6.25 * user.height - 5 * user.age + 5;
   } else {
     bmr = 10 * user.weight + 6.25 * user.height - 5 * user.age - 161;
   }
+  return bmr;
+};
 
-  // Activity level multipliers
+/**
+ * Calculate TDEE (Total Daily Energy Expenditure)
+ * @param {number} bmr - Basal Metabolic Rate
+ * @param {string} activityLevel - User's activity level
+ * @returns {number} TDEE in calories
+ */
+const calculateTDEE = (bmr, activityLevel) => {
+  // Activity level multipliers (PAL - Physical Activity Level)
   const activityMultipliers = {
-    sedentary: 1.2,
-    lightly_active: 1.375,
-    moderately_active: 1.55,
-    very_active: 1.725,
-    extra_active: 1.9
+    sedentary: 1.2,          // Little or no exercise
+    lightly_active: 1.375,   // Light exercise 1-3 days/week
+    moderately_active: 1.55, // Moderate exercise 3-5 days/week
+    very_active: 1.725,      // Hard exercise 6-7 days/week
+    extra_active: 1.9        // Very hard exercise & physical job
   };
 
-  const tdee = bmr * (activityMultipliers[user.activityLevel] || 1.55);
+  const tdee = bmr * (activityMultipliers[activityLevel] || 1.55);
+  return tdee;
+};
 
-  // Adjust based on fitness goals
+/**
+ * Calculate recommended daily calories based on user data
+ * @param {User} user - User instance
+ * @returns {Object} Calorie breakdown with BMR, TDEE, and target
+ */
+const calculateDailyCalories = (user) => {
+  // Step 1: Calculate BMR (calories burned at rest)
+  const bmr = calculateBMR(user);
+
+  // Step 2: Calculate TDEE (calories burned with daily activity)
+  const tdee = calculateTDEE(bmr, user.activityLevel);
+
+  // Step 3: Adjust based on fitness goals
   const primaryGoal = Array.isArray(user.fitnessGoals) ? user.fitnessGoals[0] : user.fitnessGoals;
+
+  let targetCalories;
+  let adjustment = 0;
+  let adjustmentReason = '';
 
   switch (primaryGoal) {
     case 'lose_weight':
-      return Math.round(tdee - 500); // 500 calorie deficit
+      adjustment = -500; // 500 calorie deficit for 0.5kg/week loss
+      adjustmentReason = '500 cal deficit for weight loss';
+      targetCalories = Math.round(tdee - 500);
+      break;
     case 'build_muscle':
-      return Math.round(tdee + 300); // 300 calorie surplus
+      adjustment = +300; // 300 calorie surplus for muscle gain
+      adjustmentReason = '300 cal surplus for muscle building';
+      targetCalories = Math.round(tdee + 300);
+      break;
     case 'gain_weight':
-      return Math.round(tdee + 500); // 500 calorie surplus
+      adjustment = +500; // 500 calorie surplus for weight gain
+      adjustmentReason = '500 cal surplus for weight gain';
+      targetCalories = Math.round(tdee + 500);
+      break;
     default:
-      return Math.round(tdee); // Maintenance
+      adjustment = 0;
+      adjustmentReason = 'Maintenance calories';
+      targetCalories = Math.round(tdee); // Maintenance
   }
+
+  return {
+    bmr: Math.round(bmr),
+    tdee: Math.round(tdee),
+    targetCalories,
+    adjustment,
+    adjustmentReason
+  };
 };
 
 /**
@@ -143,13 +188,18 @@ const generateMealPlan = async (userId, options = {}) => {
     });
 
     // Step 2: Calculate nutritional requirements
-    const dailyCalories = calculateDailyCalories(user);
+    const calorieBreakdown = calculateDailyCalories(user);
+    const { bmr, tdee, targetCalories } = calorieBreakdown;
     const bmi = calculateBMI(user.weight, user.height);
     const primaryGoal = Array.isArray(user.fitnessGoals) ? user.fitnessGoals[0] : user.fitnessGoals;
-    const macros = getMacroDistribution(primaryGoal, dailyCalories);
+    const macros = getMacroDistribution(primaryGoal, targetCalories);
 
     console.log('📊 Nutritional calculations:', {
-      dailyCalories,
+      bmr,
+      tdee,
+      targetCalories,
+      adjustment: calorieBreakdown.adjustment,
+      adjustmentReason: calorieBreakdown.adjustmentReason,
       bmi: bmi.value,
       level: bmi.level,
       macros
@@ -184,8 +234,17 @@ USER PROFILE:
 - Activity Level: ${user.activityLevel}
 - Fitness Goals: ${Array.isArray(user.fitnessGoals) ? user.fitnessGoals.join(', ') : user.fitnessGoals}
 
-NUTRITIONAL TARGETS (DAILY):
-- Calories: ${dailyCalories} kcal
+CALORIE CALCULATION BREAKDOWN:
+- BMR (Basal Metabolic Rate): ${bmr} kcal/day
+  • Calories burned at rest (breathing, circulation, cell production)
+- TDEE (Total Daily Energy Expenditure): ${tdee} kcal/day  
+  • BMR × Activity Level (${user.activityLevel})
+  • Total calories burned with daily activities
+- Target Daily Calories: ${targetCalories} kcal/day
+  • TDEE ${calorieBreakdown.adjustment >= 0 ? '+' : ''}${calorieBreakdown.adjustment} kcal (${calorieBreakdown.adjustmentReason})
+
+DAILY NUTRITIONAL TARGETS (CONSISTENT FOR ALL DAYS):
+- Daily Calories: EXACTLY ${targetCalories} kcal (±50 kcal tolerance)
 - Protein: ${macros.protein.grams}g (${macros.protein.percentage}%)
 - Carbohydrates: ${macros.carbs.grams}g (${macros.carbs.percentage}%)
 - Fat: ${macros.fat.grams}g (${macros.fat.percentage}%)
@@ -197,15 +256,32 @@ ${dietaryRestrictions.length > 0 ? `- Dietary Restrictions: ${dietaryRestriction
 ${cuisinePreferences.length > 0 ? `- Cuisine Preferences: ${cuisinePreferences.join(', ')}` : ''}
 ${allergies.length > 0 ? `- Allergies: ${allergies.join(', ')}` : ''}
 
-INSTRUCTIONS:
-1. Create a ${duration}-day meal plan with ${mealsPerDay} meals per day
-2. Each meal should be realistic, easy to prepare, and culturally appropriate
-3. Include both international and Vietnamese food options
-4. Provide detailed nutritional information for each meal
-5. Ensure daily totals match the target calories and macros (±10% is acceptable)
-6. Include preparation instructions for each meal
-7. Consider the user's fitness goals when planning meals
-8. Make meals varied and interesting throughout the week
+CRITICAL INSTRUCTIONS:
+1. **CONSISTENCY REQUIREMENT**: Each day MUST have EXACTLY ${targetCalories} kcal (±50 kcal maximum variance)
+   - Day 1: ${targetCalories} kcal
+   - Day 2: ${targetCalories} kcal
+   - Day 3: ${targetCalories} kcal
+   - ... (all ${duration} days should be the same)
+   
+2. Create a ${duration}-day meal plan with ${mealsPerDay} meals per day
+
+3. Daily macro targets (CONSISTENT across all days):
+   - Protein: ${macros.protein.grams}g ± 5g
+   - Carbs: ${macros.carbs.grams}g ± 10g
+   - Fat: ${macros.fat.grams}g ± 5g
+
+4. Each meal should be:
+   - Realistic and easy to prepare
+   - Culturally appropriate (Vietnamese + International)
+   - Properly portioned to meet calorie targets
+   
+5. Include detailed nutritional information for EACH food item
+
+6. Vary the food choices but MAINTAIN consistent daily totals
+
+7. Consider the user's fitness goal (${primaryGoal}) when selecting food types
+
+8. Include preparation instructions for each meal
 
 OUTPUT FORMAT (JSON):
 {
@@ -240,19 +316,19 @@ OUTPUT FORMAT (JSON):
         "snack": { ... same structure ... }
       },
       "dailyTotals": {
-        "calories": number,
-        "protein": number,
-        "carbs": number,
-        "fat": number
+        "calories": ${targetCalories},
+        "protein": ${macros.protein.grams},
+        "carbs": ${macros.carbs.grams},
+        "fat": ${macros.fat.grams}
       }
     }
     // ... repeat for all ${duration} days
   ],
   "weeklyTotals": {
-    "avgDailyCalories": number,
-    "avgProtein": number,
-    "avgCarbs": number,
-    "avgFat": number
+    "avgDailyCalories": ${targetCalories},
+    "avgProtein": ${macros.protein.grams},
+    "avgCarbs": ${macros.carbs.grams},
+    "avgFat": ${macros.fat.grams}
   },
   "shoppingList": [
     {
@@ -269,13 +345,22 @@ OUTPUT FORMAT (JSON):
   "hydration": "Daily water intake recommendation (e.g., 2-3 liters)"
 }
 
-IMPORTANT:
+CRITICAL VALIDATION RULES:
+- **MOST IMPORTANT**: Every single day MUST have exactly ${targetCalories} kcal (±50 kcal max)
+- All days should have nearly identical macro totals (protein: ${macros.protein.grams}g, carbs: ${macros.carbs.grams}g, fat: ${macros.fat.grams}g)
+- The "avgDailyCalories" in weeklyTotals should equal ${targetCalories} (NOT an average, but the target)
 - Return ONLY valid JSON, no markdown code blocks or additional text
 - Make sure all numbers are actual numbers, not strings
 - Ensure meals are practical and achievable
 - Consider meal prep and time constraints
-- Include variety to prevent boredom
+- Include variety to prevent boredom while maintaining consistent calorie targets
 - Respect any dietary restrictions or allergies
+
+EXAMPLE OF CORRECT CALORIE DISTRIBUTION:
+Day 1: Breakfast 400 + Lunch 600 + Dinner 700 + Snack 300 = ${targetCalories} kcal ✓
+Day 2: Breakfast 420 + Lunch 580 + Dinner 720 + Snack 280 = ${targetCalories} kcal ✓
+Day 3: Breakfast 380 + Lunch 620 + Dinner 680 + Snack 320 = ${targetCalories} kcal ✓
+(Notice: different meals but SAME daily total)
 `;
 
     console.log('🤖 Calling Gemini AI...');
@@ -331,17 +416,22 @@ IMPORTANT:
       startDate,
       endDate,
       meals: aiMealPlan.days,
-      totalCalories: dailyCalories,
+      totalCalories: targetCalories,
       macronutrients: macros,
       dietaryRestrictions,
       preferences: {
         cuisine: cuisinePreferences,
         allergies,
-        mealsPerDay
+        mealsPerDay,
+        bmr,
+        tdee,
+        targetCalories,
+        calorieAdjustment: calorieBreakdown.adjustment,
+        adjustmentReason: calorieBreakdown.adjustmentReason
       },
       isActive: true,
       aiGenerated: true,
-      aiPrompt: `Goal: ${primaryGoal}, Calories: ${dailyCalories}, Duration: ${duration} days, BMI: ${bmi.value} (${bmi.level})`
+      aiPrompt: `Goal: ${primaryGoal}, BMR: ${bmr}, TDEE: ${tdee}, Target: ${targetCalories} (${calorieBreakdown.adjustmentReason}), Duration: ${duration} days, BMI: ${bmi.value} (${bmi.level})`
     });
 
     console.log('✅ Meal plan saved to database:', savedMealPlan.id);
@@ -355,7 +445,14 @@ IMPORTANT:
         duration: savedMealPlan.duration,
         startDate: savedMealPlan.startDate,
         endDate: savedMealPlan.endDate,
-        dailyCalories,
+        calorieBreakdown: {
+          bmr,
+          tdee,
+          targetCalories,
+          adjustment: calorieBreakdown.adjustment,
+          adjustmentReason: calorieBreakdown.adjustmentReason
+        },
+        dailyCalories: targetCalories,
         macros,
         bmi,
         days: aiMealPlan.days,
@@ -497,6 +594,8 @@ module.exports = {
   getAllMealPlans,
   deactivateMealPlan,
   calculateDailyCalories,
+  calculateBMR,
+  calculateTDEE,
   calculateBMI,
   getMacroDistribution
 };

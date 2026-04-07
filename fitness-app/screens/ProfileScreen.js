@@ -5,17 +5,17 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
-  TextInput,
   ActivityIndicator,
+  TextInput,
   Image,
-  Modal,
   KeyboardAvoidingView,
   Platform,
+  Modal
 } from 'react-native';
-import { Ionicons as Icon } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-import { useAuth } from '../context/AuthContext';
 import { authAPI } from '../services/api';
+import { Ionicons as Icon } from '@expo/vector-icons';
+import { useAuth } from '../context/AuthContext';
 import colors from '../theme/colors';
 import { styles } from './styles/ProfileScreen.styles';
 

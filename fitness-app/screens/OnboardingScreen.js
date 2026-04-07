@@ -44,7 +44,6 @@ const OnboardingScreen = ({ navigation, route }) => {
     // Health Info
     targetWeight: '',
     bodyFatPercentage: '',
-
     // Nutrition Preferences
     dailyMeals: '3',
     foodPreferences: '',
@@ -181,6 +180,9 @@ const OnboardingScreen = ({ navigation, route }) => {
               placeholderTextColor="#ABADAF"
             />
           </View>
+          <Text style={styles.progressText}>
+            Step {currentStep + 1} of {steps.length}
+          </Text>
         </View>
 
         <View style={styles.inputContainer}>
