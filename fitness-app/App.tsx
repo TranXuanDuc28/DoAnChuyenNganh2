@@ -42,6 +42,13 @@ import SocialScreen from './screens/SocialScreen';
 import StatisticsScreen from './screens/StatisticsScreen';
 import PoseScreen from './screens/PoseScreen';
 import PoseHistory from './screens/PoseHistory';
+import GoPremium from './screens/GoPremiumScreen';
+import PlanComparisonScreen from './screens/PlanComparisonScreen';
+import SubscriptionPlanScreen from './screens/SubscriptionPlanScreen';
+import PaymentScreen from './screens/PaymentScreen';
+import PaymentProcessingScreen from './screens/PaymentProcessingScreen';
+import PaymentSuccessScreen from './screens/PaymentSuccessScreen';
+
 import WorkoutHistoryDetailScreen from './screens/WorkoutHistoryDetailScreen';
 import WorkoutCompleteScreen from './screens/WorkoutCompleteScreen';
 import WorkoutReviewScreen from './screens/WorkoutReviewScreen';
@@ -237,6 +244,42 @@ const AppNavigator = () => {
             options={{
               headerShown: false,
             }}
+          />
+          <Stack.Screen
+            name="GoPremium"
+            component={GoPremium}
+            options={{
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="PlanComparisonScreen"
+            component={PlanComparisonScreen}
+            options={{
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="SubscriptionPlanScreen"
+            component={SubscriptionPlanScreen}
+            options={{
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="PaymentScreen"
+            component={PaymentScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="PaymentProcessingScreen"
+            component={PaymentProcessingScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="PaymentSuccessScreen"
+            component={PaymentSuccessScreen}
+            options={{ headerShown: false }}
           />
           <Stack.Screen
             name="WorkoutHistoryDetail"

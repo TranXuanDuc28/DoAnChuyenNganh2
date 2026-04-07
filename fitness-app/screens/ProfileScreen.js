@@ -12,6 +12,7 @@ import {
   Platform,
   Modal
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 import { authAPI } from '../services/api';
 import { Ionicons as Icon } from '@expo/vector-icons';
@@ -20,6 +21,7 @@ import colors from '../theme/colors';
 import { styles } from './styles/ProfileScreen.styles';
 
 const ProfileScreen = () => {
+  const navigation = useNavigation();
   const { user, logout, updateUser } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -677,7 +679,9 @@ const ProfileScreen = () => {
         </View>
 
         {/* Premium Banner */}
-        <View style={styles.premiumBanner}>
+        <TouchableOpacity style={styles.premiumBanner}
+          onPress={() => navigation.navigate('GoPremium')}
+        >
           <Icon name="star" size={100} color="#ffffff" style={styles.premiumDecor} />
           <View style={styles.premiumBannerTextContainer}>
             <View style={styles.premiumTitleRow}>
@@ -687,7 +691,7 @@ const ProfileScreen = () => {
             <Text style={styles.premiumSub}>Unlock advanced analytics,{'\n'}custom meal plans & exclusive workout series.</Text>
           </View>
           <Icon name="chevron-forward" size={24} color="#ffffff" />
-        </View>
+        </TouchableOpacity>
 
       </View>
 
