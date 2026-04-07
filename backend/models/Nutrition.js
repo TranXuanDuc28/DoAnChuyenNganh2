@@ -1,7 +1,6 @@
 const { DataTypes } = require('sequelize');
 const { sequelize } = require('../config/database');
 
-
 // Meal Plan Model
 const MealPlan = sequelize.define('MealPlan', {
   id: {
@@ -83,8 +82,113 @@ const MealPlan = sequelize.define('MealPlan', {
   tableName: 'meal_plans'
 });
 
+// Food Model
+const Food = sequelize.define('Food', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  name: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  brand: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  calories: {
+    type: DataTypes.INTEGER,
+    allowNull: false
+  },
+  protein: {
+    type: DataTypes.FLOAT,
+    defaultValue: 0
+  },
+  carbs: {
+    type: DataTypes.FLOAT,
+    defaultValue: 0
+  },
+  fat: {
+    type: DataTypes.FLOAT,
+    defaultValue: 0
+  },
+  fiber: {
+    type: DataTypes.FLOAT,
+    defaultValue: 0
+  },
+  sugar: {
+    type: DataTypes.FLOAT,
+    defaultValue: 0
+  },
+  sodium: {
+    type: DataTypes.FLOAT,
+    defaultValue: 0
+  },
+  servingSize: {
+    type: DataTypes.STRING,
+    defaultValue: '100g'
+  },
+  imageUrl: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  category: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  isCustom: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
+  },
+  createdBy: {
+    type: DataTypes.INTEGER,
+    allowNull: true
+  }
+}, {
+  tableName: 'foods'
+});
 
-// Food Log Model - Nutrition Diary
+// Nutrition Entry Model (Records of consumed food)
+const NutritionEntry = sequelize.define('NutritionEntry', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  userId: {
+    type: DataTypes.INTEGER,
+    allowNull: false
+  },
+  foodId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'foods',
+      key: 'id'
+    }
+  },
+  mealType: {
+    type: DataTypes.ENUM('breakfast', 'lunch', 'dinner', 'snack'),
+    allowNull: false
+  },
+  servingAmount: {
+    type: DataTypes.FLOAT,
+    defaultValue: 1
+  },
+  date: {
+    type: DataTypes.DATEONLY,
+    defaultValue: DataTypes.NOW
+  },
+  loggedAt: {
+    type: DataTypes.DATE,
+    defaultValue: DataTypes.NOW
+  }
+}, {
+  tableName: 'nutrition_entries'
+});
+
+// Food Log Model (More flexible, flat log for scans and plans)
 const FoodLog = sequelize.define('FoodLog', {
   id: {
     type: DataTypes.INTEGER,
@@ -93,11 +197,7 @@ const FoodLog = sequelize.define('FoodLog', {
   },
   userId: {
     type: DataTypes.INTEGER,
-    allowNull: false,
-    references: {
-      model: 'users',
-      key: 'id'
-    }
+    allowNull: false
   },
   foodName: {
     type: DataTypes.STRING,
@@ -109,58 +209,46 @@ const FoodLog = sequelize.define('FoodLog', {
   },
   barcode: {
     type: DataTypes.STRING,
-    allowNull: true,
-    comment: 'Barcode if scanned from product'
+    allowNull: true
   },
   mealType: {
-    type: DataTypes.ENUM('breakfast', 'lunch', 'dinner', 'snack'),
-    allowNull: false,
-    defaultValue: 'snack'
+    type: DataTypes.STRING,
+    allowNull: false
   },
   servingSize: {
     type: DataTypes.STRING,
-    allowNull: true,
     defaultValue: '100g'
   },
   servingAmount: {
     type: DataTypes.FLOAT,
-    allowNull: false,
-    defaultValue: 1.0,
-    comment: 'Number of servings consumed'
+    defaultValue: 1
   },
   calories: {
     type: DataTypes.INTEGER,
-    allowNull: false,
     defaultValue: 0
   },
   protein: {
     type: DataTypes.FLOAT,
-    allowNull: false,
     defaultValue: 0
   },
   carbs: {
     type: DataTypes.FLOAT,
-    allowNull: false,
     defaultValue: 0
   },
   fat: {
     type: DataTypes.FLOAT,
-    allowNull: false,
     defaultValue: 0
   },
   fiber: {
     type: DataTypes.FLOAT,
-    allowNull: true,
     defaultValue: 0
   },
   sugar: {
     type: DataTypes.FLOAT,
-    allowNull: true,
     defaultValue: 0
   },
   sodium: {
     type: DataTypes.FLOAT,
-    allowNull: true,
     defaultValue: 0
   },
   imageUrl: {
@@ -173,32 +261,55 @@ const FoodLog = sequelize.define('FoodLog', {
   },
   logDate: {
     type: DataTypes.DATEONLY,
-    allowNull: false,
-    defaultValue: DataTypes.NOW,
-    comment: 'Date when food was consumed'
+    defaultValue: DataTypes.NOW
   },
   logTime: {
-    type: DataTypes.TIME,
-    allowNull: true,
-    comment: 'Time when food was consumed'
+    type: DataTypes.STRING,
+    allowNull: true
   },
   notes: {
     type: DataTypes.TEXT,
     allowNull: true
   }
 }, {
-  tableName: 'food_logs',
-  underscored: true,
-  indexes: [
-    {
-      fields: ['userId', 'log_date']
-    },
-    {
-      fields: ['barcode']
-    }
-  ]
+  tableName: 'food_logs'
 });
 
+// Nutrition Goal Model
+const NutritionGoal = sequelize.define('NutritionGoal', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  userId: {
+    type: DataTypes.INTEGER,
+    allowNull: false
+  },
+  targetCalories: {
+    type: DataTypes.INTEGER,
+    defaultValue: 2000
+  },
+  macronutrients: {
+    type: DataTypes.JSON,
+    defaultValue: {
+      protein: { percentage: 25, grams: 125 },
+      carbohydrates: { percentage: 45, grams: 225 },
+      fat: { percentage: 30, grams: 67 }
+    }
+  },
+  waterIntake: {
+    type: DataTypes.INTEGER,
+    defaultValue: 2000,
+    comment: 'Target water intake in ml'
+  },
+  isActive: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true
+  }
+}, {
+  tableName: 'nutrition_goals'
+});
 
 // Water Intake Model
 const WaterIntake = sequelize.define('WaterIntake', {
@@ -209,91 +320,34 @@ const WaterIntake = sequelize.define('WaterIntake', {
   },
   userId: {
     type: DataTypes.INTEGER,
-    allowNull: false,
-    references: {
-      model: 'users',
-      key: 'id'
-    }
+    allowNull: false
   },
   amount: {
     type: DataTypes.INTEGER,
     allowNull: false,
-    defaultValue: 250, // Standard glass size in ml
     comment: 'Amount in ml'
   },
   date: {
+    type: DataTypes.DATEONLY,
+    defaultValue: DataTypes.NOW
+  },
+  loggedAt: {
     type: DataTypes.DATE,
-    allowNull: false,
     defaultValue: DataTypes.NOW
   }
 }, {
-  tableName: 'water_intakes',
-  underscored: true,
-  indexes: [
-    {
-      fields: ['user_id', 'date']
-    }
-  ]
+  tableName: 'water_intake'
 });
 
-
-// Meal Completion Model - Track completed meals
-const MealCompletion = sequelize.define('MealCompletion', {
-  id: {
-    type: DataTypes.INTEGER,
-    primaryKey: true,
-    autoIncrement: true
-  },
-  userId: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    references: {
-      model: 'users',
-      key: 'id'
-    }
-  },
-  mealPlanId: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    references: {
-      model: 'meal_plans',
-      key: 'id'
-    }
-  },
-  mealId: {
-    type: DataTypes.STRING,
-    allowNull: false,
-    comment: 'Format: dayNumber-mealType (e.g., "1-breakfast")'
-  },
-  completedAt: {
-    type: DataTypes.DATE,
-    allowNull: false,
-    defaultValue: DataTypes.NOW
-  }
-}, {
-  tableName: 'meal_completions',
-  underscored: true,
-  indexes: [
-    {
-      unique: true,
-      fields: ['user_id', 'meal_plan_id', 'meal_id'],
-      name: 'unique_user_meal'
-    },
-    {
-      fields: ['user_id', 'meal_plan_id'],
-      name: 'idx_user_meal_plan'
-    },
-    {
-      fields: ['completed_at'],
-      name: 'idx_completed_at'
-    }
-  ]
-});
-
+// Associations
+NutritionEntry.belongsTo(Food, { foreignKey: 'foodId' });
+Food.hasMany(NutritionEntry, { foreignKey: 'foodId' });
 
 module.exports = {
   MealPlan,
-  FoodLog,
+  Food,
+  NutritionEntry,
+  NutritionGoal,
   WaterIntake,
-  MealCompletion,
+  FoodLog
 };

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { ScrollView, View, Text, StyleSheet, TouchableOpacity, Image, ActivityIndicator, Alert, Modal, Dimensions, StatusBar } from 'react-native';
+import { ScrollView, View, Text, StyleSheet, TouchableOpacity, Image, ActivityIndicator, Alert, Modal, Dimensions, StatusBar, Platform } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons as Icon } from '@expo/vector-icons';
@@ -16,6 +16,7 @@ import * as FileSystem from 'expo-file-system/legacy';
 import PoseAnalyzer from '../components/PoseDetector';
 import HistoryTabs from '../components/HistoryTabs';
 import PoseOverlay from '../components/PoseOverlay';
+import { LinearGradient } from 'expo-linear-gradient';
 function detectMimeFromBase64(b64) {
   if (!b64 || typeof b64 !== 'string') return 'image/jpeg';
   const p = b64.substring(0, 6);
@@ -391,10 +392,11 @@ const PoseScreen = () => {
   }, []); // Empty dependency array - only run once on mount
 
   useEffect(() => {
-    // Set navigation title
-    if (route.params?.exerciseTitle) {
-      navigation.setOptions({ title: route.params.exerciseTitle });
-    }
+    // Navigate dynamically
+    navigation.setOptions({
+      headerShown: false,
+      header: () => null
+    });
 
     // Reset rep count when exercise changes
     setRepCount(0);
@@ -1166,349 +1168,203 @@ const PoseScreen = () => {
     );
   }
   return (
-    <>
+    <View style={{ flex: 1, backgroundColor: '#020617', overflow: 'hidden' }}>
+      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
 
+      {/* Background Camera & Layers */}
+      <View style={StyleSheet.absoluteFillObject}>
+        <CameraView
+          ref={cameraRef}
+          style={{ flex: 1 }}
+          facing={facing}
+          onCameraReady={() => {
+            setIsCameraReady(true);
+            setTimeout(() => setIsFrameVisible(true), 2500);
+          }}
+        />
+        {/* Design Gradient Overlays from Snippet */}
+        <LinearGradient
+          colors={['rgba(2, 6, 23, 0.60)', 'rgba(2, 6, 23, 0)', 'rgba(2, 6, 23, 0.90)']}
+          locations={[0, 0.5, 1]}
+          style={StyleSheet.absoluteFillObject}
+          pointerEvents="none"
+        />
+      </View>
 
-      {/* Content: Camera or History */}
-      {!showHistory ? (
-        <HistoryTabs user={user} />
-      ) : (
-        <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
-          <View style={styles.cameraWrap} onLayout={(event) => {
-            const { height } = event.nativeEvent.layout;
-            if (height > 0) {
-              // Store camera wrap height for overlay
-            }
-          }}>
-            <CameraView
-              ref={cameraRef}
-              style={styles.camera}
-              facing={facing}
-              onCameraReady={() => {
-                console.log('📷 Camera is ready');
-                setIsCameraReady(true);
-                // ✅ Đợi thêm để UI render xong
-                setTimeout(() => {
-                  setIsFrameVisible(true);
-                  console.log('✅ Camera frame visible');
-                }, 2500); // Tăng từ 1000ms lên 2500ms
-              }}
-            />
-
-            {/* {isRealTimeMode && currentPose?.keypoints?.length > 0 && (
-              <PoseOverlay
-                pose={currentPose}
-                containerWidth={Dimensions.get('window').width}
-                containerHeight={260}
-                flipHorizontal={facing === 'front'}
-              />
-            )} */}
-            <View style={styles.switchRow}>
-              <TouchableOpacity style={styles.switchBtn} onPress={() => setFacing((p) => (p === 'back' ? 'front' : 'back'))}>
-                <Icon name="camera-reverse" size={18} color={colors.iconDefault} />
-                <Text style={styles.switchText}>Đổi camera</Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Detection Status Overlay */}
-            {(isRealTimeMode || detectionStatus !== 'idle') && (
-              <View style={[
-                styles.statusOverlay,
-                {
-                  backgroundColor: getStatusInfo().bgColor,
-                  borderColor: getStatusInfo().color
-                }
-              ]}>
-                <Icon
-                  name={getStatusInfo().icon}
-                  size={24}
-                  color={getStatusInfo().color}
-                  style={detectionStatus === 'scanning' ? styles.statusIconPulse : null}
-                />
-                <Text style={[styles.statusText, { color: getStatusInfo().color }]}>
-                  {getStatusInfo().text}
-                </Text>
-                {lastResult && lastResult.score !== undefined && detectionStatus !== 'scanning' && (
-                  <Text style={[styles.statusScore, { color: getStatusInfo().color }]}>
-                    Điểm: {Math.round((lastResult.score || 0))} /100
-                  </Text>
-                )}
-              </View>
-            )}
-          </View>
-
-          <View style={styles.actions}>
-            {!isRealTimeMode ? (
-              <>
-                <TouchableOpacity style={[styles.captureBtn, { marginTop: 0 }]} onPress={takeAndEvaluate} disabled={isProcessing}>
-                  {isProcessing ? (
-                    <ActivityIndicator color="#fff" />
-                  ) : (
-                    <>
-                      <Icon name="camera" size={22} color={colors.textOnPrimary} />
-                      <Text style={styles.captureText}>Chụp ảnh đánh giá</Text>
-                    </>
-                  )}
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[styles.captureBtn, styles.realTimeBtn, { marginTop: 10 }]}
-                  onPress={() => setExerciseModalVisible(true)}
-                  disabled={isProcessing || !permission?.granted}
-                >
-                  <Icon name="videocam" size={22} color={colors.textOnPrimary} />
-                  <Text style={styles.captureText}>Camera thời gian thực</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[styles.captureBtn, { marginTop: 10, backgroundColor: colors.iconSuccess }]}
-                  onPress={pickAndEvaluate}
-                  disabled={isProcessing}
-                >
-                  {isProcessing ? (
-                    <ActivityIndicator color={colors.textOnPrimary} />
-                  ) : (
-                    <>
-                      <Icon name="images" size={22} color={colors.textOnPrimary} />
-                      <Text style={styles.captureText}>Chọn ảnh từ thư viện</Text>
-                    </>
-                  )}
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={[styles.captureBtn, { marginTop: 10, backgroundColor: colors.textSecondary }]}
-                  onPress={pickVideoAndEvaluate}
-                  disabled={isProcessing}
-                >
-                  {isProcessing ? (
-                    <ActivityIndicator color={colors.textWhite} />
-                  ) : (
-                    <>
-                      <Icon name="film" size={22} color={colors.textWhite} />
-                      <Text style={[styles.captureText, { color: colors.textWhite }]}>Tải video lên đánh giá</Text>
-                    </>
-                  )}
-                </TouchableOpacity>
-              </>
-            ) : (
-              <TouchableOpacity
-                style={[styles.captureBtn, styles.stopBtn]}
-                onPress={stopRealTimeEvaluation}
-              >
-                <Icon name="stop-circle" size={22} color={colors.textWhite} />
-                <Text style={[styles.captureText, { color: colors.textWhite }]}>Dừng nhận diện thời gian thực</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-
-          {isRealTimeMode && (
-            <View style={styles.realTimeIndicator}>
-              <View style={styles.pulseDot} />
-              <Text style={styles.realTimeText}>Đang nhận diện tư thế thời gian thực...</Text>
-            </View>
-          )}
-
-          {/* Rep Counter - Only show in real-time mode or when rep count > 0 */}
-          {(isRealTimeMode || repCount > 0) && (
-            <View style={styles.repCounterContainer}>
-              <View style={styles.repCounterCircle}>
-                <Text style={styles.repCounterNumber}>{repCount}</Text>
-              </View>
-              <Text style={styles.repCounterLabel}>Số lần tập</Text>
-            </View>
-          )}
-
-          {lastVideoResult?.uri && !isVideoMode && (
-            <View style={styles.videoSummaryBox}>
-              <View style={styles.videoSummaryHeader}>
-                <Icon name="film" size={22} color={colors.primary} />
-                <Text style={styles.videoSummaryTitle}>Video đã xử lý</Text>
-              </View>
-              <Text style={styles.videoSummaryLine}>
-                Động tác: {lastVideoResult.exerciseName || exerciseTitle}
-              </Text>
-              <Text style={styles.videoSummaryLine}>
-                Số lần lặp lại: {lastVideoResult.repCount || 0}
-              </Text>
-              <TouchableOpacity
-                style={[styles.captureBtn, styles.watchAgainBtn]}
-                onPress={handleWatchProcessedVideo}
-              >
-                <Icon name="play-circle" size={22} color={colors.textOnPrimary} />
-                <Text style={styles.captureText}>Xem lại video</Text>
-              </TouchableOpacity>
-            </View>
-          )}
-
-
-          {previewUri && (
-            <View style={styles.resultWrap}>
-              <TouchableOpacity
-                style={styles.imageContainer}
-                activeOpacity={0.9}
-                onPress={() => setIsZoomed(true)}
-              >
-                <Image
-                  source={{ uri: previewUri }}
-                  style={styles.preview}
-                  onLayout={(e) => {
-                    const { width, height } = e.nativeEvent.layout;
-                    if (width > 0 && height > 0) {
-                      setImageDimensions({ width, height });
-                    }
-                  }}
-                  resizeMode="contain"
-                />
-                {lastResult && lastResult.keypoints && imageDimensions.width > 0 && originalImageDimensions && originalImageDimensions.width > 0 && (
-                  <PoseVisualization
-                    imageWidth={imageDimensions.width}
-                    imageHeight={imageDimensions.height}
-                    originalWidth={originalImageDimensions.width}
-                    originalHeight={originalImageDimensions.height}
-                    detectedKeypoints={lastResult.keypoints}
-                    exerciseName={currentExercise}
-                    showStandard={true}
-                    showDetected={true}
-                  />
-                )}
-                <View style={styles.zoomHint}>
-                  <Icon name="resize-outline" size={20} color="#fff" />
-                </View>
-              </TouchableOpacity>
-
-              {/* Zoom Modal */}
-              <Modal
-                visible={isZoomed}
-                transparent={true}
-                animationType="fade"
-                onRequestClose={() => setIsZoomed(false)}
-              >
-                <View style={styles.zoomContainer}>
-                  <TouchableOpacity
-                    style={styles.zoomCloseBtn}
-                    onPress={() => setIsZoomed(false)}
-                  >
-                    <Icon name="close-circle" size={32} color="#fff" />
-                  </TouchableOpacity>
-                  <View style={styles.zoomImageWrapper}>
-                    <Image
-                      source={{ uri: previewUri }}
-                      style={styles.zoomImage}
-                      onLayout={(e) => {
-                        const { width, height } = e.nativeEvent.layout;
-                        if (width > 0 && height > 0) {
-                          setZoomImageDimensions({ width, height });
-                        }
-                      }}
-                      resizeMode="contain"
-                    />
-                    {lastResult && lastResult.keypoints && zoomImageDimensions.width > 0 && originalImageDimensions && originalImageDimensions.width > 0 && (
-                      <View style={styles.zoomVisualizationContainer}>
-                        <PoseVisualization
-                          imageWidth={zoomImageDimensions.width}
-                          imageHeight={zoomImageDimensions.height}
-                          originalWidth={originalImageDimensions.width}
-                          originalHeight={originalImageDimensions.height}
-                          detectedKeypoints={lastResult.keypoints}
-                          exerciseName={currentExercise}
-                          showStandard={true}
-                          showDetected={true}
-                        />
-                      </View>
-                    )}
-                  </View>
-                </View>
-              </Modal>
-              {lastResult && (
-                <View style={styles.resultBox}>
-                  <Text style={styles.resultTitle}>Kết quả</Text>
-                  <Text style={styles.resultLine}>Đúng tư thế: {lastResult.isCorrect ? 'Có' : 'Không'}</Text>
-                  <Text style={styles.resultLine}>Điểm: {Math.round((lastResult.score || 0) * 100)} / 100</Text>
-                  {lastResult.angles && (
-                    <View style={styles.anglesContainer}>
-                      <Text style={styles.anglesTitle}>Góc đo:</Text>
-                      {Object.entries(lastResult.angles).map(([key, value]) => (
-                        <Text key={key} style={styles.resultLine}>
-                          {key}: {Math.round(value)}°
-                        </Text>
-                      ))}
-                    </View>
-                  )}
-                </View>
-              )}
-              {lastResult && lastResult.keypoints && (
-                <View style={styles.legendBox}>
-                  <Text style={styles.legendTitle}>Chú thích:</Text>
-                  <View style={styles.legendItem}>
-                    <View style={[styles.legendDot, { backgroundColor: COLORS.detected.correct }]} />
-                    <Text style={styles.legendText}>Keypoint đúng (xanh)</Text>
-                  </View>
-                  <View style={styles.legendItem}>
-                    <View style={[styles.legendDot, { backgroundColor: COLORS.detected.incorrect }]} />
-                    <Text style={styles.legendText}>Keypoint sai (đỏ)</Text>
-                  </View>
-                  <View style={styles.legendItem}>
-                    <View style={[styles.legendDot, { backgroundColor: COLORS.standard.point }]} />
-                    <Text style={styles.legendText}>Vị trí chuẩn (xanh dương)</Text>
-                  </View>
-                </View>
-              )}
-            </View>
-          )}
-        </ScrollView>
-      )}
-      {/* Tab Bar */}
-      <View style={styles.mainTabBar}>
-        <View style={styles.tabBarInner}>
+      {/* Custom Header overlaying Camera - Strictly from design snippet */}
+      <View style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 100, }}>
+        {/* Gradient Header Layer */}
+        <LinearGradient
+          colors={['rgba(0, 0, 0, 0.40)', 'rgba(0, 0, 0, 0)']}
+          style={{ width: '100%', height: 100, position: 'absolute' }}
+        />
+        {/* Solid Header Layer (Matched to design snippet) */}
+        <View style={{ width: '100%', height: 100, backgroundColor: '#F6F2F7', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingTop: 50 }}>
           <TouchableOpacity
-            style={[styles.mainTab, showHistory && styles.activeMainTab]}
-            onPress={() => setShowHistory(true)}
-            activeOpacity={0.7}
+            onPress={() => navigation.goBack()}
+            style={{ position: 'absolute', left: 16, top: 40, marginTop: 20 }}
           >
-            <View style={[styles.tabIconContainer, showHistory && styles.activeTabIconContainer]}>
-              <Icon name="camera" size={22} color={showHistory ? colors.textOnPrimary : colors.textSecondary} />
-            </View>
-            <Text style={[styles.mainTabText, showHistory && styles.activeMainTabText]}>
-              Camera
-            </Text>
-            {showHistory && <View style={styles.activeIndicator} />}
+            <Icon name="chevron-back" size={28} color="black" />
           </TouchableOpacity>
 
+          <Text style={{ color: '#F97316', fontSize: 22, fontWeight: '800', marginTop: 10 }}>
+            {exerciseTitle}
+          </Text>
+
           <TouchableOpacity
-            style={[styles.mainTab, !showHistory && styles.activeMainTab]}
-            onPress={() => setShowHistory(false)}
-            activeOpacity={0.7}
+            onPress={() => Alert.alert('History', 'History feature triggered')}
+            style={{ position: 'absolute', right: 16, top: 40, padding: 6, backgroundColor: '#000', borderRadius: 20, marginTop: 20 }}
           >
-            <View style={[styles.tabIconContainer, !showHistory && styles.activeTabIconContainer]}>
-              <Icon name="time" size={22} color={!showHistory ? colors.textOnPrimary : colors.textSecondary} />
-            </View>
-            <Text style={[styles.mainTabText, !showHistory && styles.activeMainTabText]}>
-              Lịch sử
-            </Text>
-            {!showHistory && <View style={styles.activeIndicator} />}
+            <Icon name="time" size={18} color="#fff" />
           </TouchableOpacity>
         </View>
       </View>
-      {/* Modals */}
+
+      {/* Pose Overlay */}
+      {isRealTimeMode && currentPose?.keypoints?.length > 0 && (
+        <View style={[StyleSheet.absoluteFillObject, { zIndex: 10 }]}>
+          <PoseOverlay
+            pose={currentPose}
+            containerWidth={Dimensions.get('window').width}
+            containerHeight={Dimensions.get('window').height}
+            flipHorizontal={facing === 'front'}
+          />
+        </View>
+      )}
+
+      {/* Main Interface Content - Exact coordinates from snippet */}
+      <View style={{ flex: 1, paddingTop: 96, paddingHorizontal: 24, zIndex: 20, justifyContent: 'space-between', paddingBottom: 60 }}>
+
+        {/* Switch Camera Button Top Center */}
+        <TouchableOpacity
+          style={{
+            alignSelf: 'center',
+            backgroundColor: 'rgba(15, 15, 15, 0.70)', paddingHorizontal: 20, paddingVertical: 10,
+            borderRadius: 9999, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.10)',
+            flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 20
+          }}
+          onPress={() => setFacing(p => (p === 'back' ? 'front' : 'back'))}
+        >
+          <Icon name="camera-reverse" size={16} color="#fff" />
+          <Text style={{ color: '#fff', fontSize: 12, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.6 }}>Switch camera</Text>
+        </TouchableOpacity>
+
+        {/* Scan Tracker Middle */}
+        <View style={{ alignSelf: 'stretch', alignItems: 'center', marginBottom: 20 }}>
+          <View style={{
+            width: 256, height: 256, borderRadius: 48,
+            borderWidth: 2, borderColor: 'rgba(168, 57, 13, 0.30)',
+            justifyContent: 'center', alignItems: 'center',
+          }}>
+            <View style={{ position: 'absolute', top: -2, left: -2, width: 32, height: 32, borderTopLeftRadius: 32, borderTopWidth: 4, borderLeftWidth: 4, borderColor: '#A8390D' }} />
+            <View style={{ position: 'absolute', top: -2, right: -2, width: 32, height: 32, borderTopRightRadius: 32, borderTopWidth: 4, borderRightWidth: 4, borderColor: '#A8390D' }} />
+            <View style={{ position: 'absolute', bottom: -2, left: -2, width: 32, height: 32, borderBottomLeftRadius: 32, borderBottomWidth: 4, borderLeftWidth: 4, borderColor: '#A8390D' }} />
+            <View style={{ position: 'absolute', bottom: -2, right: -2, width: 32, height: 32, borderBottomRightRadius: 32, borderBottomWidth: 4, borderRightWidth: 4, borderColor: '#A8390D' }} />
+
+            <View style={{ alignItems: 'center' }}>
+              <Icon name="scan" size={40} color="#A8390D" />
+              <Text style={{ color: '#FFDBD0', fontSize: 10, fontWeight: '400', textTransform: 'uppercase', letterSpacing: 2, marginTop: 8 }}>
+                {isRealTimeMode ? 'Scanning Active' : 'Ready to Scan'}
+              </Text>
+            </View>
+          </View>
+
+          {/* Local Status Message */}
+          {(detectionStatus !== 'idle') && (
+            <View style={{ marginTop: 16, backgroundColor: 'rgba(0,0,0,0.5)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12, flexDirection: 'row', alignItems: 'center' }}>
+              <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: getStatusInfo().color, marginRight: 8 }} />
+              <Text style={{ color: '#fff', fontSize: 13, fontWeight: '600' }}>{getStatusInfo().text}</Text>
+            </View>
+          )}
+        </View>
+
+        {/* Bottom Controls Group */}
+        <View style={{ width: '100%', gap: 12 }}>
+          {!isRealTimeMode ? (
+            <>
+              <TouchableOpacity
+                style={{ backgroundColor: '#FF7849', borderRadius: 32, padding: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', elevation: 5 }}
+                onPress={takeAndEvaluate} disabled={isProcessing}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
+                  <View style={{ backgroundColor: 'rgba(255, 255, 255, 0.2)', padding: 8, borderRadius: 999 }}>
+                    {isProcessing ? <ActivityIndicator color="#fff" size="small" /> : <Icon name="camera" size={20} color="#fff" />}
+                  </View>
+                  <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>Take Photo for Analysis</Text>
+                </View>
+                <Icon name="chevron-forward" size={20} color="rgba(255, 255, 255, 0.5)" />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={{ backgroundColor: '#F59E0B', borderRadius: 32, padding: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', elevation: 4 }}
+                onPress={startRealTimeEvaluation} disabled={isProcessing || !permission?.granted}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
+                  <View style={{ backgroundColor: 'rgba(255, 255, 255, 0.2)', padding: 8, borderRadius: 999 }}>
+                    <Icon name="videocam" size={20} color="#fff" />
+                  </View>
+                  <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>Real-time Camera</Text>
+                </View>
+                <Icon name="chevron-forward" size={20} color="rgba(255, 255, 255, 0.5)" />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={{ backgroundColor: '#22C55E', borderRadius: 32, padding: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', elevation: 4 }}
+                onPress={pickAndEvaluate} disabled={isProcessing}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
+                  <View style={{ backgroundColor: 'rgba(255, 255, 255, 0.2)', padding: 8, borderRadius: 999 }}>
+                    <Icon name="images" size={20} color="#fff" />
+                  </View>
+                  <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>Choose from Gallery</Text>
+                </View>
+                <Icon name="chevron-forward" size={20} color="rgba(255, 255, 255, 0.5)" />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={{ backgroundColor: 'rgba(156, 163, 175, 0.60)', borderRadius: 32, padding: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
+                onPress={pickVideoAndEvaluate} disabled={isProcessing}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16, opacity: 0.6 }}>
+                  <View style={{ backgroundColor: 'rgba(255, 255, 255, 0.1)', padding: 8, borderRadius: 999 }}>
+                    <Icon name="film" size={20} color="#fff" />
+                  </View>
+                  <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>Upload Video for Analysis</Text>
+                </View>
+                <Icon name="chevron-forward" size={20} color="rgba(255, 255, 255, 0.5)" />
+              </TouchableOpacity>
+            </>
+          ) : (
+            <TouchableOpacity
+              style={{ backgroundColor: '#EF4444', borderRadius: 32, padding: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', elevation: 10 }}
+              onPress={stopRealTimeEvaluation}
+            >
+              <Icon name="stop-circle" size={24} color="#fff" style={{ marginRight: 12 }} />
+              <Text style={{ color: '#fff', fontSize: 18, fontWeight: '700' }}>STOP SESSION</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      </View>
+
+      {/* Rep Counter Overlay Top Right */}
+      {(isRealTimeMode || repCount > 0) && (
+        <View style={{
+          position: 'absolute', right: 20, top: 100,
+          backgroundColor: 'rgba(168, 57, 13, 0.85)', paddingHorizontal: 20, paddingVertical: 12, borderRadius: 24,
+          alignItems: 'center', minWidth: 80, zIndex: 30, elevation: 5
+        }}>
+          <Text style={{ color: '#FFDBD0', fontSize: 12, fontWeight: '800' }}>REPS</Text>
+          <Text style={{ color: '#fff', fontSize: 40, fontWeight: '900', lineHeight: 44 }}>{repCount}</Text>
+        </View>
+      )}
+
+      {/* Evaluation Results Modal */}
       <EvaluationResultModal
         visible={resultModalVisible}
         onClose={() => setResultModalVisible(false)}
         result={evaluationResult}
       />
-      <ExerciseSelectorModal
-        visible={exerciseModalVisible}
-        onClose={() => setExerciseModalVisible(false)}
-        currentExerciseId={currentExercise}
-        onSelect={(exerciseId) => {
-          setCurrentExercise(exerciseId);
-          setExerciseModalVisible(false);
-          // Slight delay to allow modal to close smoothly
-          setTimeout(() => {
-            startRealTimeEvaluation(exerciseId);
-          }, 500);
-        }}
-      />
-    </>
+    </View>
   );
 };
 

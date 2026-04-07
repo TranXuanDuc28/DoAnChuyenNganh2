@@ -109,7 +109,17 @@ const WorkoutPlanDetailScreen = ({ route, navigation }) => {
                   setDayDetails(dayResponse.data.data);
                 }
 
-                Alert.alert('Congratulations! 🎉', 'Session completed! Keep it up! 💪');
+                // Navigate to completion screen with stats
+                navigation.navigate('WorkoutComplete', {
+                  calories: dayDetails.estimatedCalories || 350,
+                  duration: dayDetails.totalDuration || 60,
+                  exerciseCount: dayDetails.exercises?.length || 0,
+                  sessionData: {
+                    ...dayDetails,
+                    date: new Date().toISOString(),
+                    planName: planData.name
+                  }
+                });
               }
             } catch (error) {
               console.error('Failed to complete day:', error);

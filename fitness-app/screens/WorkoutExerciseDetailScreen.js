@@ -213,7 +213,12 @@ const WorkoutExerciseDetailScreen = ({ route, navigation }) => {
            </TouchableOpacity>
            <TouchableOpacity 
              style={[styles.tabCard, activeTab === 'recognition' && styles.tabCardActive]}
-             onPress={() => setActiveTab(activeTab === 'recognition' ? null : 'recognition')}
+             onPress={() => {
+                navigation.navigate('Pose', { 
+                  exerciseName: exercise.slug || exercise.id || exercise.name, 
+                  exerciseTitle: exercise.name 
+                });
+             }}
            >
               <Text style={styles.tabCardText}>Recognition</Text>
            </TouchableOpacity>

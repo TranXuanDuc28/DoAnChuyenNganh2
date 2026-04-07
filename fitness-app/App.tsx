@@ -43,6 +43,9 @@ import StatisticsScreen from './screens/StatisticsScreen';
 import PoseScreen from './screens/PoseScreen';
 import PoseHistory from './screens/PoseHistory';
 import WorkoutHistoryDetailScreen from './screens/WorkoutHistoryDetailScreen';
+import WorkoutCompleteScreen from './screens/WorkoutCompleteScreen';
+import WorkoutReviewScreen from './screens/WorkoutReviewScreen';
+import LogMealScreen from './screens/LogMealScreen';
 import PoseGuideScreen from './screens/PoseGuideScreen';
 import VideoPlayerScreen from './screens/VideoPlayerScreen';
 
@@ -191,12 +194,11 @@ const AppNavigator = () => {
             name="Pose"
             component={PoseScreen}
             options={{
-              headerShown: true,
-              headerStyle: { backgroundColor: colors.primary },
-              headerTintColor: colors.textWhite,
-              headerTitleStyle: { fontWeight: 'bold' },
+              headerShown: false,
+              header: () => null
             }}
           />
+
           <Stack.Screen
             name="PoseHistory"
             component={PoseHistory}
@@ -239,6 +241,27 @@ const AppNavigator = () => {
           <Stack.Screen
             name="WorkoutHistoryDetail"
             component={WorkoutHistoryDetailScreen}
+            options={{
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="WorkoutComplete"
+            component={WorkoutCompleteScreen}
+            options={{
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="WorkoutReview"
+            component={WorkoutReviewScreen}
+            options={{
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="LogMeal"
+            component={LogMealScreen}
             options={{
               headerShown: false,
             }}
