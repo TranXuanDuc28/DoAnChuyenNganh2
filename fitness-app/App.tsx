@@ -55,6 +55,14 @@ import WorkoutReviewScreen from './screens/WorkoutReviewScreen';
 import LogMealScreen from './screens/LogMealScreen';
 import PoseGuideScreen from './screens/PoseGuideScreen';
 import VideoPlayerScreen from './screens/VideoPlayerScreen';
+import DashboardScreenNew from './screens/DashboardScreenNew';
+import PostDetailsScreen from './screens/PostDetailsScreen';
+import ProgressScreen from './screens/ProgressScreen';
+import MealDetailScreen from './screens/MealDetailScreen';
+import AllergyPreferenceScreen from './screens/AllergyPreferenceScreen';
+
+// Import components
+import CustomBottomNavBar from './components/CustomBottomNavBar';
 
 // Import context
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -68,85 +76,35 @@ const Tab = createBottomTabNavigator();
 const TabNavigator = () => {
   return (
     <Tab.Navigator
-      screenOptions={({ route }) => ({
-        tabBarIcon: ({ focused, color, size }) => {
-          let iconName;
-
-          if (route.name === 'Dashboard') {
-            iconName = focused ? 'home' : 'home-outline';
-          } else if (route.name === 'Workout') {
-            iconName = focused ? 'fitness' : 'fitness-outline';
-          } else if (route.name === 'Nutrition') {
-            iconName = focused ? 'restaurant' : 'restaurant-outline';
-          } else if (route.name === 'Health') {
-            iconName = focused ? 'heart' : 'heart-outline';
-          } else if (route.name === 'Profile') {
-            iconName = focused ? 'person' : 'person-outline';
-          } else if (route.name === 'Assistant') {
-            iconName = focused ? 'chatbubbles' : 'chatbubbles-outline';
-          } else if (route.name === 'AIWorkout') {
-            iconName = focused ? 'body' : 'body-outline';
-          }
-
-          return <Icon name={iconName as any} size={size} color={color} />;
-        },
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: '#666666',
-        tabBarStyle: {
-          backgroundColor: colors.white,
-          borderTopWidth: 1,
-          borderTopColor: colors.border,
-          paddingBottom: 5,
-          paddingTop: 5,
-          height: 60,
-        },
-        tabBarLabelStyle: {
-          fontSize: 12,
-          fontWeight: '600',
-        },
-        headerStyle: {
-          backgroundColor: colors.primary,
-        },
-        headerTintColor: colors.textWhite,
-        headerTitleStyle: {
-          fontWeight: 'bold',
-        },
-      })}
+      tabBar={props => <CustomBottomNavBar {...props} />}
+      screenOptions={{
+        headerShown: false,
+      }}
     >
       <Tab.Screen
         name="Dashboard"
         component={DashboardScreen}
-        options={{ title: 'Home', headerShown: false }}
-      />
-      <Tab.Screen
-        name="Assistant"
-        component={AssistantScreen}
-        options={{ title: 'Assistant', headerShown: false }}
+        options={{ title: 'Home' }}
       />
       <Tab.Screen
         name="Workout"
         component={WorkoutScreen}
-        options={{ title: 'Workouts', headerShown: false }}
+        options={{ title: 'Workouts' }}
       />
       <Tab.Screen
-        name="AIWorkout"
-        component={ExerciseSelectionScreen}
-        options={{ title: 'AI Workout', headerShown: false }}
+        name="Community"
+        component={SocialScreen}
+        options={{ title: 'Community' }}
       />
       <Tab.Screen
         name="Nutrition"
         component={NutritionScreen}
-        options={{ title: 'Nutrition', headerShown: false }}
-      />
-      <Tab.Screen
-        name="Health"
-        component={HealthScreen}
-        options={{ title: 'Health', headerShown: false }}
+        options={{ title: 'Nutrition' }}
       />
       <Tab.Screen
         name="Profile"
         component={ProfileScreen}
-        options={{ title: 'Profile', headerShown: false }}
+        options={{ title: 'Profile' }}
       />
     </Tab.Navigator>
   );
@@ -197,6 +155,13 @@ const AppNavigator = () => {
       {user ? (
         <Stack.Navigator screenOptions={{ headerShown: false }}>
           <Stack.Screen name="MainTabs" component={TabNavigator} />
+          <Stack.Screen
+            name="Assistant"
+            component={AssistantScreen}
+            options={{
+              headerShown: false,
+            }}
+          />
           <Stack.Screen
             name="Pose"
             component={PoseScreen}
@@ -323,6 +288,41 @@ const AppNavigator = () => {
               headerShown: false,
               presentation: 'modal',
               animation: 'fade_from_bottom',
+            }}
+          />
+          <Stack.Screen
+            name="DashboardNew"
+            component={DashboardScreenNew}
+            options={{
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="PostDetails"
+            component={PostDetailsScreen}
+            options={{
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="Progress"
+            component={ProgressScreen}
+            options={{
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="MealDetail"
+            component={MealDetailScreen}
+            options={{
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="AllergyPreference"
+            component={AllergyPreferenceScreen}
+            options={{
+              headerShown: false,
             }}
           />
         </Stack.Navigator>

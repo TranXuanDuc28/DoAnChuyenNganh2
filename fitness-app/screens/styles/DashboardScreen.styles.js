@@ -7,7 +7,7 @@ const isWeb = Platform.OS === 'web';
 export const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F7F9',
+    backgroundColor: '#F8F9FB',
     ...(isWeb && {
       maxWidth: 600,
       marginHorizontal: 'auto',
@@ -16,8 +16,8 @@ export const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingTop: Platform.OS === 'android' ? 60 : 60,
-    paddingHorizontal: 24,
-    paddingBottom: 60, // Extra padding for bottom navigation
+    paddingHorizontal: 20,
+    paddingBottom: 130, // More space for the custom bottom nav
   },
   // --- Top Header ---
   topHeaderBar: {
@@ -54,34 +54,35 @@ export const styles = StyleSheet.create({
     position: 'relative',
   },
   statusSubtitle: {
-    color: '#FF794A',
-    fontSize: 11,
+    color: '#E76F51',
+    fontSize: 10,
     fontWeight: '800',
     textTransform: 'uppercase',
-    letterSpacing: 1.2,
-    marginBottom: 8,
+    letterSpacing: 2,
+    marginBottom: 6,
   },
   welcomeTitle: {
-    color: '#2C2F31',
-    fontSize: 42,
-    fontWeight: '900',
-    lineHeight: 46,
-    width: '80%', // Leave space for the robot button
+    color: '#1A1A1A',
+    fontSize: 40,
+    fontWeight: '800',
+    lineHeight: 44,
+    letterSpacing: -1,
+    width: '80%',
   },
   robotButtonContainer: {
     position: 'absolute',
     top: 5,
     right: 0,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: '#FF794A',
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    backgroundColor: '#E76F51',
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#FF794A',
-    shadowOffset: { width: 0, height: 8 },
+    shadowColor: '#E76F51',
+    shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.3,
-    shadowRadius: 10,
+    shadowRadius: 15,
     elevation: 8,
   },
 
@@ -151,12 +152,82 @@ export const styles = StyleSheet.create({
     marginTop: 4,
   },
   pulseIconCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  // Weekly Progress Bar Chart
+  weeklyProgressCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 32,
+    padding: 24,
+    marginTop: 32,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.04,
+    shadowRadius: 12,
+    elevation: 2,
+  },
+  weeklyProgressHeader: {
+    marginBottom: 20,
+  },
+  weeklyTitle: {
+    color: '#1A1A1A',
+    fontSize: 22,
+    fontWeight: '800',
+    marginBottom: 4,
+  },
+  weeklySubtitle: {
+    color: '#666666',
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  chartRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+    height: 120,
+    marginBottom: 24,
+  },
+  barContainer: {
+    alignItems: 'center',
+    width: 30,
+  },
+  barBg: {
+    width: 30,
+    height: 100,
+    backgroundColor: '#F0F2F5',
+    borderRadius: 15,
+    justifyContent: 'flex-end',
+    overflow: 'hidden',
+  },
+  barFill: {
+    width: '100%',
+    borderRadius: 15,
+  },
+  dayText: {
+    marginTop: 8,
+    fontSize: 10,
+    color: '#8E9295',
+    fontWeight: '700',
+  },
+  viewProgressButton: {
+    backgroundColor: '#E76F51',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 16,
+    borderRadius: 20,
+    marginTop: 8,
+  },
+  viewProgressText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '700',
+    marginRight: 8,
   },
   pulseContentRow: {
     flexDirection: 'row',

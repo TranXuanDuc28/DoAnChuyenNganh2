@@ -172,7 +172,7 @@ const generateWorkoutPlan = async (userId, preferences = {}) => {
     // Calculate BMI and fitness metrics
     const bmi = user.calculateBMI();
     const heightInMeters = user.height / 100;
-    const workoutDuration = user.workout_duration || 60; // Default 60 minutes if not set
+    const workoutDuration = user.workoutDuration || 60; // Default 60 minutes if not set
     const userWeight = user.weight; // User's weight for calorie calculations
 
     // Determine workout location text
@@ -183,7 +183,8 @@ const generateWorkoutPlan = async (userId, preferences = {}) => {
       locationText = 'At home only';
     }
 
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+    const modelName = process.env.GEMINI_MODEL || 'gemini-1.5-flash';
+    const model = genAI.getGenerativeModel({ model: modelName });
 
     const prompt = `
 You are a professional fitness trainer and workout program designer. Create a personalized ${duration}-week workout plan for this user.
@@ -372,9 +373,29 @@ EXAMPLE OF CORRECT DAY STRUCTURE:
 }
 `;
 
-    console.log('Generating workout plan with Gemini AI...');
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
+    console.log(`Generating workout plan with Gemini AI (Model: ${modelName})...`);
+    
+    // Helper to call Gemini with retry logic for transient errors
+    const generateWithRetry = async (retries = 3, delay = 2000) => {
+      for (let i = 0; i < retries; i++) {
+        try {
+          const result = await model.generateContent(prompt);
+          return await result.response;
+        } catch (error) {
+          const isServiceUnavailable = error.message?.includes('503') || error.status === 503 || error.message?.includes('Service Unavailable');
+          
+          if (isServiceUnavailable && i < retries - 1) {
+            console.log(`⚠️ Gemini Service Unavailable (503). Retrying in ${delay / 1000}s... (Attempt ${i + 1}/${retries})`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+            delay *= 2; 
+            continue;
+          }
+          throw error;
+        }
+      }
+    };
+
+    const response = await generateWithRetry();
     let text = response.text();
 
     // Clean up the response - remove markdown code blocks if present

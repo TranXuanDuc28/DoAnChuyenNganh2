@@ -114,6 +114,7 @@ const WorkoutPlanDetailScreen = ({ route, navigation }) => {
                   calories: dayDetails.estimatedCalories || 350,
                   duration: dayDetails.totalDuration || 60,
                   exerciseCount: dayDetails.exercises?.length || 0,
+                  plan: planData, // Pass the plan object for return navigation
                   sessionData: {
                     ...dayDetails,
                     date: new Date().toISOString(),

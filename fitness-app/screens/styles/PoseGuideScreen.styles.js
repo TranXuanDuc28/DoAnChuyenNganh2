@@ -14,7 +14,7 @@ export const styles = StyleSheet.create({
   main: {
     gap: 40,
   },
-  
+
   // Floating Header
   headerOverlay: {
     position: 'absolute',
@@ -152,9 +152,9 @@ export const styles = StyleSheet.create({
     gap: 24,
   },
   stepNumberText: {
-    fontSize: 48,
+    fontSize: 40,
     fontWeight: '800',
-    color: 'rgba(255, 121, 74, 0.15)',
+    color: '#FF794A',
     width: 60,
   },
   stepContent: {

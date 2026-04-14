@@ -40,6 +40,9 @@ const ProfileScreen = () => {
     newPassword: '',
     confirmPassword: ''
   });
+  const [showCurrentPass, setShowCurrentPass] = useState(false);
+  const [showNewPass, setShowNewPass] = useState(false);
+  const [showConfirmPass, setShowConfirmPass] = useState(false);
 
   const [formData, setFormData] = useState({
     firstName: '',
@@ -52,7 +55,7 @@ const ProfileScreen = () => {
     fitnessLevel: '',
     fitnessGoals: [],
     activityLevel: '',
-    workout_duration: '',
+    workoutDuration: '',
     dailyMeals: '',
     budgetLevel: '',
     foodPreferences: [],
@@ -73,7 +76,7 @@ const ProfileScreen = () => {
         fitnessLevel: user.fitnessLevel || 'beginner',
         fitnessGoals: user.fitnessGoals || [],
         activityLevel: user.activityLevel || 'moderately_active',
-        workout_duration: user.workout_duration?.toString() || '60',
+        workoutDuration: user.workoutDuration?.toString() || '60',
         dailyMeals: user.dailyMeals?.toString() || '3',
         budgetLevel: user.budgetLevel || 'medium',
         foodPreferences: Array.isArray(user.foodPreferences) ? user.foodPreferences.join(', ') : (user.foodPreferences || ''),
@@ -107,7 +110,7 @@ const ProfileScreen = () => {
         return;
       }
 
-      const workoutDuration = parseInt(formData.workout_duration);
+      const workoutDuration = parseInt(formData.workoutDuration);
       if (isNaN(workoutDuration) || workoutDuration < 15 || workoutDuration > 180) {
         Alert.alert('Error', 'Workout duration must be between 15 and 180 minutes');
         return;
@@ -132,7 +135,7 @@ const ProfileScreen = () => {
         fitnessLevel: formData.fitnessLevel,
         fitnessGoals: formData.fitnessGoals,
         activityLevel: formData.activityLevel,
-        workout_duration: parseInt(formData.workout_duration),
+        workoutDuration: parseInt(formData.workoutDuration),
         dailyMeals: parseInt(formData.dailyMeals),
         budgetLevel: formData.budgetLevel,
         foodPreferences: typeof formData.foodPreferences === 'string' ? formData.foodPreferences.split(',').map(item => item.trim()).filter(item => item) : [],
@@ -168,7 +171,7 @@ const ProfileScreen = () => {
         fitnessLevel: user.fitnessLevel || 'beginner',
         fitnessGoals: user.fitnessGoals || [],
         activityLevel: user.activityLevel || 'moderately_active',
-        workout_duration: user.workout_duration?.toString() || '60',
+        workoutDuration: user.workoutDuration?.toString() || '60',
         dailyMeals: user.dailyMeals?.toString() || '3',
         budgetLevel: user.budgetLevel || 'medium',
         foodPreferences: Array.isArray(user.foodPreferences) ? user.foodPreferences.join(', ') : (user.foodPreferences || ''),
@@ -429,7 +432,7 @@ const ProfileScreen = () => {
                 <View style={styles.editActivityCard}>
                   <Icon name="time-outline" size={24} color="#1c1917" style={styles.editActivityIcon} />
                   <Text style={styles.editActivityLabel}>Duration (min)</Text>
-                  <TextInput style={styles.editActivityValue} value={formData.workout_duration} onChangeText={(t) => setFormData(p => ({ ...p, workout_duration: t }))} keyboardType="number-pad" />
+                  <TextInput style={styles.editActivityValue} value={formData.workoutDuration} onChangeText={(t) => setFormData(p => ({ ...p, workoutDuration: t }))} keyboardType="number-pad" />
                 </View>
               </View>
 
@@ -446,53 +449,6 @@ const ProfileScreen = () => {
               </TouchableOpacity>
             </View>
 
-            {/* Dietary Tags */}
-            <View style={styles.editSectionContainer}>
-              <View style={styles.editSectionHeader}>
-                <View style={styles.editSectionLine} />
-                <Text style={styles.editSectionTitle}>Dietary Tags</Text>
-              </View>
-
-              <View style={styles.editSmallInputGroup}>
-                <Text style={styles.editGrayLabel}>Meals per Day</Text>
-                <TextInput style={styles.editMealsInput} value={formData.dailyMeals} onChangeText={(t) => setFormData(p => ({ ...p, dailyMeals: t }))} keyboardType="number-pad" />
-              </View>
-
-              <View style={styles.editInputGroup}>
-                <Text style={styles.editGrayLabel}>Food Preferences (comma separated)</Text>
-                <TextInput style={[styles.editInput, { marginTop: 8 }]} multiline value={formData.foodPreferences} onChangeText={(t) => setFormData(p => ({ ...p, foodPreferences: t }))} placeholder="e.g. Vegetarian" />
-              </View>
-
-              <View style={styles.editInputGroup}>
-                <Text style={styles.editGrayLabel}>Allergies (comma separated)</Text>
-                <TextInput style={[styles.editInput, { marginTop: 8 }]} multiline value={formData.foodAllergies} onChangeText={(t) => setFormData(p => ({ ...p, foodAllergies: t }))} placeholder="e.g. Dairy, Gluten" />
-              </View>
-
-              <View style={{ marginTop: 16 }}>
-                <Text style={styles.editSectionHeader}>
-                  <View style={styles.editSectionLine} />
-                  <Text style={styles.editSectionTitle}>  Nutrition Preferences</Text>
-                </Text>
-                <View style={styles.editTagPillsContainer}>
-                  {['High Protein', 'Vegan', 'Keto', 'Gluten Free', 'Intermittent Fasting'].map(tag => {
-                    const isActive = typeof formData.foodPreferences === 'string' && formData.foodPreferences.includes(tag);
-                    return (
-                      <TouchableOpacity key={tag} style={[styles.editNutritionPill, isActive && styles.editNutritionPillActive]} onPress={() => {
-                        let currentPrefs = typeof formData.foodPreferences === 'string' ? formData.foodPreferences.split(',').map(s => s.trim()).filter(s => s) : [];
-                        if (isActive) {
-                          currentPrefs = currentPrefs.filter(s => s !== tag);
-                        } else {
-                          currentPrefs.push(tag);
-                        }
-                        setFormData(p => ({ ...p, foodPreferences: currentPrefs.join(', ') }));
-                      }}>
-                        <Text style={[styles.editNutritionPillText, isActive && styles.editNutritionPillTextActive]}>{tag}</Text>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </View>
-              </View>
-            </View>
 
             {/* Deactivate Account */}
             <TouchableOpacity style={styles.editDeactivateBtn} onPress={() => {
@@ -636,11 +592,18 @@ const ProfileScreen = () => {
         </View>
 
         {/* Nutrition Card */}
-        <View style={styles.cardDark}>
+        <TouchableOpacity 
+          style={styles.cardDark}
+          onPress={() => navigation.navigate('AllergyPreference')}
+          activeOpacity={0.9}
+        >
           <View style={styles.nutritionDecor} />
           <View style={styles.cardHeader}>
             <Icon name="restaurant-outline" size={16} color="#ff794a" />
-            <Text style={styles.cardHeaderTitleDark}>Nutrition Preferences</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', flex: 1 }}>
+              <Text style={styles.cardHeaderTitleDark}>Nutrition Preferences</Text>
+              <Icon name="chevron-forward" size={18} color="#9ca3af" />
+            </View>
           </View>
 
           <View style={styles.nutritionGrid}>
@@ -651,8 +614,8 @@ const ProfileScreen = () => {
                   <Icon name="leaf-outline" size={20} color="#ffffff" />
                 </View>
                 <View>
-                  <Text style={styles.focusTitle}>{user?.foodPreferences || 'Plant-Forward'}</Text>
-                  <Text style={styles.focusSub}>High Protein Focus</Text>
+                  <Text style={styles.focusTitle}>{user?.foodPreferences?.[0] || 'Plant-Forward'}</Text>
+                  <Text style={styles.focusSub}>Personalize menu</Text>
                 </View>
               </View>
             </View>
@@ -668,15 +631,14 @@ const ProfileScreen = () => {
                     <Text style={styles.restrictionText}>{allergy || 'None'}</Text>
                   </View>
                 )) : (
-                  <>
-                    <View style={styles.restrictionChip}><Text style={styles.restrictionText}>Gluten-Free</Text></View>
-                    <View style={styles.restrictionChip}><Text style={styles.restrictionText}>No Dairy</Text></View>
-                  </>
+                  <View style={styles.restrictionChip}>
+                    <Text style={styles.restrictionText}>Tap to set</Text>
+                  </View>
                 )}
               </View>
             </View>
           </View>
-        </View>
+        </TouchableOpacity>
 
         {/* Premium Banner */}
         <TouchableOpacity style={styles.premiumBanner}
@@ -716,51 +678,84 @@ const ProfileScreen = () => {
       <Modal
         visible={showEmailModal}
         transparent
-        animationType="fade"
+        animationType="slide"
         onRequestClose={() => setShowEmailModal(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Change Email</Text>
-
-            <Text style={styles.modalLabel}>Current Email</Text>
-            <Text style={styles.currentValue}>{user?.email}</Text>
-
-            <Text style={styles.modalLabel}>New Email</Text>
-            <TextInput
-              style={styles.modalInput}
-              value={newEmail}
-              onChangeText={setNewEmail}
-              placeholder="Enter new email"
-              placeholderTextColor={colors.textSecondary}
-              keyboardType="email-address"
-              autoCapitalize="none"
-            />
-
-            <View style={styles.modalActions}>
-              <TouchableOpacity
-                style={styles.modalCancelButton}
+        <View style={styles.securityModalOverlay}>
+          <View style={styles.securityModalContent}>
+            <View style={styles.securityModalHandle} />
+            
+            <View style={styles.securityModalHeader}>
+              <Text style={styles.securityModalHeaderText}>Account Security</Text>
+              <TouchableOpacity 
+                style={styles.securityCloseBtn}
                 onPress={() => {
                   setShowEmailModal(false);
                   setNewEmail('');
                 }}
-                disabled={saving}
               >
-                <Text style={styles.modalCancelText}>Cancel</Text>
+                <Icon name="close" size={24} color="#1E293B" />
               </TouchableOpacity>
+            </View>
 
-              <TouchableOpacity
-                style={styles.modalSaveButton}
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 20 }}>
+              <View style={styles.securityHeroTitleContainer}>
+                <Text style={styles.securityHeroTitleBlack}>CHANGE</Text>
+                <Text style={styles.securityHeroTitleOrange}>EMAIL</Text>
+              </View>
+
+              <Text style={styles.securitySubText}>
+                Update your primary contact address. A verification link will be sent to the new email address for your security.
+              </Text>
+
+              <View style={styles.securityInputGroup}>
+                <Text style={styles.securityInputLabel}>CURRENT EMAIL</Text>
+                <View style={[styles.securityInputBox, styles.securityInputBoxReadOnly]}>
+                  <Icon name="at" size={22} color="#94A3B8" style={styles.securityInputIcon} />
+                  <Text style={[styles.securityInputText, styles.securityInputTextReadOnly]} numberOfLines={1} ellipsizeMode="middle">
+                    {user?.email}
+                  </Text>
+                  <Icon name="lock-closed" size={18} color="#94A3B8" />
+                </View>
+              </View>
+
+              <View style={styles.securityInputGroup}>
+                <Text style={styles.securityInputLabelOrange}>NEW EMAIL ADDRESS</Text>
+                <View style={styles.securityInputBox}>
+                  <Icon name="mail-outline" size={22} color="#FF794A" style={styles.securityInputIcon} />
+                  <TextInput
+                    style={styles.securityInputText}
+                    value={newEmail}
+                    onChangeText={setNewEmail}
+                    placeholder="Enter your new email"
+                    placeholderTextColor="#CBD5E1"
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                  />
+                </View>
+              </View>
+
+              <TouchableOpacity 
+                style={styles.securitySubmitBtn}
                 onPress={handleChangeEmail}
                 disabled={saving}
               >
-                {saving ? (
-                  <ActivityIndicator color={colors.white} size="small" />
-                ) : (
-                  <Text style={styles.modalSaveText}>Save</Text>
-                )}
+                {saving ? <ActivityIndicator color="#FFF" /> : <Text style={styles.securitySubmitBtnText}>Update Email</Text>}
               </TouchableOpacity>
-            </View>
+
+              <View style={styles.securityCheckContainer}>
+                <View style={styles.securityCheckIconBox}>
+                  <Icon name="information-circle" size={16} color="#FF794A" />
+                </View>
+                <View style={styles.securityCheckContent}>
+                  <Text style={styles.securityCheckTitle}>SECURITY CHECK</Text>
+                  <Text style={styles.securityCheckText}>
+                    To ensure your account's integrity, you'll need to confirm the change by clicking the link in the email we send to your new address.
+                  </Text>
+                </View>
+              </View>
+            </ScrollView>
+
           </View>
         </View>
       </Modal>
@@ -769,67 +764,139 @@ const ProfileScreen = () => {
       <Modal
         visible={showPasswordModal}
         transparent
-        animationType="fade"
+        animationType="slide"
         onRequestClose={() => setShowPasswordModal(false)}
       >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Change Password</Text>
-
-            <Text style={styles.modalLabel}>Current Password</Text>
-            <TextInput
-              style={styles.modalInput}
-              value={passwordForm.currentPassword}
-              onChangeText={(text) => setPasswordForm(prev => ({ ...prev, currentPassword: text }))}
-              placeholder="Enter current password"
-              placeholderTextColor={colors.textSecondary}
-              secureTextEntry
-            />
-
-            <Text style={styles.modalLabel}>New Password</Text>
-            <TextInput
-              style={styles.modalInput}
-              value={passwordForm.newPassword}
-              onChangeText={(text) => setPasswordForm(prev => ({ ...prev, newPassword: text }))}
-              placeholder="Enter new password (min 6 chars)"
-              placeholderTextColor={colors.textSecondary}
-              secureTextEntry
-            />
-
-            <Text style={styles.modalLabel}>Confirm New Password</Text>
-            <TextInput
-              style={styles.modalInput}
-              value={passwordForm.confirmPassword}
-              onChangeText={(text) => setPasswordForm(prev => ({ ...prev, confirmPassword: text }))}
-              placeholder="Confirm new password"
-              placeholderTextColor={colors.textSecondary}
-              secureTextEntry
-            />
-
-            <View style={styles.modalActions}>
-              <TouchableOpacity
-                style={styles.modalCancelButton}
+        <View style={styles.securityModalOverlay}>
+          <View style={styles.securityModalContent}>
+            <View style={styles.securityModalHandle} />
+            
+            <View style={styles.securityModalHeader}>
+              <Text style={styles.securityModalHeaderText}>Account Security</Text>
+              <TouchableOpacity 
+                style={styles.securityCloseBtn}
                 onPress={() => {
                   setShowPasswordModal(false);
                   setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
                 }}
-                disabled={saving}
+                activeOpacity={0.7}
               >
-                <Text style={styles.modalCancelText}>Cancel</Text>
+                <Icon name="close" size={24} color="#1E293B" />
               </TouchableOpacity>
+            </View>
 
-              <TouchableOpacity
-                style={styles.modalSaveButton}
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
+              <View style={styles.securityHeroTitleContainer}>
+                <Text style={styles.securityHeroTitleBlack}>STAY</Text>
+                <Text style={styles.securityHeroTitleOrange}>SECURE.</Text>
+              </View>
+
+              <Text style={styles.securitySubText}>
+                Keep your kinetic data private. Update your credentials to maintain peak security.
+              </Text>
+
+              {/* Strength Guide */}
+              <View style={styles.strengthGuideCard}>
+                <View style={styles.strengthGuideIcon}>
+                  <Icon name="shield-outline" size={24} color="#FF794A" />
+                </View>
+                <View style={styles.strengthGuideContent}>
+                  <Text style={styles.strengthGuideTitle}>STRENGTH GUIDE</Text>
+                  <View style={styles.strengthGuideItem}>
+                    <View style={styles.strengthGuideDot} />
+                    <Text style={styles.strengthGuideText}>At least 8 characters</Text>
+                  </View>
+                  <View style={styles.strengthGuideItem}>
+                    <View style={[styles.strengthGuideDot, styles.strengthGuideDotGray]} />
+                    <Text style={styles.strengthGuideText}>Mixed letters & symbols</Text>
+                  </View>
+                </View>
+              </View>
+
+              <View style={styles.securityInputGroup}>
+                <Text style={styles.securityInputLabel}>CURRENT PASSWORD</Text>
+                <View style={styles.securityInputBox}>
+                  <TextInput
+                    style={styles.securityInputText}
+                    value={passwordForm.currentPassword}
+                    onChangeText={(text) => setPasswordForm(prev => ({ ...prev, currentPassword: text }))}
+                    placeholder="••••••••"
+                    placeholderTextColor="#CBD5E1"
+                    secureTextEntry={!showCurrentPass}
+                  />
+                  <TouchableOpacity 
+                    style={styles.passwordEyeBtn} 
+                    onPress={() => setShowCurrentPass(!showCurrentPass)}
+                  >
+                    <Icon name={showCurrentPass ? "eye-off-outline" : "eye-outline"} size={20} color="#94A3B8" />
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              <View style={styles.securityInputGroup}>
+                <Text style={styles.securityInputLabel}>NEW PASSWORD</Text>
+                <View style={styles.securityInputBox}>
+                  <TextInput
+                    style={styles.securityInputText}
+                    value={passwordForm.newPassword}
+                    onChangeText={(text) => setPasswordForm(prev => ({ ...prev, newPassword: text }))}
+                    placeholder="••••••••"
+                    placeholderTextColor="#CBD5E1"
+                    secureTextEntry={!showNewPass}
+                  />
+                  <TouchableOpacity 
+                    style={styles.passwordEyeBtn} 
+                    onPress={() => setShowNewPass(!showNewPass)}
+                  >
+                    <Icon name={showNewPass ? "eye-off-outline" : "eye-outline"} size={20} color="#94A3B8" />
+                  </TouchableOpacity>
+                </View>
+                {/* Strength Bar */}
+                <View style={styles.strengthBarContainer}>
+                  <View style={[styles.strengthBarSegment, passwordForm.newPassword.length > 0 && styles.strengthBarSegmentActive]} />
+                  <View style={[styles.strengthBarSegment, passwordForm.newPassword.length > 4 && styles.strengthBarSegmentActive]} />
+                  <View style={[styles.strengthBarSegment, passwordForm.newPassword.length > 8 && styles.strengthBarSegmentActive]} />
+                  <View style={[styles.strengthBarSegment, passwordForm.newPassword.length > 10 && styles.strengthBarSegmentActive]} />
+                </View>
+              </View>
+
+              <View style={styles.securityInputGroup}>
+                <Text style={styles.securityInputLabel}>CONFIRM NEW PASSWORD</Text>
+                <View style={styles.securityInputBox}>
+                  <TextInput
+                    style={styles.securityInputText}
+                    value={passwordForm.confirmPassword}
+                    onChangeText={(text) => setPasswordForm(prev => ({ ...prev, confirmPassword: text }))}
+                    placeholder="••••••••"
+                    placeholderTextColor="#CBD5E1"
+                    secureTextEntry={!showConfirmPass}
+                  />
+                  <TouchableOpacity 
+                    style={styles.passwordEyeBtn} 
+                    onPress={() => setShowConfirmPass(!showConfirmPass)}
+                  >
+                    <Icon name={showConfirmPass ? "eye-off-outline" : "eye-outline"} size={20} color="#94A3B8" />
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              <TouchableOpacity 
+                style={styles.securitySubmitBtn}
                 onPress={handleChangePassword}
                 disabled={saving}
               >
                 {saving ? (
-                  <ActivityIndicator color={colors.white} size="small" />
+                  <ActivityIndicator color="#FFF" />
                 ) : (
-                  <Text style={styles.modalSaveText}>Change Password</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    <Text style={styles.securitySubmitBtnText}>Update Password </Text>
+                    <Icon name="arrow-forward" size={18} color="#FFF" />
+                  </View>
                 )}
               </TouchableOpacity>
-            </View>
+
+            </ScrollView>
+
           </View>
         </View>
       </Modal>

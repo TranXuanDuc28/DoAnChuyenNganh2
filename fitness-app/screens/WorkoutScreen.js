@@ -8,12 +8,12 @@ import {
   TextInput,
   Image,
   ActivityIndicator,
-  Platform,
   StatusBar,
 } from 'react-native';
 import { Ionicons as Icon } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { workoutAPI } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import { styles } from './styles/WorkoutScreen.styles';
 
 const getCurrentDayNumber = (startDate, duration) => {
@@ -31,6 +31,7 @@ const getCurrentDayNumber = (startDate, duration) => {
 };
 
 const WorkoutScreen = ({ navigation }) => {
+  const { user } = useAuth();
   const [selectedTab, setSelectedTab] = useState('plans');
   const [searchQuery, setSearchQuery] = useState('');
   const [exerciseCategories, setExerciseCategories] = useState([]);
@@ -83,16 +84,36 @@ const WorkoutScreen = ({ navigation }) => {
   const fetchWorkoutPlans = async () => {
     setPlansLoading(true);
     try {
-      const activeResponse = await workoutAPI.getActiveWorkoutPlan();
-      if (activeResponse.data.success && activeResponse.data.data) {
-        setActiveWorkoutPlan(activeResponse.data.data);
+      // Use Promise.allSettled to ensure one failure doesn't block everything
+      const results = await Promise.allSettled([
+        workoutAPI.getActiveWorkoutPlan(),
+        workoutAPI.getAllWorkoutPlans()
+      ]);
+
+      // Handle active plan response
+      if (results[0].status === 'fulfilled') {
+        const activeResponse = results[0].value;
+        if (activeResponse.data.success && activeResponse.data.data) {
+          setActiveWorkoutPlan(activeResponse.data.data);
+        } else {
+          setActiveWorkoutPlan(null);
+        }
+      } else {
+        console.warn('Active workout plan fetch failed:', results[0].reason);
+        setActiveWorkoutPlan(null);
       }
-      const allPlansResponse = await workoutAPI.getAllWorkoutPlans();
-      if (allPlansResponse.data.success) {
-        setWorkoutPlans(allPlansResponse.data.data || []);
+
+      // Handle all plans response
+      if (results[1].status === 'fulfilled') {
+        const allPlansResponse = results[1].value;
+        if (allPlansResponse.data.success) {
+          setWorkoutPlans(allPlansResponse.data.data || []);
+        }
+      } else {
+        console.warn('All workout plans fetch failed:', results[1].reason);
       }
     } catch (error) {
-      console.error('Failed to load plans:', error);
+      console.error('Unified load plans error:', error);
     } finally {
       setPlansLoading(false);
     }
@@ -115,7 +136,13 @@ const WorkoutScreen = ({ navigation }) => {
   const handleGenerateWorkoutPlan = async () => {
     setGeneratingPlan(true);
     try {
-      const preferences = { duration: 4, frequency: 4, goal: 'general_fitness', focusAreas: [], workoutLocation: { atGym: workoutAtGym, atHome: workoutAtHome } };
+      const preferences = { 
+        duration: 4, 
+        frequency: 4, 
+        goal: 'general_fitness', 
+        focusAreas: [], 
+        workoutLocation: { atGym: workoutAtGym, atHome: workoutAtHome } 
+      };
       const response = await workoutAPI.generateAIWorkoutPlan(preferences);
       if (response.data.success) {
         const plan = response.data.data;
@@ -303,56 +330,224 @@ const WorkoutScreen = ({ navigation }) => {
     return cat.name?.toLowerCase().includes(query) || cat.englishName?.toLowerCase().includes(query);
   }), [exerciseCategories, searchQuery]);
 
+  const renderExercisesLibrary = () => (
+    <View>
+      <View style={{ paddingHorizontal: 24, paddingTop: 18, paddingBottom: 10 }}>
+        <Text style={{
+          color: '#A43609',
+          fontSize: 14,
+          fontWeight: '700',
+          letterSpacing: 2.8,
+          textTransform: 'uppercase',
+          marginBottom: 8,
+        }}>
+          Library
+        </Text>
+        <Text style={{
+          color: '#2C2F31',
+          fontSize: 48,
+          lineHeight: 48,
+          fontWeight: '900',
+          letterSpacing: -2.4,
+        }}>
+          Exercises
+        </Text>
+      </View>
+
+      <View style={{
+        marginHorizontal: 24,
+        marginTop: 18,
+        marginBottom: 8,
+        height: 76,
+        borderRadius: 999,
+        backgroundColor: '#E5E9EB',
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 20,
+      }}>
+        <Icon name="search-outline" size={20} color="#A6A9AC" />
+        <TextInput
+          style={{
+            flex: 1,
+            marginLeft: 12,
+            fontSize: 16,
+            color: '#2C2F31',
+          }}
+          placeholder="Search"
+          placeholderTextColor="#ABADAF"
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+        />
+      </View>
+
+      {categoriesLoading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#A8390D" />
+        </View>
+      ) : categoriesError ? (
+        <View style={{ paddingHorizontal: 24, paddingTop: 24 }}>
+          <Text style={{ color: '#A8390D', fontSize: 15, fontWeight: '600' }}>{categoriesError}</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={filteredCategories}
+          keyExtractor={(item) => item.id.toString()}
+          scrollEnabled={false}
+          contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 16, paddingBottom: 36 }}
+          renderItem={({ item }) => {
+            const isTrending = item.name?.toLowerCase().includes('leg');
+
+            return (
+              <TouchableOpacity
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  backgroundColor: '#FFFFFF',
+                  borderRadius: 32,
+                  paddingVertical: 20,
+                  paddingLeft: isTrending ? 20 : 20,
+                  paddingRight: 20,
+                  marginBottom: 16,
+                  borderLeftWidth: isTrending ? 4 : 0,
+                  borderLeftColor: isTrending ? '#FF7849' : 'transparent',
+                  shadowColor: '#000000',
+                  shadowOffset: { width: 0, height: 8 },
+                  shadowOpacity: 0.04,
+                  shadowRadius: 18,
+                  elevation: 3,
+                }}
+                onPress={() => navigation.navigate('CategoryExercises', { category: item })}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                  <View style={{
+                    width: 64,
+                    height: 64,
+                    borderRadius: 32,
+                    backgroundColor: '#EEF1F3',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    overflow: 'hidden',
+                    marginRight: 20,
+                  }}>
+                    {item.imageUrl ? (
+                      <Image source={{ uri: item.imageUrl }} style={{ width: 40, height: 40, borderRadius: 8 }} />
+                    ) : (
+                      <Icon name="body-outline" size={28} color="#A8390D" />
+                    )}
+                  </View>
+
+                  <View style={{ flex: 1 }}>
+                    <Text style={{
+                      color: '#2C2F31',
+                      fontSize: 20,
+                      lineHeight: 28,
+                      fontWeight: '700',
+                      marginBottom: 2,
+                    }}>
+                      {item.name}
+                    </Text>
+                    <Text style={{
+                      color: isTrending ? '#A43609' : '#ABADAF',
+                      fontSize: 14,
+                      lineHeight: 20,
+                      fontWeight: isTrending ? '700' : '500',
+                    }}>
+                      {isTrending ? 'Trending' : `${item.exerciseCount} exercises`}
+                    </Text>
+                  </View>
+                </View>
+
+                <View style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 20,
+                  backgroundColor: '#DFE3E6',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginLeft: 12,
+                }}>
+                  <Icon name="chevron-forward" size={18} color="#A8390D" />
+                </View>
+              </TouchableOpacity>
+            );
+          }}
+        />
+      )}
+    </View>
+  );
+
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" />
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: '#F6F2F7', borderBottomLeftRadius: 0, borderBottomRightRadius: 0, shadowOpacity: 0, elevation: 0 }]}>
         <View style={styles.headerTop}>
-          <View style={styles.brandContainer}><View style={styles.logoImage}><Icon name="fitness" size={32} color="#A8390D" /></View><Text style={styles.brandName}>FITLIFE</Text></View>
+          <View style={styles.brandContainer}>
+            <View style={[styles.logoImage, { backgroundColor: '#F6F2F7' }]}>
+              {user?.profileImage ? (
+                <Image source={{ uri: user.profileImage }} style={{ width: 40, height: 40, borderRadius: 20 }} />
+              ) : (
+                <Icon name="person" size={22} color="#A8390D" />
+              )}
+            </View>
+            <Text style={[styles.brandName, { fontSize: 18, letterSpacing: -0.8 }]}>FITLIFE</Text>
+          </View>
+          <TouchableOpacity style={{
+            width: 32,
+            height: 32,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}>
+            <Icon name="notifications-outline" size={18} color="#8D94A0" />
+          </TouchableOpacity>
         </View>
-        <View style={styles.tabContainer}>
+        <View style={[styles.tabContainer, { justifyContent: 'flex-start', paddingTop: 6 }]}>
           {tabs.map((tab) => (
-            <TouchableOpacity key={tab.id} style={[styles.tab, selectedTab === tab.id && styles.activeTab]} onPress={() => setSelectedTab(tab.id)}>
+            <TouchableOpacity
+              key={tab.id}
+              style={[
+                styles.tab,
+                selectedTab === tab.id && styles.activeTab,
+                {
+                  flex: 0,
+                  width: tab.id === 'plans' ? 80 : tab.id === 'history' ? 111 : 120,
+                  height: 40,
+                  paddingHorizontal: 12,
+                  backgroundColor: selectedTab === tab.id ? '#FFEFEB' : 'transparent',
+                }
+              ]}
+              onPress={() => setSelectedTab(tab.id)}
+            >
               <Icon name={tab.icon} size={18} color={selectedTab === tab.id ? '#A8390D' : '#5E5E5E'} />
               <Text style={[styles.tabText, selectedTab === tab.id && styles.activeTabText]}>{tab.title}</Text>
             </TouchableOpacity>
           ))}
         </View>
       </View>
-      <ScrollView showsVerticalScrollIndicator={false} style={styles.content}>
+      <ScrollView showsVerticalScrollIndicator={false} style={styles.content} contentContainerStyle={styles.scrollContent}>
         {selectedTab === 'plans' && (plansLoading ? <View style={styles.loadingContainer}><ActivityIndicator size="large" color="#A8390D" /></View> : renderActivePlanCard())}
         {selectedTab === 'history' && renderHistory()}
-        {selectedTab === 'exercises' && (
-          <View>
-            <View style={styles.searchContainer}><Icon name="search" size={20} color="#5E5E5E" style={{ marginRight: 12 }} /><TextInput style={styles.searchInput} placeholder="Search exercises..." placeholderTextColor="#94A3B8" value={searchQuery} onChangeText={setSearchQuery} /></View>
-            <FlatList data={filteredCategories} keyExtractor={(item) => item.id.toString()} scrollEnabled={false} contentContainerStyle={{ paddingBottom: 60 }}
-              renderItem={({ item }) => (
-                <TouchableOpacity style={[styles.categoryItem, { marginHorizontal: 24 }]} onPress={() => navigation.navigate('CategoryExercises', { category: item })}>
-                  <View style={styles.muscleImageWrapper}>{item.imageUrl ? <Image source={{ uri: item.imageUrl }} style={styles.muscleImage} /> : <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}><Icon name="body" size={32} color="#A8390D" /></View>}</View>
-                  <View style={styles.categoryInfo}><Text style={styles.categoryName}>{item.name}</Text><Text style={styles.categorySubtext}>{item.exerciseCount} exercises</Text></View><Icon name="chevron-forward" size={20} color="#94A3B8" />
-                </TouchableOpacity>
+        {selectedTab === 'exercises' && renderExercisesLibrary()}
+        {/* Persistent High-Fidelity Generate New Plan Button */}
+        {selectedTab !== 'exercises' && (
+          <View style={styles.generateNewPlanContainer}>
+            <TouchableOpacity 
+              style={styles.generateNewPlanButton} 
+              activeOpacity={0.7}
+              onPress={handleGenerateWorkoutPlan}
+              disabled={generatingPlan}
+            >
+              {generatingPlan ? (
+                <ActivityIndicator color="#A8390D" size="small" />
+              ) : (
+                <>
+                  <Icon name="sparkles" size={18} color="#A8390D" />
+                  <Text style={styles.generateNewPlanText}>GENERATED NEW PLAN</Text>
+                </>
               )}
-            />
+            </TouchableOpacity>
           </View>
         )}
-        {/* Persistent High-Fidelity Generate New Plan Button */}
-        <View style={styles.generateNewPlanContainer}>
-          <TouchableOpacity 
-            style={styles.generateNewPlanButton} 
-            activeOpacity={0.7}
-            onPress={handleGenerateWorkoutPlan}
-            disabled={generatingPlan}
-          >
-            {generatingPlan ? (
-              <ActivityIndicator color="#A8390D" size="small" />
-            ) : (
-              <>
-                <Icon name="sparkles" size={18} color="#A8390D" />
-                <Text style={styles.generateNewPlanText}>GENERATED NEW PLAN</Text>
-              </>
-            )}
-          </TouchableOpacity>
-        </View>
       </ScrollView>
     </View>
   );

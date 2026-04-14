@@ -1,7 +1,7 @@
 import React from 'react';
-import { 
-  Text, 
-  View, 
+import {
+  Text,
+  View,
   SafeAreaView,
   StatusBar,
   TouchableOpacity,
@@ -19,10 +19,10 @@ const PaymentSuccessScreen = () => {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-      
+
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.navigate('SubscriptionPlanScreen')}>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.navigate('MainTabs', { screen: 'Profile' })}>
           <Icon name="arrow-back" size={24} color="#FF6B00" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>CHECKOUT</Text>
@@ -32,7 +32,7 @@ const PaymentSuccessScreen = () => {
       </View>
 
       <ScrollView contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
-        
+
         {/* Success Icon */}
         <View style={styles.successIconContainer}>
           <View style={styles.successIconOuterRing} />
@@ -65,7 +65,7 @@ const PaymentSuccessScreen = () => {
               <Text style={styles.dateLabel}>START DATE</Text>
               <Text style={styles.dateValue}>October 24, 2023</Text>
             </View>
-            <View style={[styles.dateItem, {alignItems: 'flex-end'}]}>
+            <View style={[styles.dateItem, { alignItems: 'flex-end' }]}>
               <Text style={styles.dateLabel}>NEXT BILLING</Text>
               <Text style={styles.dateValue}>November 24, 2023</Text>
             </View>
@@ -75,7 +75,7 @@ const PaymentSuccessScreen = () => {
         {/* Membership Includes */}
         <View style={styles.featuresContainer}>
           <Text style={styles.featuresTitle}>YOUR MEMBERSHIP INCLUDES</Text>
-          
+
           <View style={styles.featureItem}>
             <MaterialCommunityIcons name="dumbbell" size={20} color="#FF6B00" style={styles.featureIcon} />
             <Text style={styles.featureText}>FULL GYM ACCESS</Text>
@@ -94,7 +94,7 @@ const PaymentSuccessScreen = () => {
 
         {/* Actions */}
         <View style={styles.actionsContainer}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.getStartedButton}
             activeOpacity={0.8}
             onPress={() => navigation.navigate('GoPremiumScreen')} // Or Dashboard/Home if we have one
@@ -124,8 +124,8 @@ const PaymentSuccessScreen = () => {
             <LinearGradient
               colors={['rgba(255,255,255,0)', 'rgba(255,255,255,0.8)', '#FFFFFF']}
               style={styles.journeyBannerOverlay}
-              start={{x: 0, y: 0}}
-              end={{x: 0, y: 1}}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 0, y: 1 }}
             >
               <Text style={styles.journeyBannerText}>YOUR JOURNEY</Text>
               <Text style={styles.journeyBannerText}>BEGINS NOW.</Text>
@@ -141,7 +141,7 @@ const PaymentSuccessScreen = () => {
           <Icon name="home-outline" size={24} color="#767575" />
           <Text style={styles.navItemLabel}>Home</Text>
         </TouchableOpacity>
-        
+
         <TouchableOpacity style={styles.navItem}>
           <MaterialCommunityIcons name="dumbbell" size={24} color="#767575" />
           <Text style={styles.navItemLabel}>Workouts</Text>

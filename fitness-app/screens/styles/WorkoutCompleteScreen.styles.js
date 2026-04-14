@@ -55,6 +55,7 @@ export const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     paddingHorizontal: 24,
+
   },
   successSection: {
     alignItems: 'center',
@@ -121,9 +122,17 @@ export const styles = StyleSheet.create({
   },
   statGroup: {
     marginBottom: 20,
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   statLastGroup: {
     marginBottom: 0,
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   statLabel: {
     fontSize: 10,

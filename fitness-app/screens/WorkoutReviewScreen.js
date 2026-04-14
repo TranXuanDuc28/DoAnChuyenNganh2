@@ -24,18 +24,24 @@ const VIBES = [
 const INTENSITIES = ['Too Easy', 'Perfect', 'Too Hard'];
 
 const WorkoutReviewScreen = ({ route, navigation }) => {
-  const { sessionData = {}, calories = 350, duration = 45 } = route.params || {};
-  
+  const { sessionData = {}, calories = 350, duration = 45, plan = null } = route.params || {};
+
   const [selectedVibe, setSelectedVibe] = useState('great');
   const [intensity, setIntensity] = useState('Perfect');
   const [notes, setNotes] = useState('');
 
   const handleFinish = () => {
     // Save logic here
-    navigation.reset({
-      index: 0,
-      routes: [{ name: 'MainTabs' }],
-    });
+    if (plan) {
+      // If we came from a specific plan, go back to it
+      navigation.navigate('WorkoutPlanDetail', { plan });
+    } else {
+      // Otherwise go to main dashboard
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'MainTabs' }],
+      });
+    }
   };
 
   const handleBack = () => {

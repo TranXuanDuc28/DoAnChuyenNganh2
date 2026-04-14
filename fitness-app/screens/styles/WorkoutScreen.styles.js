@@ -102,7 +102,7 @@ export const styles = StyleSheet.create({
   activeTabText: {
     color: fitlifeColors.brandOrange,
   },
-  
+
   // Tab-specific overrides if needed
   tabPlans: { borderColor: '#94A3B8' },
   tabHistory: {},
@@ -110,6 +110,9 @@ export const styles = StyleSheet.create({
 
   content: {
     flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 140,
   },
   loadingContainer: {
     padding: 100,
@@ -167,7 +170,7 @@ export const styles = StyleSheet.create({
   statLabel: { fontSize: 11, fontWeight: '600', color: 'rgba(104, 28, 0, 0.5)', textTransform: 'uppercase', letterSpacing: 1 },
 
   // --- HISTORY SECTION ---
-  historyMainContainer: { paddingTop: 32, paddingHorizontal: 24, paddingBottom: 100 },
+  historyMainContainer: { paddingTop: 32, paddingHorizontal: 24, paddingBottom: 130 },
   performanceGallery: { marginBottom: 48 },
   galleryLabel: { fontSize: 12, fontWeight: '400', color: fitlifeColors.brownText, textTransform: 'uppercase', letterSpacing: 2.4, marginBottom: 8 },
   galleryTitle: { fontSize: 48, fontWeight: '800', color: fitlifeColors.onyx, lineHeight: 48, fontFamily: 'Manrope', marginBottom: 32 },
@@ -222,7 +225,7 @@ export const styles = StyleSheet.create({
   emptyStateText: { fontSize: 16, color: fitlifeColors.grayText, textAlign: 'center', marginTop: 24, marginBottom: 36, lineHeight: 24 },
   generateButton: { flexDirection: 'row', alignItems: 'center', backgroundColor: fitlifeColors.brandOrange, paddingVertical: 16, paddingHorizontal: 32, borderRadius: 24, gap: 12, shadowColor: fitlifeColors.brandOrange, shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.2, shadowRadius: 20, elevation: 8 },
   generateButtonText: { color: 'white', fontSize: 17, fontWeight: '800' },
-  
+
   // High-Fidelity Generate Button (Custom Snippet)
   generateNewPlanContainer: {
     paddingHorizontal: 24,

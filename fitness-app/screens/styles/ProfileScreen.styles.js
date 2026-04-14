@@ -33,7 +33,7 @@ export const styles = StyleSheet.create({
     }),
   },
   scrollContent: {
-    paddingBottom: 10, // Space for bottom nav and bounce
+    paddingBottom: 140, // Space for bottom nav and bounce
   },
   topHeader: {
     flexDirection: 'row',
@@ -960,5 +960,248 @@ export const styles = StyleSheet.create({
     color: localColors.text,
     width: 80,
     textAlign: 'center',
+  },
+
+  // Security Modal Styles
+  securityModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    justifyContent: 'flex-end',
+  },
+  securityModalContent: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 40,
+    borderTopRightRadius: 40,
+    paddingHorizontal: 28, // Slighly reduced padding
+    paddingTop: 12,
+    paddingBottom: Platform.OS === 'ios' ? 40 : 30, // Optimized padding for buttons
+    maxHeight: '92%', // Ensure it doesn't cover the entire screen or overflow too much
+  },
+  securityModalHandle: {
+    width: 48,
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: '#E2E8F0',
+    alignSelf: 'center',
+    marginBottom: 16, // Reduced margin
+  },
+  securityModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20, // Reduced from 32
+  },
+  securityModalHeaderText: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#1E293B',
+  },
+  securityCloseBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#F1F5F9',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  securityHeroTitleContainer: {
+    marginBottom: 16,
+  },
+  securityHeroTitleBlack: {
+    fontSize: 36, // Reduced from 48
+    fontWeight: '900',
+    color: '#1E293B',
+    lineHeight: 40, // Adjusted lineHeight
+    textTransform: 'uppercase',
+  },
+  securityHeroTitleOrange: {
+    fontSize: 36, // Reduced from 48
+    fontWeight: '900',
+    color: '#FF794A',
+    lineHeight: 40, // Adjusted lineHeight
+    textTransform: 'uppercase',
+  },
+  securitySubText: {
+    fontSize: 14,
+    color: '#64748B',
+    lineHeight: 20, // Slightly more compact
+    marginBottom: 16, // Reduced from 32
+  },
+  securityInputGroup: {
+    marginBottom: 24,
+  },
+  securityInputLabel: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#94A3B8',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginBottom: 12,
+  },
+  securityInputLabelOrange: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#FF794A',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginBottom: 12,
+  },
+  securityInputBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 20,
+    paddingHorizontal: 20,
+    height: 64,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 2,
+  },
+  securityInputBoxReadOnly: {
+    backgroundColor: '#F1F5F9',
+    borderColor: '#E2E8F0',
+    elevation: 0,
+    shadowOpacity: 0,
+  },
+  securityInputIcon: {
+    marginRight: 16,
+  },
+  securityInputText: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1E293B',
+  },
+  securityInputTextReadOnly: {
+    color: '#94A3B8',
+  },
+  securitySubmitBtn: {
+    backgroundColor: '#FF794A',
+    height: 64,
+    borderRadius: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 16,
+    shadowColor: '#FF794A',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 15,
+    elevation: 8,
+  },
+  securitySubmitBtnText: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#FFFFFF',
+  },
+  securityCheckContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#F1F5F9',
+    borderRadius: 20,
+    padding: 20,
+    marginTop: 32,
+    alignItems: 'flex-start',
+  },
+  securityCheckIconBox: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#FF794A20',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
+    marginTop: 2,
+  },
+  securityCheckContent: {
+    flex: 1,
+  },
+  securityCheckTitle: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#1E293B',
+    textTransform: 'uppercase',
+    marginBottom: 4,
+    letterSpacing: 0.5,
+  },
+  securityCheckText: {
+    fontSize: 12,
+    color: '#64748B',
+    lineHeight: 18,
+  },
+
+  // Stay Secure Specific Styles
+  strengthGuideCard: {
+    backgroundColor: '#F8FAFC',
+    borderRadius: 20, // Slightly more rounded
+    padding: 20, // Reduced from 24
+    marginBottom: 24, // Reduced from 32
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+  },
+  strengthGuideIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#FFF2EC',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
+  },
+  strengthGuideContent: {
+    flex: 1,
+  },
+  strengthGuideTitle: {
+    fontSize: 14,
+    fontFamily: 'Lexend',
+    fontWeight: '800',
+    color: '#1E293B',
+    marginBottom: 8,
+    textTransform: 'uppercase',
+  },
+  strengthGuideItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  strengthGuideDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#FF794A',
+    marginRight: 8,
+  },
+  strengthGuideDotGray: {
+    backgroundColor: '#CBD5E1',
+  },
+  strengthGuideText: {
+    fontSize: 12,
+    fontFamily: 'Manrope',
+    fontWeight: '600',
+    color: '#64748B',
+  },
+  strengthBarContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 4,
+    marginTop: 8, // Reduced
+    marginBottom: 16, // Reduced from 32
+    gap: 8,
+  },
+  strengthBarSegment: {
+    flex: 1,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#E2E8F0',
+  },
+  strengthBarSegmentActive: {
+    backgroundColor: '#FF794A',
+  },
+  passwordEyeBtn: {
+    padding: 4,
   },
 });

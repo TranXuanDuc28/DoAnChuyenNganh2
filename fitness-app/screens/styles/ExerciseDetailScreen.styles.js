@@ -108,7 +108,7 @@ export const styles = StyleSheet.create({
 
   // --- Objective Card ---
   objectiveContainer: {
-    marginTop: -40, // Pull up over hero
+    marginTop: 30, // Pull up over hero
     paddingHorizontal: 24,
   },
   objectiveCard: {

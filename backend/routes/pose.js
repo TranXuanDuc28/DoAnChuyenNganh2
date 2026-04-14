@@ -108,7 +108,10 @@ router.get('/history', async (req, res) => {
 
       // If type === 'all', continue to merge with video history
       const VideoAnalysis = require('../models/VideoAnalysis');
-      const videoWhere = user_id ? { userId: user_id } : {};
+      const videoWhere = {};
+      if (user_id) videoWhere.userId = user_id;
+      if (exerciseName) videoWhere.exerciseName = exerciseName;
+
       const videoItems = await VideoAnalysis.findAll({
         where: videoWhere,
         order: [['createdAt', 'DESC']],
@@ -141,7 +144,10 @@ router.get('/history', async (req, res) => {
     if (type === 'video') {
       // Get video analysis history
       const VideoAnalysis = require('../models/VideoAnalysis');
-      const where = user_id ? { userId: user_id } : {};
+      const where = {};
+      if (user_id) where.userId = user_id;
+      if (exerciseName) where.exerciseName = exerciseName;
+
       const items = await VideoAnalysis.findAll({
         where,
         order: [['createdAt', 'DESC']],

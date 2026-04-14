@@ -77,25 +77,17 @@ const RegisterScreen = ({ navigation, route }) => {
   };
 
   return (
-    <ImageBackground
-      source={require('../image/banner.jpg')}
-      style={styles.container}
-      imageStyle={styles.backgroundImage}
-    >
-      <LinearGradient
-        colors={['rgba(0,0,0,0.85)', 'rgba(0,0,0,0.65)']}
-        style={styles.gradient}
+    <View style={styles.container}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.keyboardAvoidingView}
       >
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          style={styles.keyboardAvoidingView}
-        >
-          <ScrollView contentContainerStyle={styles.scrollContainer}>
-            <View style={styles.header}>
-              <Icon name="person-add" size={70} color={colors.primary} style={styles.logo} />
-              <Text style={styles.title}>Create Account</Text>
-              <Text style={styles.subtitle}>Join thousands on their fitness journey</Text>
-            </View>
+        <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
+          <View style={styles.header}>
+            <Icon name="person-add" size={70} color={colors.primary} style={styles.logo} />
+            <Text style={styles.title}>Create Account</Text>
+            <Text style={styles.subtitle}>Join thousands on their fitness journey</Text>
+          </View>
 
           <View style={styles.formContainer}>
             <View style={styles.row}>
@@ -107,6 +99,7 @@ const RegisterScreen = ({ navigation, route }) => {
                     value={formData.firstName}
                     onChangeText={(text) => updateFormData('firstName', text)}
                     placeholder="First name"
+                    placeholderTextColor="#ABADAF"
                     autoCapitalize="words"
                   />
                 </View>
@@ -120,6 +113,7 @@ const RegisterScreen = ({ navigation, route }) => {
                     value={formData.lastName}
                     onChangeText={(text) => updateFormData('lastName', text)}
                     placeholder="Last name"
+                    placeholderTextColor="#ABADAF"
                     autoCapitalize="words"
                   />
                 </View>
@@ -129,12 +123,13 @@ const RegisterScreen = ({ navigation, route }) => {
             <View style={styles.inputContainer}>
               <Text style={styles.inputLabel}>Email *</Text>
               <View style={styles.inputWrapper}>
-                <Icon name="mail" size={20} color={colors.textSecondary} style={styles.inputIcon} />
+                <Icon name="mail" size={20} color="#595C5E" style={styles.inputIcon} />
                 <TextInput
                   style={styles.textInput}
                   value={formData.email}
                   onChangeText={(text) => updateFormData('email', text)}
                   placeholder="Enter your email"
+                  placeholderTextColor="#ABADAF"
                   keyboardType="email-address"
                   autoCapitalize="none"
                   autoCorrect={false}
@@ -145,12 +140,13 @@ const RegisterScreen = ({ navigation, route }) => {
             <View style={styles.inputContainer}>
               <Text style={styles.inputLabel}>Password *</Text>
               <View style={styles.inputWrapper}>
-                <Icon name="lock-closed" size={20} color={colors.textSecondary} style={styles.inputIcon} />
+                <Icon name="lock-closed" size={20} color="#595C5E" style={styles.inputIcon} />
                 <TextInput
                   style={[styles.textInput, styles.passwordInput]}
                   value={formData.password}
                   onChangeText={(text) => updateFormData('password', text)}
                   placeholder="Create a password"
+                  placeholderTextColor="#ABADAF"
                   secureTextEntry={!showPassword}
                   autoCapitalize="none"
                 />
@@ -161,7 +157,7 @@ const RegisterScreen = ({ navigation, route }) => {
                   <Icon 
                     name={showPassword ? "eye-off" : "eye"} 
                     size={20} 
-                    color={colors.textSecondary} 
+                    color="#595C5E" 
                   />
                 </TouchableOpacity>
               </View>
@@ -170,12 +166,13 @@ const RegisterScreen = ({ navigation, route }) => {
             <View style={styles.inputContainer}>
               <Text style={styles.inputLabel}>Confirm Password *</Text>
               <View style={styles.inputWrapper}>
-                <Icon name="lock-closed" size={20} color={colors.textSecondary} style={styles.inputIcon} />
+                <Icon name="lock-closed" size={20} color="#595C5E" style={styles.inputIcon} />
                 <TextInput
                   style={[styles.textInput, styles.passwordInput]}
                   value={formData.confirmPassword}
                   onChangeText={(text) => updateFormData('confirmPassword', text)}
                   placeholder="Confirm your password"
+                  placeholderTextColor="#ABADAF"
                   secureTextEntry={!showConfirmPassword}
                   autoCapitalize="none"
                 />
@@ -186,7 +183,7 @@ const RegisterScreen = ({ navigation, route }) => {
                   <Icon 
                     name={showConfirmPassword ? "eye-off" : "eye"} 
                     size={20} 
-                    color={colors.textSecondary} 
+                    color="#595C5E" 
                   />
                 </TouchableOpacity>
               </View>
@@ -211,18 +208,18 @@ const RegisterScreen = ({ navigation, route }) => {
 
             <View style={styles.divider}>
               <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>or</Text>
+              <Text style={styles.dividerText}>or continue with</Text>
               <View style={styles.dividerLine} />
             </View>
 
             <TouchableOpacity style={styles.socialButton}>
-              <Icon name="logo-google" size={22} color="#DB4437" />
-              <Text style={styles.socialButtonText}>Continue with Google</Text>
+              <Icon name="logo-google" size={24} color="#DB4437" />
+              <Text style={styles.socialButtonText}>Google</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.socialButton}>
-              <Icon name="logo-apple" size={22} color={colors.text} />
-              <Text style={styles.socialButtonText}>Continue with Apple</Text>
+              <Icon name="logo-apple" size={24} color="#000000" />
+              <Text style={styles.socialButtonText}>Apple</Text>
             </TouchableOpacity>
 
             <View style={styles.loginContainer}>
@@ -238,8 +235,7 @@ const RegisterScreen = ({ navigation, route }) => {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
-      </LinearGradient>
-    </ImageBackground>
+    </View>
   );
 };
 

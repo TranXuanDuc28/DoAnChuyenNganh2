@@ -281,7 +281,7 @@ export const styles = StyleSheet.create({
   addFoodIcon: {
     width: 16,
     height: 16,
-    backgroundColor: colors.brandOrange,
+    //backgroundColor: colors.brandOrange,
     borderRadius: 2,
   },
   addFoodText: {
@@ -449,7 +449,7 @@ export const styles = StyleSheet.create({
     position: 'absolute',
     left: 24,
     right: 24,
-    bottom: 24, // Will adjust if bottom tabs are visible
+    bottom: 120, // Will adjust if bottom tabs are visible
   },
   mainLogMealFab: {
     width: '100%',
@@ -470,7 +470,7 @@ export const styles = StyleSheet.create({
   fabIconWrapper: {
     width: 20,
     height: 20,
-    backgroundColor: colors.background,
+    //backgroundColor: colors.background,
   },
   fabLabel: {
     fontSize: 16,
@@ -478,5 +478,133 @@ export const styles = StyleSheet.create({
     fontWeight: '700',
     color: colors.background,
     lineHeight: 24,
+  },
+  // Weekly Schedule Styles
+  weeklyScheduleContainer: {
+    marginTop: 8,
+  },
+  weeklyHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  weeklyTitle: {
+    fontSize: 24,
+    fontFamily: 'Manrope',
+    fontWeight: '700',
+    color: colors.onyx,
+  },
+  viewAllLink: {
+    fontSize: 14,
+    fontFamily: 'Inter',
+    fontWeight: '600',
+    color: colors.brandOrange,
+  },
+  dateSelector: {
+    marginBottom: 24,
+  },
+  dateSelectorContent: {
+    paddingRight: 24,
+  },
+  dayItem: {
+    width: 60,
+    height: 80,
+    backgroundColor: '#F6F2F7',
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  dayItemActive: {
+    backgroundColor: colors.brandOrange,
+    shadowColor: colors.brandOrange,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  dayName: {
+    fontSize: 12,
+    fontFamily: 'Inter',
+    fontWeight: '500',
+    color: colors.brandBrown,
+    marginBottom: 4,
+  },
+  dayNameActive: {
+    color: 'rgba(255, 255, 255, 0.8)',
+  },
+  dateNumber: {
+    fontSize: 18,
+    fontFamily: 'Manrope',
+    fontWeight: '700',
+    color: colors.onyx,
+  },
+  dateNumberActive: {
+    color: colors.white,
+  },
+  activeDot: {
+    width: 4,
+    height: 4,
+    backgroundColor: colors.white,
+    borderRadius: 2,
+    marginTop: 4,
+  },
+  // Plan Empty State
+  planEmptyState: {
+    padding: 32,
+    backgroundColor: '#F6F2F7',
+    borderRadius: 32,
+    alignItems: 'center',
+    gap: 16,
+    marginTop: 20,
+  },
+  emptyStateTitle: {
+    fontSize: 18,
+    fontFamily: 'Manrope',
+    fontWeight: '700',
+    color: colors.onyx,
+    textAlign: 'center',
+  },
+  emptyStateDesc: {
+    fontSize: 14,
+    fontFamily: 'Inter',
+    color: colors.brandBrown,
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  generatePlanButton: {
+    marginTop: 12,
+    backgroundColor: colors.brandOrange,
+    paddingHorizontal: 24,
+    paddingVertical: 14,
+    borderRadius: 28,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  generatePlanButtonText: {
+    color: colors.white,
+    fontSize: 16,
+    fontFamily: 'Manrope',
+    fontWeight: '700',
+  },
+  generateNewPlanBtn: {
+    width: '100%',
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: colors.onyx,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    marginTop: 24,
+  },
+  generateNewPlanBtnText: {
+    color: '#FBF8FC',
+    fontSize: 16,
+    fontFamily: 'Manrope',
+    fontWeight: '700',
+    textTransform: 'uppercase',
   },
 });

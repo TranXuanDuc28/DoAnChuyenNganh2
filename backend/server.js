@@ -125,6 +125,7 @@ app.use('/api/notifications', require('./routes/notifications'));
 app.use('/api/pose', require('./routes/pose'));
 app.use('/api/push', require('./routes/push'));
 app.use('/api/admin', require('./routes/admin'));
+app.use('/api/dashboard', require('./routes/dashboard'));
 
 // Static serving for category images stored inside the fitness app image folder
 const categoryImagesDir = path.join(__dirname, '..', 'fitness-app', 'image');

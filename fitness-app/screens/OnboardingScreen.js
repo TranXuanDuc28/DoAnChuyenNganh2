@@ -19,6 +19,7 @@ const OnboardingScreen = ({ navigation, route }) => {
   const { register } = useAuth();
   const [currentStep, setCurrentStep] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+  const steps = [0, 1, 2, 3]; // Define steps for progress indicator
 
   // Get registration data from RegisterScreen
   const registrationData = route?.params?.registrationData || {};

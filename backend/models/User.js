@@ -117,7 +117,7 @@ const User = sequelize.define('User', {
     defaultValue: 0
   },
   // Workout preferences
-  workout_duration: {
+  workoutDuration: {
     type: DataTypes.INTEGER,
     defaultValue: 60,
     comment: 'Workout duration in minutes per session',

@@ -1,0 +1,355 @@
+import { StyleSheet, Dimensions, Platform } from 'react-native';
+
+const { width } = Dimensions.get('window');
+
+export const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+  scrollContent: {
+    paddingBottom: 40,
+  },
+  main: {
+    paddingTop: 32, // Adjusted from 128px in UIDL for better mobile view
+    paddingHorizontal: 24,
+    gap: 32,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 24,
+    paddingTop: 20,
+    paddingBottom: 20,
+    backgroundColor: '#FFFFFF',
+    zIndex: 10,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '900',
+    color: '#FF794A',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  // ViewToggle
+  viewToggle: {
+    alignSelf: 'stretch',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  toggleBackground: {
+    backgroundColor: 'rgba(231, 232, 231, 1)',
+    flexDirection: 'row',
+    padding: 4,
+    borderRadius: 9999,
+    gap: 4,
+    width: '100%',
+  },
+  toggleButton: {
+    flex: 1,
+    paddingVertical: 8,
+    borderRadius: 9999,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  activeToggleButton: {
+    backgroundColor: '#FFFFFF',
+    shadowColor: 'rgba(0, 0, 0, 0.05)',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  toggleText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: 'rgba(88, 66, 53, 1)',
+    fontFamily: Platform.OS === 'ios' ? 'Manrope' : 'sans-serif',
+  },
+  activeToggleText: {
+    fontWeight: '700',
+    color: 'rgba(153, 71, 0, 1)',
+    fontFamily: Platform.OS === 'ios' ? 'Manrope' : 'sans-serif-medium',
+  },
+  // MainTrendChartSection
+  chartSection: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    padding: 24,
+    shadowColor: 'rgba(25, 28, 28, 1)',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.04,
+    shadowRadius: 24,
+    elevation: 2,
+    alignSelf: 'stretch',
+    gap: 24,
+  },
+  chartHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  chartTitleContainer: {
+    gap: 4,
+  },
+  chartLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: 'rgba(88, 66, 53, 1)',
+  },
+  chartValueRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: 4,
+  },
+  chartValue: {
+    fontSize: 36,
+    fontWeight: '700',
+    color: 'rgba(25, 28, 28, 1)',
+    lineHeight: 40,
+    fontFamily: Platform.OS === 'ios' ? 'Lexend' : 'sans-serif-bold',
+  },
+  chartUnitText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: 'rgba(88, 66, 53, 1)',
+    marginBottom: 6,
+  },
+  trendBadge: {
+    backgroundColor: 'rgba(255, 122, 0, 0.1)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 4,
+    paddingHorizontal: 12,
+    borderRadius: 9999,
+    gap: 4,
+  },
+  trendText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: 'rgba(153, 71, 0, 1)',
+  },
+  visualChart: {
+    width: '100%',
+    height: 184,
+    alignSelf: 'stretch',
+  },
+  daysRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(231, 232, 231, 1)',
+  },
+  dayText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: 'rgba(88, 66, 53, 1)',
+  },
+  activeDayText: {
+    color: 'rgba(153, 71, 0, 1)',
+  },
+  // SectionRecentAchievements
+  achievementsSection: {
+    alignSelf: 'stretch',
+    gap: 16,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: 'rgba(25, 28, 28, 1)',
+  },
+  seeAllText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: 'rgba(153, 71, 0, 1)',
+  },
+  achievementList: {
+    gap: 12,
+  },
+  achievementCard: {
+    backgroundColor: '#FFFFFF',
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
+    gap: 16,
+  },
+  achievementIconBg: {
+    width: 48,
+    height: 48,
+    backgroundColor: '#FFEDD5',
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  achievementInfo: {
+    flex: 1,
+  },
+  achievementTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: 'rgba(25, 28, 28, 1)',
+  },
+  achievementDesc: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: 'rgba(88, 66, 53, 1)',
+  },
+  achievementDate: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: 'rgba(88, 66, 53, 1)',
+  },
+  // SummaryGridBentoStyle
+  gridSection: {
+    flexDirection: 'row',
+    gap: 16,
+    alignSelf: 'stretch',
+  },
+  bentoCard: {
+    flex: 1,
+    backgroundColor: 'rgba(243, 244, 243, 1)',
+    padding: 20,
+    borderRadius: 24,
+    justifyContent: 'space-between',
+    minHeight: 160,
+    gap: 12,
+  },
+  bentoHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  iconCircle: {
+    width: 40,
+    height: 40,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 9999,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  activeBadge: {
+    backgroundColor: 'rgba(255, 122, 0, 0.1)',
+    paddingVertical: 2,
+    paddingHorizontal: 8,
+    borderRadius: 9999,
+  },
+  activeBadgeText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: 'rgba(153, 71, 0, 1)',
+  },
+  bentoInfo: {
+    gap: 4,
+  },
+  bentoLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: 'rgba(88, 66, 53, 1)',
+  },
+  bentoValueRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 4,
+    paddingBottom: 8,
+  },
+  bentoValue: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: 'rgba(25, 28, 28, 1)',
+    fontFamily: Platform.OS === 'ios' ? 'Lexend' : 'sans-serif-bold',
+  },
+  bentoUnit: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: 'rgba(88, 66, 53, 1)',
+  },
+  progressBar: {
+    height: 6,
+    backgroundColor: 'rgba(225, 227, 226, 1)',
+    borderRadius: 9999,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: '#FF7A00',
+    borderRadius: 9999,
+  },
+  bentoSubtext: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: 'rgba(153, 71, 0, 1)',
+  },
+  // MuscleMassHeroAestheticCard
+  heroCard: {
+    height: 310,
+    borderRadius: 24,
+    overflow: 'hidden',
+    position: 'relative',
+    justifyContent: 'center',
+    padding: 24,
+    alignSelf: 'stretch',
+  },
+  heroContent: {
+    zIndex: 1,
+    gap: 12,
+    paddingTop: 50,
+    paddingBottom: 50,
+  },
+  heroLabel: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    opacity: 0.8,
+  },
+  heroTitle: {
+    fontSize: 32,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    lineHeight: 40,
+  },
+  heroButton: {
+    backgroundColor: '#FFFFFF',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 9999,
+    alignSelf: 'flex-start',
+    marginTop: 12,
+  },
+  heroButtonText: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: 'rgba(153, 71, 0, 1)',
+  },
+  photoGalleryPill: {
+    borderWidth: 1,
+    borderColor: 'rgba(243, 244, 243, 1)',
+    borderStyle: 'dashed',
+    borderRadius: 24,
+    paddingVertical: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    gap: 8,
+    alignSelf: 'stretch',
+    marginTop: 8,
+  },
+  photoGalleryText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: 'rgba(88, 66, 53, 1)',
+  }
+});

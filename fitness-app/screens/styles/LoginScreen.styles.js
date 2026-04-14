@@ -6,20 +6,12 @@ const isWeb = Platform.OS === 'web';
 export const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: '#FFFFFF',
     ...(isWeb && {
       maxWidth: 1200,
       marginHorizontal: 'auto',
       width: '100%',
     }),
-  },
-  backgroundImage: {
-    resizeMode: 'cover',
-    opacity: 0.6, // Dim the background image slightly
-  },
-  gradient: {
-    flex: 1,
-    paddingHorizontal: 24,
   },
   keyboardAvoidingView: {
     flex: 1,
@@ -28,6 +20,7 @@ export const styles = StyleSheet.create({
     flexGrow: 1,
     justifyContent: 'center',
     paddingVertical: 40,
+    paddingHorizontal: 24,
     ...(isWeb && {
       paddingHorizontal: 40,
       paddingVertical: 60,
@@ -39,26 +32,19 @@ export const styles = StyleSheet.create({
   },
   logo: {
     marginBottom: 24,
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8,
-    shadowRadius: 20,
   },
   title: {
     fontSize: 42,
-    fontWeight: '800',
-    color: colors.white,
+    fontWeight: '900',
+    color: '#1A1A1A',
     marginBottom: 12,
-    letterSpacing: 1,
-    textShadowColor: 'rgba(0, 0, 0, 0.5)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 4,
+    letterSpacing: -1,
   },
   subtitle: {
     fontSize: 18,
-    color: colors.textSecondary,
+    color: '#595C5E',
     textAlign: 'center',
-    letterSpacing: 0.5,
+    lineHeight: 26,
   },
   formContainer: {
     width: '100%',
@@ -66,25 +52,25 @@ export const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   inputContainer: {
-    marginBottom: 24,
+    marginBottom: 20,
   },
   inputLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.textSecondary,
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#1A1A1A',
     marginBottom: 8,
     marginLeft: 4,
     textTransform: 'uppercase',
-    letterSpacing: 1,
+    letterSpacing: 1.5,
   },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.08)', // Glass effect
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-    height: 60,
+    backgroundColor: '#F3F4F6',
+    borderRadius: 18,
+    height: 64,
+    borderWidth: 1.5,
+    borderColor: 'transparent',
   },
   inputIcon: {
     marginLeft: 20,
@@ -94,8 +80,8 @@ export const styles = StyleSheet.create({
     flex: 1,
     height: '100%',
     fontSize: 16,
-    color: colors.white,
-    fontWeight: '500',
+    color: '#1A1A1A',
+    fontWeight: '600',
   },
   passwordInput: {
     paddingRight: 50,
@@ -110,33 +96,31 @@ export const styles = StyleSheet.create({
   forgotPasswordText: {
     color: colors.primary,
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   loginButtonContainer: {
     marginBottom: 24,
-    borderRadius: 16,
+    borderRadius: 20,
     overflow: 'hidden',
     shadowColor: colors.primary,
-    shadowOffset: {
-      width: 0,
-      height: 8,
-    },
-    shadowOpacity: 0.4,
-    shadowRadius: 16,
-    elevation: 10,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.25,
+    shadowRadius: 15,
+    elevation: 8,
   },
   loginButton: {
-    paddingVertical: 18,
+    backgroundColor: colors.primary,
+    paddingVertical: 20,
     alignItems: 'center',
     justifyContent: 'center',
   },
   loginButtonDisabled: {
-    opacity: 0.7,
+    opacity: 0.6,
   },
   loginButtonText: {
     color: colors.white,
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: '900',
     letterSpacing: 1,
   },
   divider: {
@@ -147,35 +131,35 @@ export const styles = StyleSheet.create({
   },
   dividerLine: {
     flex: 1,
-    height: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    height: 1.5,
+    backgroundColor: '#E5E7EB',
   },
   dividerText: {
     marginHorizontal: 16,
-    color: colors.textTertiary,
+    color: '#ABADAF',
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: '700',
+    textTransform: 'uppercase',
   },
   socialButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 16,
-    paddingVertical: 16,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: '#E5E7EB',
+    borderRadius: 18,
+    paddingVertical: 18,
     marginBottom: 16,
     ...(isWeb && {
       cursor: 'pointer',
-      transition: 'all 0.2s ease',
     }),
   },
   socialButtonText: {
     marginLeft: 12,
     fontSize: 16,
-    fontWeight: '600',
-    color: colors.white,
+    fontWeight: '700',
+    color: '#1A1A1A',
   },
   signupContainer: {
     flexDirection: 'row',
@@ -183,13 +167,14 @@ export const styles = StyleSheet.create({
     marginTop: 24,
   },
   signupText: {
-    color: colors.textSecondary,
+    color: '#595C5E',
     fontSize: 16,
+    fontWeight: '500',
   },
   signupLink: {
     color: colors.primary,
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '800',
   },
 });
 

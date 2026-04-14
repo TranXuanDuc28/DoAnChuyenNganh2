@@ -41,7 +41,7 @@ const ExerciseDetailScreen = ({ route, navigation }) => {
   const fetchRelatedExercises = async () => {
     // Try to find a valid category ID
     const categoryId = exercise.exerciseCategoryId || (exercise.categories && exercise.categories[0]?.id);
-    
+
     if (!categoryId) return;
 
     setLoadingRelated(true);
@@ -63,7 +63,7 @@ const ExerciseDetailScreen = ({ route, navigation }) => {
     <View style={styles.topHeader}>
       <TouchableOpacity style={styles.brandRow} onPress={() => navigation.goBack()} activeOpacity={0.7}>
         <Icon name="arrow-back" size={22} color="#FF6B35" />
-        <Text style={styles.brandText}>FITLIFE</Text>
+        {/* <Text style={styles.brandText}>FITLIFE</Text> */}
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.headerIconBtn} activeOpacity={0.7}>
@@ -227,7 +227,7 @@ const ExerciseDetailScreen = ({ route, navigation }) => {
       </View>
     );
   };
-   
+
 
   return (
     <View style={styles.container}>

@@ -11,6 +11,164 @@ const { MealPlan } = require('../models/Nutrition');
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 /**
+ * Generate a mock meal plan when AI is unavailable
+ * @param {User} user - User instance
+ * @param {number} duration - Duration in days
+ * @param {number} targetCalories - Target daily calories
+ * @param {object} macros - Macronutrient breakdown
+ * @param {array} dietaryRestrictions - Dietary restrictions
+ * @param {array} cuisinePreferences - Cuisine preferences
+ * @param {array} allergies - Food allergies
+ * @param {number} mealsPerDay - Meals per day
+ * @param {number} bmr - BMR
+ * @param {number} tdee - TDEE
+ * @param {object} calorieBreakdown - Calorie breakdown info
+ * @param {object} bmi - BMI info
+ * @returns {object} Mock meal plan
+ */
+const generateMockMealPlan = (user, duration, targetCalories, macros, dietaryRestrictions, cuisinePreferences, allergies, mealsPerDay, bmr, tdee, calorieBreakdown, bmi) => {
+  const days = [];
+
+  // Sample meal templates
+  const breakfastOptions = [
+    { name: 'Oatmeal with fruits', calories: 350, protein: 12, carbs: 60, fat: 8 },
+    { name: 'Greek yogurt parfait', calories: 320, protein: 20, carbs: 45, fat: 6 },
+    { name: 'Whole grain toast with avocado', calories: 380, protein: 10, carbs: 50, fat: 15 },
+    { name: 'Smoothie bowl', calories: 340, protein: 15, carbs: 55, fat: 7 }
+  ];
+
+  const lunchOptions = [
+    { name: 'Grilled chicken salad', calories: 450, protein: 35, carbs: 30, fat: 20 },
+    { name: 'Quinoa bowl with vegetables', calories: 480, protein: 18, carbs: 65, fat: 12 },
+    { name: 'Turkey wrap', calories: 420, protein: 28, carbs: 45, fat: 14 },
+    { name: 'Lentil soup with bread', calories: 460, protein: 22, carbs: 70, fat: 8 }
+  ];
+
+  const dinnerOptions = [
+    { name: 'Baked salmon with rice', calories: 550, protein: 40, carbs: 45, fat: 25 },
+    { name: 'Stir-fried tofu with vegetables', calories: 480, protein: 25, carbs: 55, fat: 18 },
+    { name: 'Lean beef stir-fry', calories: 520, protein: 38, carbs: 40, fat: 22 },
+    { name: 'Vegetable curry with rice', calories: 490, protein: 15, carbs: 75, fat: 12 }
+  ];
+
+  const snackOptions = [
+    { name: 'Apple with almond butter', calories: 200, protein: 5, carbs: 25, fat: 12 },
+    { name: 'Protein shake', calories: 180, protein: 25, carbs: 10, fat: 3 },
+    { name: 'Greek yogurt', calories: 150, protein: 15, carbs: 12, fat: 5 },
+    { name: 'Handful of nuts', calories: 220, protein: 8, carbs: 8, fat: 20 }
+  ];
+
+  for (let day = 1; day <= duration; day++) {
+    const dayMeals = [];
+    let dayCalories = 0;
+
+    // Breakfast
+    const breakfast = breakfastOptions[Math.floor(Math.random() * breakfastOptions.length)];
+    dayMeals.push({
+      type: 'breakfast',
+      name: breakfast.name,
+      calories: breakfast.calories,
+      macronutrients: {
+        protein: breakfast.protein,
+        carbs: breakfast.carbs,
+        fat: breakfast.fat
+      },
+      ingredients: ['Sample ingredients - customize based on preferences'],
+      instructions: 'Prepare according to standard recipe'
+    });
+    dayCalories += breakfast.calories;
+
+    // Lunch
+    const lunch = lunchOptions[Math.floor(Math.random() * lunchOptions.length)];
+    dayMeals.push({
+      type: 'lunch',
+      name: lunch.name,
+      calories: lunch.calories,
+      macronutrients: {
+        protein: lunch.protein,
+        carbs: lunch.carbs,
+        fat: lunch.fat
+      },
+      ingredients: ['Sample ingredients - customize based on preferences'],
+      instructions: 'Prepare according to standard recipe'
+    });
+    dayCalories += lunch.calories;
+
+    // Dinner
+    const dinner = dinnerOptions[Math.floor(Math.random() * dinnerOptions.length)];
+    dayMeals.push({
+      type: 'dinner',
+      name: dinner.name,
+      calories: dinner.calories,
+      macronutrients: {
+        protein: dinner.protein,
+        carbs: dinner.carbs,
+        fat: dinner.fat
+      },
+      ingredients: ['Sample ingredients - customize based on preferences'],
+      instructions: 'Prepare according to standard recipe'
+    });
+    dayCalories += dinner.calories;
+
+    // Snacks if mealsPerDay > 3
+    if (mealsPerDay > 3) {
+      const snack = snackOptions[Math.floor(Math.random() * snackOptions.length)];
+      dayMeals.push({
+        type: 'snack',
+        name: snack.name,
+        calories: snack.calories,
+        macronutrients: {
+          protein: snack.protein,
+          carbs: snack.carbs,
+          fat: snack.fat
+        },
+        ingredients: ['Sample ingredients'],
+        instructions: 'Enjoy as a healthy snack'
+      });
+      dayCalories += snack.calories;
+    }
+
+    days.push({
+      day,
+      meals: dayMeals,
+      totalCalories: dayCalories,
+      macronutrients: {
+        protein: dayMeals.reduce((sum, meal) => sum + meal.macronutrients.protein, 0),
+        carbs: dayMeals.reduce((sum, meal) => sum + meal.macronutrients.carbs, 0),
+        fat: dayMeals.reduce((sum, meal) => sum + meal.macronutrients.fat, 0)
+      }
+    });
+  }
+
+  return {
+    planName: `${duration}-Day Mock Meal Plan`,
+    description: `Mock meal plan generated due to AI service unavailability. Target: ${targetCalories} calories/day`,
+    days,
+    shoppingList: [
+      'Fruits and vegetables',
+      'Lean proteins (chicken, fish, tofu)',
+      'Whole grains (oats, quinoa, rice)',
+      'Healthy fats (avocado, nuts)',
+      'Dairy or alternatives'
+    ],
+    tips: [
+      'Stay hydrated with at least 8 glasses of water daily',
+      'Portion control is key for weight management',
+      'Include variety in your meals for balanced nutrition',
+      'Consider consulting a nutritionist for personalized advice'
+    ],
+    hydration: {
+      dailyWaterIntake: '8-10 glasses (2-3 liters)',
+      tips: ['Drink water before meals', 'Carry a water bottle', 'Add lemon for flavor']
+    },
+    weeklyTotals: {
+      totalCalories: targetCalories * duration,
+      averageMacros: macros
+    }
+  };
+};
+
+/**
  * Calculate BMR (Basal Metabolic Rate) using Mifflin-St Jeor Equation
  * @param {User} user - User instance
  * @returns {number} BMR in calories
@@ -371,9 +529,9 @@ Day 3: Breakfast 380 + Lunch 620 + Dinner 680 + Snack 320 = ${targetCalories} kc
     }
 
     // Configure Gemini model with timeout settings
-    // Set timeout to 3 minutes (180 seconds) to allow sufficient time for plan generation
+    const modelName = process.env.GEMINI_MODEL || 'gemini-1.5-flash';
     const model = genAI.getGenerativeModel({
-      model: 'gemini-2.5-flash',
+      model: modelName,
       generationConfig: {
         temperature: 0.7,
         topK: 40,
@@ -381,19 +539,40 @@ Day 3: Breakfast 380 + Lunch 620 + Dinner 680 + Snack 320 = ${targetCalories} kc
       }
     });
 
-    console.log('⏱️ Timeout set to 3 minutes for AI generation');
+    console.log(`⏱️ Timeout set to 3 minutes for AI generation (Model: ${modelName})`);
 
-    // Wrap Gemini API call with timeout (3 minutes = 180 seconds)
-    const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error('Gemini API timeout after 3 minutes')), 180000);
-    });
+    // Helper for retry logic
+    const generateWithRetry = async (retries = 3, delay = 2000) => {
+      for (let i = 0; i < retries; i++) {
+        try {
+          // Wrap Gemini API call with timeout (3 minutes = 180 seconds)
+          const timeoutPromise = new Promise((_, reject) => {
+            setTimeout(() => reject(new Error('Gemini API timeout after 3 minutes')), 180000);
+          });
 
-    const generationPromise = model.generateContent(prompt);
+          const generationPromise = model.generateContent(prompt);
 
-    // Race between generation and timeout
-    const result = await Promise.race([generationPromise, timeoutPromise]);
-    const response = await result.response;
-    let text = response.text();
+          // Race between generation and timeout
+          const result = await Promise.race([generationPromise, timeoutPromise]);
+          const response = await result.response;
+          return response.text();
+        } catch (error) {
+          const isServiceUnavailable = error.message?.includes('503') || error.status === 503 || error.message?.includes('Service Unavailable');
+          const isQuotaExceeded = error.message?.includes('429') || error.status === 429 || error.message?.includes('Too Many Requests') || error.message?.includes('quota');
+
+          if ((isServiceUnavailable || isQuotaExceeded) && i < retries - 1) {
+            const retryDelay = isQuotaExceeded ? Math.max(delay, 15000) : delay; // Longer delay for quota
+            console.log(`⚠️ Gemini ${isQuotaExceeded ? 'Quota exceeded (429)' : 'Service Unavailable (503)'}. Retrying in ${retryDelay / 1000}s... (Attempt ${i + 1}/${retries})`);
+            await new Promise(resolve => setTimeout(resolve, retryDelay));
+            delay *= 2; // Exponential backoff
+            continue;
+          }
+          throw error;
+        }
+      }
+    };
+
+    let text = await generateWithRetry();
 
     console.log('✅ Gemini AI response received successfully');
 
@@ -465,6 +644,79 @@ Day 3: Breakfast 380 + Lunch 620 + Dinner 680 + Snack 320 = ${targetCalories} kc
 
   } catch (error) {
     console.error('❌ Error generating meal plan:', error);
+
+    // Check if it's a quota or service error, and provide fallback
+    const isQuotaError = error.message?.includes('429') || error.status === 429 || error.message?.includes('Too Many Requests') || error.message?.includes('quota');
+    const isServiceError = error.message?.includes('503') || error.status === 503 || error.message?.includes('Service Unavailable');
+    const isRateLimitError = error.message?.includes('rate limit') || error.message?.includes('Rate limit');
+
+    if (isQuotaError || isServiceError || isRateLimitError) {
+      console.log('⚠️ AI service unavailable due to quota/rate limits. Using fallback mock meal plan...');
+
+      // Generate mock meal plan
+      const mockMealPlan = generateMockMealPlan(user, duration, targetCalories, macros, dietaryRestrictions, cuisinePreferences, allergies, mealsPerDay, bmr, tdee, calorieBreakdown, bmi);
+
+      // Save mock meal plan to database
+      const startDate = new Date();
+      const endDate = new Date();
+      endDate.setDate(endDate.getDate() + duration);
+
+      const savedMealPlan = await MealPlan.create({
+        userId,
+        name: mockMealPlan.planName,
+        description: mockMealPlan.description,
+        duration,
+        startDate,
+        endDate,
+        meals: mockMealPlan.days,
+        totalCalories: targetCalories,
+        macronutrients: macros,
+        dietaryRestrictions,
+        preferences: {
+          cuisine: cuisinePreferences,
+          allergies,
+          mealsPerDay,
+          bmr,
+          tdee,
+          targetCalories,
+          calorieAdjustment: calorieBreakdown.adjustment,
+          adjustmentReason: calorieBreakdown.adjustmentReason
+        },
+        isActive: true,
+        aiGenerated: false, // Mark as not AI generated
+        aiPrompt: `MOCK: Goal: ${primaryGoal}, BMR: ${bmr}, TDEE: ${tdee}, Target: ${targetCalories} (${calorieBreakdown.adjustmentReason}), Duration: ${duration} days, BMI: ${bmi.value} (${bmi.level})`
+      });
+
+      console.log('✅ Mock meal plan saved to database:', savedMealPlan.id);
+
+      return {
+        success: true,
+        mealPlan: {
+          id: savedMealPlan.id,
+          name: savedMealPlan.name,
+          description: savedMealPlan.description,
+          duration: savedMealPlan.duration,
+          startDate: savedMealPlan.startDate,
+          endDate: savedMealPlan.endDate,
+          calorieBreakdown: {
+            bmr,
+            tdee,
+            targetCalories,
+            adjustment: calorieBreakdown.adjustment,
+            adjustmentReason: calorieBreakdown.adjustmentReason
+          },
+          dailyCalories: targetCalories,
+          macros,
+          bmi,
+          days: mockMealPlan.days,
+          shoppingList: mockMealPlan.shoppingList,
+          tips: mockMealPlan.tips,
+          hydration: mockMealPlan.hydration,
+          weeklyTotals: mockMealPlan.weeklyTotals,
+          isMock: true // Indicate this is a mock plan
+        }
+      };
+    }
 
     if (error.message.includes('API key')) {
       throw new Error('Gemini API key is not configured properly');

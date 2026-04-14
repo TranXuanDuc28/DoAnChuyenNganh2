@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import {
   View,
   Text,
@@ -19,7 +20,7 @@ import { styles } from './styles/NutritionScreen.styles';
 import BarcodeScanner from '../components/BarcodeScanner';
 import FoodDetailModal from '../components/FoodDetailModal';
 
-const NutritionScreen = ({ navigation }) => {
+const NutritionScreen = ({ navigation, route }) => {
   const [selectedView, setSelectedView] = useState('daily');
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -40,19 +41,58 @@ const NutritionScreen = ({ navigation }) => {
     labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
     datasets: [{ data: [1600, 1550, 1650, 1600, 1580, 1620, 1600] }]
   });
+  const [activePlan, setActivePlan] = useState(null);
+  const [selectedDayIndex, setSelectedDayIndex] = useState(0);
+  const [isGeneratingPlan, setIsGeneratingPlan] = useState(false);
 
   useEffect(() => {
     fetchData();
   }, [selectedView]);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (route.params?.refresh) {
+        fetchData();
+        // Clear param so it doesn't refresh again on every focus unless specified
+        navigation.setParams({ refresh: false });
+      }
+    }, [route.params?.refresh])
+  );
 
   const fetchData = async () => {
     setLoading(true);
     if (selectedView === 'daily') {
       await Promise.all([fetchTodayMeals(), fetchBurnedCalories()]);
     } else {
-      await fetchWeeklyProgress();
+      await fetchActivePlan();
     }
     setLoading(false);
+  };
+
+  const fetchActivePlan = async () => {
+    try {
+      const response = await aiAPI.getMealPlans();
+      if (response.data.success && response.data.mealPlans.length > 0) {
+        const plan = response.data.mealPlans[0];
+        let meals = plan.meals;
+        if (typeof meals === 'string') meals = JSON.parse(meals);
+
+        setActivePlan({ ...plan, meals });
+
+        // Auto-select today's day item
+        if (plan.startDate) {
+          const startDate = new Date(plan.startDate);
+          const today = new Date();
+          startDate.setHours(0, 0, 0, 0);
+          today.setHours(0, 0, 0, 0);
+          const diffDays = Math.floor((today - startDate) / (1000 * 60 * 60 * 24));
+          const index = Math.max(0, Math.min(diffDays, (plan.duration || 7) - 1));
+          setSelectedDayIndex(index);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching active plan:', error);
+    }
   };
 
   const onRefresh = async () => {
@@ -96,9 +136,10 @@ const NutritionScreen = ({ navigation }) => {
       ]);
 
       if (planResponse.data.success && planResponse.data.mealPlans.length > 0) {
-        const activePlan = planResponse.data.mealPlans[0];
+        const activePlanData = planResponse.data.mealPlans[0];
+        setActivePlan(activePlanData);
 
-        let meals = activePlan.meals;
+        let meals = activePlanData.meals;
         if (typeof meals === 'string') {
           try {
             meals = JSON.parse(meals);
@@ -110,15 +151,15 @@ const NutritionScreen = ({ navigation }) => {
 
         // Find today's data based on the plan's start date
         let dayIndex = 0;
-        if (activePlan.startDate) {
-          const startDate = new Date(activePlan.startDate);
+        if (activePlanData.startDate) {
+          const startDate = new Date(activePlanData.startDate);
           const today = new Date();
           startDate.setHours(0, 0, 0, 0);
           today.setHours(0, 0, 0, 0);
 
           const diffTime = Math.abs(today - startDate);
           const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-          dayIndex = diffDays % (activePlan.duration || 7);
+          dayIndex = diffDays % (activePlanData.duration || 7);
         }
 
         const todayData = Array.isArray(meals) ? meals[dayIndex] : { meals };
@@ -140,16 +181,15 @@ const NutritionScreen = ({ navigation }) => {
           }
 
           let totalTarget = {
-            calories: activePlan.totalCalories || 1600,
-            protein: activePlan.macronutrients?.protein?.grams || 120,
-            carbs: activePlan.macronutrients?.carbs?.grams || 200,
-            fat: activePlan.macronutrients?.fat?.grams || 50
+            calories: activePlanData.totalCalories || 1600,
+            protein: activePlanData.macronutrients?.protein?.grams || 120,
+            carbs: activePlanData.macronutrients?.carbs?.grams || 200,
+            fat: activePlanData.macronutrients?.fat?.grams || 50
           };
 
           mealTypes.forEach((type) => {
             const meal = todayData.meals[type];
             if (meal) {
-              // Check if this meal type has been logged today in FoodLogs
               const isLogged = logResponse.data.data?.logs?.some(l => l.mealType.toLowerCase() === type.toLowerCase()) || false;
 
               mealsArray.push({
@@ -170,8 +210,6 @@ const NutritionScreen = ({ navigation }) => {
             }
           });
 
-          // Update completedMeals state with loaded data
-          setCompletedMeals(completionStatusMap);
           setTodayMeals(mealsArray);
           setNutritionGoals({
             calories: { consumed: totalConsumed.calories, target: totalTarget.calories },
@@ -224,6 +262,10 @@ const NutritionScreen = ({ navigation }) => {
       case 'snack': return '#A855F7';
       default: return '#A8390D';
     }
+  };
+
+  const handleMealPress = (mealData) => {
+    navigation.navigate('MealDetail', { meal: mealData });
   };
 
   const toggleMealCompleted = async (type) => {
@@ -351,6 +393,65 @@ const NutritionScreen = ({ navigation }) => {
         <View style={styles.macroProgressBar}>
           <View style={[styles.macroProgressFill, { width: `${percentage}%`, backgroundColor: color }]} />
         </View>
+      </View>
+    );
+  };
+
+  const handleGenerateAIPlan = async () => {
+    setIsGeneratingPlan(true);
+    try {
+      const response = await aiAPI.generateMealPlan({
+        duration: 7,
+        mealsPerDay: 4,
+        dietaryRestrictions: [],
+        cuisinePreferences: ['Vietnamese', 'Healthy'],
+        allergies: []
+      });
+      if (response.data.success) {
+        Alert.alert('Success', 'AI has generated a new meal plan for you!');
+        fetchData();
+      }
+    } catch (error) {
+      console.error('AI Gen Error:', error);
+      Alert.alert('AI Error', 'Failed to generate meal plan. Please check your network.');
+    } finally {
+      setIsGeneratingPlan(false);
+    }
+  };
+
+  const renderDateSelector = () => {
+    if (!activePlan) return null;
+
+    const startDate = new Date(activePlan.startDate || new Date());
+    const days = [];
+    const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+    for (let i = 0; i < (activePlan.duration || 7); i++) {
+      const date = new Date(startDate);
+      date.setDate(startDate.getDate() + i);
+      days.push({
+        name: weekDays[date.getDay()],
+        date: date.getDate(),
+        index: i,
+        fullDate: date
+      });
+    }
+
+    return (
+      <View style={styles.dateSelector}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.dateSelectorContent}>
+          {days.map((day) => (
+            <TouchableOpacity
+              key={day.index}
+              style={[styles.dayItem, selectedDayIndex === day.index && styles.dayItemActive]}
+              onPress={() => setSelectedDayIndex(day.index)}
+            >
+              <Text style={[styles.dayName, selectedDayIndex === day.index && styles.dayNameActive]}>{day.name}</Text>
+              <Text style={[styles.dateNumber, selectedDayIndex === day.index && styles.dateNumberActive]}>{day.date}</Text>
+              {selectedDayIndex === day.index && <View style={styles.activeDot} />}
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
       </View>
     );
   };
@@ -483,12 +584,11 @@ const NutritionScreen = ({ navigation }) => {
                 );
               }
 
-              // Case: HAS PLAN for this meal type -> Show details (always visible)
               return (
                 <TouchableOpacity
                   key={type}
                   style={[styles.mealCard, !meal.logged && { borderLeftWidth: 4, borderLeftColor: '#FF7849' }]}
-                  onPress={() => toggleMealCompleted(type)}
+                  onPress={() => handleMealPress(meal)}
                 >
                   <View style={styles.mealCardHeader}>
                     <View style={styles.mealTitleRow}>
@@ -549,38 +649,110 @@ const NutritionScreen = ({ navigation }) => {
             })}
           </>
         ) : (
-          /* Weekly View Placeholder */
-          <View style={styles.weeklyContainer}>
-            <Text style={styles.chartTitle}>Calorie Intake History</Text>
-            <LineChart
-              data={weeklyData}
-              width={Dimensions.get('window').width - 48}
-              height={220}
-              chartConfig={{
-                backgroundColor: '#ffffff',
-                backgroundGradientFrom: '#ffffff',
-                backgroundGradientTo: '#ffffff',
-                decimalPlaces: 0,
-                color: (opacity = 1) => `rgba(255, 120, 73, ${opacity})`,
-                labelColor: (opacity = 1) => `rgba(88, 66, 59, ${opacity})`,
-                style: { borderRadius: 16 },
-                propsForDots: { r: '6', strokeWidth: '2', stroke: '#FF7849' }
-              }}
-              bezier
-              style={{ marginVertical: 8, borderRadius: 16 }}
-            />
-
-            <View style={styles.weeklyStatsCard}>
-              <View style={styles.weeklyStatItem}>
-                <Text style={styles.weeklyStatLabel}>Weekly Avg</Text>
-                <Text style={styles.weeklyStatValue}>1,600 kcal</Text>
-              </View>
-              <View style={styles.weeklyStatDivider} />
-              <View style={styles.weeklyStatItem}>
-                <Text style={styles.weeklyStatLabel}>Goal Status</Text>
-                <Text style={[styles.weeklyStatValue, { color: '#10B981' }]}>On Track</Text>
-              </View>
+          /* High-Fidelity Weekly View */
+          <View style={styles.weeklyScheduleContainer}>
+            <View style={styles.weeklyHeader}>
+              <Text style={styles.weeklyTitle}>
+                {activePlan ? new Date(activePlan.startDate).toLocaleString('default', { month: 'long' }) : 'September'}
+              </Text>
+              <TouchableOpacity>
+                <Text style={styles.viewAllLink}>View all</Text>
+              </TouchableOpacity>
             </View>
+
+            {renderDateSelector()}
+
+            {!activePlan ? (
+              <View style={styles.planEmptyState}>
+                <Icon name="restaurant-outline" size={48} color="#A8390D" style={{ opacity: 0.2 }} />
+                <Text style={styles.emptyStateTitle}>No Active Meal Plan</Text>
+                <Text style={styles.emptyStateDesc}>
+                  Generate a personalized AI meal plan to track your nutrition effectively.
+                </Text>
+                <TouchableOpacity
+                  style={styles.generatePlanButton}
+                  onPress={handleGenerateAIPlan}
+                  disabled={isGeneratingPlan}
+                >
+                  {isGeneratingPlan ? (
+                    <ActivityIndicator color="#FFFFFF" size="small" />
+                  ) : (
+                    <>
+                      <Icon name="sparkles" size={20} color="#FFFFFF" />
+                      <Text style={styles.generatePlanButtonText}>Generate AI Plan</Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <View>
+                {/* Meal Cards for Selected Day */}
+                {(() => {
+                  const dayData = Array.isArray(activePlan.meals) ? activePlan.meals[selectedDayIndex] : activePlan.meals;
+                  if (!dayData || !dayData.meals) return null;
+
+                  return ['breakfast', 'lunch', 'dinner', 'snack'].map((type) => {
+                    const meal = dayData.meals[type];
+                    if (!meal) return null;
+
+                    return (
+                      <View key={type} style={styles.mealCard}>
+                        <View style={styles.mealCardHeader}>
+                          <View style={styles.mealTitleRow}>
+                            <View style={[styles.mealIconContainer, { backgroundColor: getMealIconBg(type) }]}>
+                              <Icon name={getMealIcon(type)} size={22} color={getMealIconColor(type)} />
+                            </View>
+                            <View style={styles.mealInfoContainer}>
+                              <Text style={styles.mealTypeTitle}>{type.charAt(0).toUpperCase() + type.slice(1)}</Text>
+                              <View style={styles.mealMetaContainer}>
+                                <Text style={styles.mealTimeText}>{meal.time || getDefaultTime(type)}</Text>
+                                <View style={styles.mealDotSeparator} />
+                                <Text style={styles.mealMacrosMeta}>
+                                  {meal.macros?.protein}g Protein
+                                </Text>
+                              </View>
+                            </View>
+                          </View>
+                          <View style={styles.mealCalorieContainer}>
+                            <Text style={styles.mealCalorieValue}>{meal.totalCalories}</Text>
+                            <Text style={styles.mealCalorieLabel}>kcal</Text>
+                          </View>
+                        </View>
+
+                        <View style={styles.mealDivider} />
+
+                        <View style={styles.foodItemsList}>
+                          {meal.foods?.map((food, idx) => (
+                            <View key={idx} style={styles.foodItemRow}>
+                              <View style={styles.foodItemTextGroup}>
+                                <Text style={styles.foodItemName}>{food.name}</Text>
+                                <Text style={styles.foodItemWeight}>{food.amount || '1 serving'}</Text>
+                              </View>
+                              <Text style={styles.foodItemKcal}>{food.calories} kcal</Text>
+                            </View>
+                          ))}
+                        </View>
+                      </View>
+                    );
+                  });
+                })()}
+
+                <TouchableOpacity
+                  style={styles.generateNewPlanBtn}
+                  onPress={handleGenerateAIPlan}
+                  disabled={isGeneratingPlan}
+                >
+                  {isGeneratingPlan ? (
+                    <ActivityIndicator color="#FBF8FC" size="small" />
+                  ) : (
+                    <>
+                      <Icon name="sparkles" size={20} color="#FBF8FC" />
+                      <Text style={styles.generateNewPlanBtnText}>Generate New Plan</Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+              </View>
+            )}
           </View>
         )}
       </ScrollView>

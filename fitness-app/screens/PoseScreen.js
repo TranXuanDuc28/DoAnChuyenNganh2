@@ -1212,7 +1212,11 @@ const PoseScreen = () => {
           </Text>
 
           <TouchableOpacity
-            onPress={() => Alert.alert('History', 'History feature triggered')}
+            onPress={() => navigation.navigate('PoseHistory', { 
+              exerciseName: currentExercise, 
+              exerciseTitle: exerciseTitle,
+              exerciseMode: isRealTimeMode ? 'video' : 'image'
+            })}
             style={{ position: 'absolute', right: 16, top: 40, padding: 6, backgroundColor: '#000', borderRadius: 20, marginTop: 20 }}
           >
             <Icon name="time" size={18} color="#fff" />
