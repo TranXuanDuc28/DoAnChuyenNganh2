@@ -1,36 +1,61 @@
-# React Native
-Template này được sử dụng cho video hướng dẫn React Native (basic) của tác giả Hỏi Dân IT (Eric)
+# Fitness AI Mobile Application
 
-### Môi trường chạy dự án: Node.js v20.14.0
-https://nodejs.org/download/release/v20.14.0/
+A state-of-the-art mobile application built with React Native and Expo, designed to help you reach your fitness goals through AI-powered pose detection, personalized workouts, and smart nutrition tracking.
 
-## Về tác giả
-Mọi thông tin về Tác giả Hỏi Dân IT, các bạn có thể tìm kiếm tại đây:
+## ✨ Features
 
-Website chính thức: https://hoidanit.vn/
+- **Personalized Workout Plans**: AI-generated workout schedules tailored to your fitness level.
+- **Pose Analysis**: Use your camera to get real-time feedback on your exercise form.
+- **Social Feed**: Join challenges and share your progress with friends.
+- **Nutrition Diary**: Track your daily meals and water intake.
+- **AI Assistant**: A dedicated health assistant powered by Gemini AI.
+- **Push Notifications**: Stay motivated with reminders and goal updates.
 
-Youtube “Hỏi Dân IT” : https://www.youtube.com/@hoidanit
+## 🛠️ Tech Stack
 
-Tiktok “Hỏi Dân IT” :  https://www.tiktok.com/@hoidanit
+- **Framework**: React Native (Expo)
+- **Language**: TypeScript
+- **State Management**: Context API
+- **Networking**: Axios
+- **Animations**: Reanimated, Layout Animation
+- **Icons**: Expo Vector Icons (Ionicons)
 
-Fanpage “Hỏi Dân IT” : https://www.facebook.com/askITwithERIC/
+## 🚀 Getting Started
 
-Udemy Hỏi Dân IT: https://www.udemy.com/user/eric-7039/
+### Prerequisites
 
-===
+- **Node.js**: v20 or higher
+- **Expo Go App**: Installed on your physical device or use an Android/iOS emulator.
 
-Các bước cài đặt: (chế độ development)
-1. clone code
-2. cài đặt thư viện: npm i
-3. Update file .env (nếu cần thiết)
-4. Chạy dự án:  npm start | hoặc | npm run dev 
+### Setup
 
-## Nhận diện tư thế (Pose)
+1.  Navigate to the `fitness-app/` directory.
+2.  Install dependencies:
+    ```bash
+    npm install
+    ```
+3.  Configure environment variables:
+    Create a `.env` file and set your Backend API host:
+    ```env
+    EXPO_PUBLIC_API_URL=http://your-local-ip:5000/api
+    ```
+4.  Start the application:
+    ```bash
+    npx expo start
+    ```
 
-- Mở tab `Pose` trong app.
-- Nhấn "Đánh giá tư thế" để chụp hình và gửi lên server.
-- Server sẽ trả về điểm số và đánh giá đúng/sai theo bài tập (mặc định: squat).
+### Mobile Connection Tips
+- **Android Emulator**: Uses `10.0.2.2` as host.
+- **Physical Device**: Ensure your phone and computer are on the same Wi-Fi network. Use your computer's local IP (e.g., `192.168.1.x`) in the `.env` file.
 
-Lưu ý phát triển:
-- Nếu chạy Android emulator: API base URL tự động dùng `10.0.2.2` (được cấu hình trong `services/api.js`).
-- Máy thật cần đặt biến môi trường `REACT_NATIVE_API_HOST` bằng IP máy chạy backend, hoặc sửa trực tiếp trong `services/api.js`.
+## 📁 Project Structure
+
+- `screens/`: All application screens.
+- `components/`: Reusable UI components.
+- `context/`: Application state providers (Auth, Theme).
+- `services/`: API integration layer.
+- `theme/`: Global styles and color palettes.
+- `utils/`: Helper functions.
+
+---
+© 2024 Fitness AI - Mobile Engineering Team

@@ -1,51 +1,74 @@
-# Backend - Pose Recognition (Node.js + MySQL)
+# Fitness Ecosystem Backend
 
-## Yêu cầu
-- Node.js >= 18
-- MySQL >= 8 (hoặc 5.7)
-- Windows cần build tools khi cài `@tensorflow/tfjs-node` (Visual Studio Build Tools, Python 3.8+). Nếu gặp lỗi, dùng WSL hoặc Docker.
+This is the core server for the Fitness AI project, built with Node.js, Express, and MySQL. It handles user management, workout tracking, nutrition logging, and coordinates with the AI service for pose recognition.
 
-## Cấu hình
-Tạo file `.env` trong thư mục `backend`:
+## 🌟 Key Features
 
-```
-DB_HOST=localhost
-DB_PORT=3306
-DB_USER=root
-DB_PASSWORD=
-DB_NAME=fitness_app
-NODE_ENV=development
-```
+- **User Authentication**: Secure JWT-based login, registration, and profile management.
+- **Pose Recognition API**: Automated exercise form analysis using MoveNet and a specialized Python service.
+- **AI Recommendations**: Personalized workout and nutrition plans generated using Gemini AI.
+- **Multi-Client support**: Serves both a Mobile App (React Native) and an Admin Dashboard (Vite).
+- **WebSockets**: Real-time communication for live pose analysis.
+- **Task Scheduling**: Automated workout reminders and data processing via cron jobs.
 
-## Cài đặt
-```
-cd backend
-npm i
-```
+## 🛠️ Technology Stack
 
-Lưu ý: gói `@tensorflow/tfjs-node` có thể mất vài phút để cài đặt.
+- **Node.js & Express**: API framework.
+- **Sequelize ORM**: Database management (MySQL).
+- **Socket.IO**: Real-time feedback.
+- **TensorFlow.js**: Server-side computer vision.
+- **Child Processes**: Integration with Python-based ML services.
 
-## Chạy server
-```
-npm run dev
-```
-Server mặc định chạy tại `http://localhost:5000`.
+## ⚙️ Configuration
 
-## Database
-Sequelize sẽ tự động `sync` schema. Bảng mới:
-- `pose_logs` – lưu mỗi lần đánh giá tư thế
+1.  **Clone the project** and navigate to the `backend/` directory.
+2.  **Install dependencies**:
+    ```bash
+    npm install
+    ```
+3.  **Setup Environment Variables**:
+    Create a `.env` file based on `.env.example`:
+    ```env
+    PORT=5000
+    DB_HOST=localhost
+    DB_USER=root
+    DB_PASSWORD=
+    DB_NAME=fitness_app
+    JWT_SECRET=your_secret_key
+    GEMINI_API_KEY=your_gemini_key
+    ```
+4.  **Database Migration**:
+    The system will automatically sync tables on startup. To seed initial data:
+    ```bash
+    npm run dev -- --seed
+    ```
 
-## API
-- POST `/api/pose/evaluate`
-  - body: `{ userId?, exerciseName: 'squat'|'plank', imageBase64? , keypoints? }`
-  - trả về: `{ success, isCorrect, score, angles, logId }`
-- GET `/api/pose/history?userId=&limit=`
-  - trả về: `{ success, items }`
+## 🚀 Running the Server
 
-## Mô hình nhận diện
-- Server dùng MoveNet (pose-detection) qua `@tensorflow/tfjs-node`.
-- Nếu gửi `keypoints` từ client thì server bỏ qua bước detect và chỉ đánh giá/gán điểm.
+- **Development Mode**:
+  ```bash
+  npm run dev
+  ```
+- **Production Mode**:
+  ```bash
+  npm start
+  ```
 
-## Troubleshooting
-- Lỗi cài `tfjs-node` trên Windows: cài Visual Studio Build Tools, Python, hoặc chạy trong WSL/Docker.
-- RAM/CPU cao khi detect ảnh: gửi `keypoints` từ client sẽ nhẹ hơn nhiều.
+## 🔌 API Endpoints (Overview)
+
+| Endpoint | Method | Description |
+| :--- | :--- | :--- |
+| `/api/auth` | POST/GET | User authentication and session management. |
+| `/api/pose/evaluate` | POST | Analyze exercise pose using TensorFlow.js (Base64/Keypoints). |
+| `/api/pose/evaluate-pose` | POST | Deep analysis using Python ML service (Advanced). |
+| `/api/workouts` | GET/POST | Manage workouts and exercise database. |
+| `/api/nutrition` | GET/POST | Log meals and track nutritional intake. |
+| `/api/admin` | ALL | Administrative tasks (User management, stats). |
+
+## 🧠 ML Integration (Python Service)
+
+The backend interacts with a Python-based pose recognition service located in `/Yoga-Posture-Detection-using-Mediapipe`.
+Ensure you have Python installed and the required dependencies for that service to enable high-fidelity pose scoring.
+
+---
+© 2024 Fitness AI - Engineering Team

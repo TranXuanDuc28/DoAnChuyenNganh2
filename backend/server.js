@@ -136,10 +136,7 @@ app.use('/api/dashboard', require('./routes/dashboard'));
 // Static serving for category images stored inside the fitness app image folder
 const categoryImagesDir = path.join(__dirname, '..', 'fitness-app', 'image');
 app.use('/static/category-images', express.static(categoryImagesDir));
-// Python-based pose scoring endpoint (calls Yoga-Posture-Detection main1.py)
-// mounted under /api/pose/evaluate-pose -> full path: /api/pose/evaluate-pose
-app.use('/api/pose', require('./routes/poseScoring'));
-app.use('/api/push', require('./routes/push'));
+
 app.use('/api/video-analysis', require('./routes/videoAnalysis'));
 
 // Error handling middleware
