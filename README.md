@@ -52,4 +52,4 @@ To get the entire system running, follow the setup guides in each sub-directory:
 
 ---
 
-© 2024 Xuan Duc - Do An Chuyen Nganh 2
+© 2024 Xuan Duc 
