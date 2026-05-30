@@ -208,8 +208,11 @@ const WorkoutPlanDetailScreen = ({ route, navigation }) => {
           </View>
         </View>
 
-        {exercise?.imageUrl ? (
-          <Image source={{ uri: exercise.imageUrl }} style={styles.exerciseImage} />
+        {(exercise?.imageUrl || exercise?.image_url) ? (
+          <Image
+            source={(exercise.imageUrl || exercise.image_url) ? { uri: exercise.imageUrl || exercise.image_url } : null}
+            style={styles.exerciseImage}
+          />
         ) : (
           <View style={[styles.exerciseImage, { justifyContent: 'center', alignItems: 'center' }]}>
             <Icon name="fitness" size={24} color="#A8390D" style={{ opacity: 0.3 }} />

@@ -11,6 +11,17 @@ import { StatusBar } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons as Icon } from '@expo/vector-icons';
 import * as Notifications from 'expo-notifications';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 2,
+      staleTime: 1000 * 60 * 5, // 5 minutes
+      cacheTime: 1000 * 60 * 30, // 30 minutes
+    },
+  },
+});
 
 // Configure notification handler
 Notifications.setNotificationHandler({
@@ -60,6 +71,11 @@ import PostDetailsScreen from './screens/PostDetailsScreen';
 import ProgressScreen from './screens/ProgressScreen';
 import MealDetailScreen from './screens/MealDetailScreen';
 import AllergyPreferenceScreen from './screens/AllergyPreferenceScreen';
+import ChallengesScreen from './screens/ChallengesScreen';
+import ChallengeDetailScreen from './screens/ChallengeDetailScreen';
+import LeaderboardScreen from './screens/LeaderboardScreen';
+import CreatePostScreen from './screens/CreatePostScreen';
+import WaterTrackingScreen from './screens/WaterTrackingScreen';
 
 // Import components
 import CustomBottomNavBar from './components/CustomBottomNavBar';
@@ -325,6 +341,55 @@ const AppNavigator = () => {
               headerShown: false,
             }}
           />
+          <Stack.Screen
+            name="Challenges"
+            component={ChallengesScreen}
+            options={{
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="ChallengeDetail"
+            component={ChallengeDetailScreen}
+            options={{
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="Leaderboard"
+            component={LeaderboardScreen}
+            options={{
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="CreatePost"
+            component={CreatePostScreen}
+            options={{
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="Health"
+            component={HealthScreen}
+            options={{
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="Statistics"
+            component={StatisticsScreen}
+            options={{
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="WaterTracking"
+            component={WaterTrackingScreen}
+            options={{
+              headerShown: false,
+            }}
+          />
         </Stack.Navigator>
       ) : (
         <AuthNavigator />
@@ -361,10 +426,12 @@ const App = () => {
   }, []);
 
   return (
-    <AuthProvider>
-      <StatusBar barStyle="dark-content" backgroundColor={colors.primary} />
-      <AppNavigator />
-    </AuthProvider>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <StatusBar barStyle="dark-content" backgroundColor={colors.primary} />
+        <AppNavigator />
+      </AuthProvider>
+    </QueryClientProvider>
   );
 };
 

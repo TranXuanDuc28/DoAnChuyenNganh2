@@ -22,16 +22,26 @@ const CHALLENGES = [
   {
     id: '1',
     title: 'Morning HIIT Blast',
+    category: 'High Intensity',
     participants: '4.2k Active Participants',
     badge: '14 DAYS LEFT',
     image: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&q=80',
+    duration: '14 Days',
+    reward: 'HIIT Warrior',
+    intensity: 'High',
+    description: 'Transform your mornings with high-intensity interval training. This challenge is designed to boost your metabolism and build explosive strength through quick, powerful movements.\n\nOver the next 14 days, you will push your limits with short bursts of maximum effort followed by recovery periods. Perfect for those with busy schedules who want maximum results in minimum time.',
   },
   {
     id: '2',
-    title: 'Mindful Yoga',
+    title: 'Mindful Yoga Flow',
+    category: 'Yoga Mastery',
     participants: '1.8k Active Participants',
     badge: 'NEW',
     image: 'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&q=80',
+    duration: '30 Days',
+    reward: 'Zen Master',
+    intensity: 'Intermediate',
+    description: 'Find your balance and improve your flexibility with our Mindful Yoga Flow challenge. This program focuses on connecting breath with movement to build functional strength and mental clarity.\n\nWhether you are a beginner or an experienced yogi, this 30-day journey will help you deepen your practice and find a sense of calm in your daily life.',
   },
 ];
 
@@ -77,7 +87,11 @@ const SocialScreen = ({ navigation }) => {
           </View>
         )}
       </View>
-      <TouchableOpacity style={styles.quickPostInput} activeOpacity={0.8}>
+      <TouchableOpacity 
+        style={styles.quickPostInput} 
+        activeOpacity={0.8}
+        onPress={() => navigation.navigate('CreatePost')}
+      >
         <Text style={styles.quickPostText}>What's on your mind?</Text>
       </TouchableOpacity>
       <TouchableOpacity style={styles.imageIconBtn}>
@@ -87,7 +101,11 @@ const SocialScreen = ({ navigation }) => {
   );
 
   const renderChallengeCard = ({ item }) => (
-    <TouchableOpacity style={styles.challengeCard} activeOpacity={0.9}>
+    <TouchableOpacity 
+      style={styles.challengeCard} 
+      activeOpacity={0.9}
+      onPress={() => navigation.navigate('ChallengeDetail', { challenge: item })}
+    >
       <Image source={{ uri: item.image }} style={styles.challengeImage} />
       <LinearGradient
         colors={['transparent', 'rgba(0,0,0,0.85)']}
@@ -98,7 +116,10 @@ const SocialScreen = ({ navigation }) => {
         </View>
         <Text style={styles.challengeTitle}>{item.title}</Text>
         <Text style={styles.challengeStats}>{item.participants}</Text>
-        <TouchableOpacity style={styles.joinBtn}>
+        <TouchableOpacity 
+          style={styles.joinBtn}
+          onPress={() => navigation.navigate('ChallengeDetail', { challenge: item })}
+        >
           <Text style={styles.joinBtnText}>Join Challenge</Text>
         </TouchableOpacity>
       </LinearGradient>
@@ -174,7 +195,10 @@ const SocialScreen = ({ navigation }) => {
             <Text style={styles.trendingTag}>Trending Now</Text>
             <Text style={styles.sectionTitle}>Challenges</Text>
           </View>
-          <TouchableOpacity style={styles.viewAllBtn}>
+          <TouchableOpacity 
+            style={styles.viewAllBtn}
+            onPress={() => navigation.navigate('Challenges')}
+          >
             <Text style={styles.viewAllText}>View All</Text>
           </TouchableOpacity>
         </View>

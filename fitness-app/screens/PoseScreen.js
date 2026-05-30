@@ -17,6 +17,7 @@ import PoseAnalyzer from '../components/PoseDetector';
 import HistoryTabs from '../components/HistoryTabs';
 import PoseOverlay from '../components/PoseOverlay';
 import { LinearGradient } from 'expo-linear-gradient';
+import { compressImage } from '../utils/imageUtils';
 function detectMimeFromBase64(b64) {
   if (!b64 || typeof b64 !== 'string') return 'image/jpeg';
   const p = b64.substring(0, 6);
@@ -605,7 +606,7 @@ const PoseScreen = () => {
       }
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: 'images',
-        quality: 0.5,
+        quality: 1.0, // High quality because we will compress it manually
         base64: true,
         allowsEditing: false,
       });
@@ -615,44 +616,33 @@ const PoseScreen = () => {
         return;
       }
       const asset = result.assets && result.assets[0];
-      if (!asset?.base64) {
+      if (!asset) {
         Alert.alert('Lỗi', 'Không đọc được ảnh đã chọn');
         setDetectionStatus('idle');
         return;
       }
-      setPreviewUri(asset.uri);
+
+      // Compress and resize image
+      const compressed = await compressImage(asset.uri, 1024, 0.8);
+      setPreviewUri(compressed.uri);
+
       let base64Data;
       try {
         const encodingOption = FileSystem.EncodingType?.Base64 || 'base64';
-        base64Data = await FileSystem.readAsStringAsync(asset.uri, {
+        base64Data = await FileSystem.readAsStringAsync(compressed.uri, {
           encoding: encodingOption,
         });
 
-        console.log('[pickAndEvaluate] Read base64 from file, length:', base64Data.length);
-
-        if (!base64Data || base64Data.length < 100) {
-          throw new Error('Base64 data is too short or empty');
-        }
+        console.log('[pickAndEvaluate] Read compressed base64, length:', base64Data.length);
       } catch (readError) {
-        console.error('[pickAndEvaluate] Failed to read image as base64:', readError);
-        Alert.alert('Lỗi', 'Không thể đọc ảnh đã chọn');
+        console.error('[pickAndEvaluate] Failed to read compressed image:', readError);
+        Alert.alert('Lỗi', 'Không thể đọc ảnh sau khi nén');
         setDetectionStatus('idle');
         setIsProcessing(false);
         return;
       }
 
-      // Determine mime from base64 and convert PNG->JPEG if needed
-      let mimeType = detectMimeFromBase64(base64Data) || asset.mimeType || 'image/jpeg';
-      try {
-        if (mimeType === 'image/png') {
-          const converted = await convertBase64PngToJpeg(base64Data);
-          base64Data = converted;
-          mimeType = 'image/jpeg';
-          console.log('[pickAndEvaluate] Converted PNG->JPEG for upload');
-        }
-      } catch (convErr) {
-        console.warn('[pickAndEvaluate] PNG->JPEG conversion failed:', convErr.message || convErr);
-      }
+      const mimeType = 'image/jpeg';
       const imageBase64 = `data:${mimeType};base64,${base64Data}`;
       // const resp = await poseAPI.evaluate({
       //   user_id: user?.id,

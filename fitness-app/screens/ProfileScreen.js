@@ -19,6 +19,7 @@ import { Ionicons as Icon } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
 import colors from '../theme/colors';
 import { styles } from './styles/ProfileScreen.styles';
+import { compressImage } from '../utils/imageUtils';
 
 const ProfileScreen = () => {
   const navigation = useNavigation();
@@ -207,7 +208,8 @@ const ProfileScreen = () => {
       });
 
       if (!result.canceled && result.assets[0]) {
-        await handleUploadImage(result.assets[0].uri);
+        const compressedImage = await compressImage(result.assets[0].uri);
+        await handleUploadImage(compressedImage.uri);
       }
     } catch (error) {
       console.error('Pick image error:', error);

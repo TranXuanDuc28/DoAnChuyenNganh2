@@ -80,7 +80,7 @@ const ExerciseDetailScreen = ({ route, navigation }) => {
     return (
       <View style={styles.heroSection}>
         <Image
-          source={exercise.imageUrl ? { uri: exercise.imageUrl } : FALLBACK_HERO}
+          source={(exercise.imageUrl || exercise.image_url) ? { uri: exercise.imageUrl || exercise.image_url } : FALLBACK_HERO}
           style={styles.heroImage}
         />
         <LinearGradient
@@ -202,7 +202,7 @@ const ExerciseDetailScreen = ({ route, navigation }) => {
             onPress={() => navigation.push('ExerciseDetail', { exercise: item })}
           >
             <Image
-              source={item.imageUrl ? { uri: item.imageUrl } : FALLBACK_THUMB}
+              source={(item.imageUrl || item.image_url) ? { uri: item.imageUrl || item.image_url } : FALLBACK_THUMB}
               style={styles.exerciseThumb}
               resizeMode="cover"
             />

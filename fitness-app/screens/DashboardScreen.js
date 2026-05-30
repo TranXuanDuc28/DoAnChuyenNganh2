@@ -5,7 +5,6 @@ import {
   ScrollView,
   TouchableOpacity,
   RefreshControl,
-  Image,
   ImageBackground,
   ActivityIndicator,
   Platform,
@@ -17,58 +16,69 @@ import Svg, { Circle } from 'react-native-svg';
 import { useAuth } from '../context/AuthContext';
 import { styles } from './styles/DashboardScreen.styles';
 import { dashboardAPI } from '../services/api';
+import { useQuery } from '@tanstack/react-query';
+import Skeleton from '../components/Skeleton';
+import { Image } from 'expo-image';
 
 const DashboardScreen = () => {
   const { user } = useAuth();
   const navigation = useNavigation();
-  const [refreshing, setRefreshing] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [todayStats, setTodayStats] = useState({
+
+  const todayStats = {
     steps: 8450,
     calories: 320,
     activeMinutes: 45,
     water: 6,
     sleep: 7.5,
     heartRate: 72,
-  });
-
-  const fetchDashboardData = async () => {
-    try {
-      const statsRes = await dashboardAPI.getStats();
-      if (statsRes.data && statsRes.data.success) {
-        setTodayStats(statsRes.data.stats);
-      }
-    } catch (err) {
-      console.log('Error fetching dashboard data:', err);
-    } finally {
-      setTimeout(() => {
-        setLoading(false);
-        setRefreshing(false);
-      }, 500);
-    }
   };
 
-  useEffect(() => {
-    fetchDashboardData();
-  }, []);
+  const {
+    data: dashboardData,
+    isLoading: loading,
+    refetch,
+    isRefetching: refreshing
+  } = useQuery({
+    queryKey: ['dashboardStats'],
+    queryFn: async () => {
+      const res = await dashboardAPI.getStats();
+      return res.data?.success ? res.data.stats : todayStats;
+    }
+  });
 
-  const onRefresh = async () => {
-    setRefreshing(true);
-    fetchDashboardData();
+  const stats = dashboardData || todayStats;
+
+  const onRefresh = () => {
+    refetch();
   };
 
   if (loading) {
     return (
-      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-        <ActivityIndicator size="large" color="#E76F51" />
+      <View style={styles.container}>
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          <View style={styles.topHeaderBar}>
+            <Skeleton width={120} height={40} borderRadius={20} />
+            <Skeleton width={38} height={38} borderRadius={19} />
+          </View>
+          <View style={styles.headerContainer}>
+            <Skeleton width={150} height={20} style={{ marginBottom: 10 }} />
+            <Skeleton width={200} height={60} />
+          </View>
+          <View style={styles.topStatsRow}>
+            <Skeleton width="48%" height={100} borderRadius={15} />
+            <Skeleton width="48%" height={100} borderRadius={15} />
+          </View>
+          <Skeleton width="100%" height={200} borderRadius={20} style={{ marginTop: 20 }} />
+          <Skeleton width="100%" height={150} borderRadius={20} style={{ marginTop: 20 }} />
+        </ScrollView>
       </View>
     );
   }
 
-  const displaySteps = todayStats.steps || 999;
-  const displayCalories = todayStats.calories ? (todayStats.calories / 1000).toFixed(1) + 'k' : '12.4k';
-  const displayHR = todayStats.heartRate || 72;
-  const displayWater = todayStats.water ? (todayStats.water / 1000).toFixed(1) : '1.8';
+  const displaySteps = stats.steps || 999;
+  const displayCalories = stats.calories ? (stats.calories / 1000).toFixed(1) + 'k' : '12.4k';
+  const displayHR = stats.heartRate || 72;
+  const displayWater = stats.water ? (stats.water / 1000).toFixed(1) : '1.8';
   const stepGoal = 2000;
   const stepsProgress = Math.min(displaySteps / stepGoal, 1);
 
@@ -100,7 +110,7 @@ const DashboardScreen = () => {
             />
             <Text style={styles.brandText}>FITLIFE</Text>
           </View>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[styles.notificationIconBtn, {
               width: 38, height: 38, borderRadius: 19, backgroundColor: 'rgba(255,255,255,0.7)', alignItems: 'center', justifyContent: 'center'
             }]}
@@ -245,7 +255,7 @@ const DashboardScreen = () => {
             ))}
           </View>
 
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.viewProgressButton}
             onPress={() => navigation.navigate('Progress')}
           >
@@ -257,33 +267,38 @@ const DashboardScreen = () => {
         {/* Daily Challenge Section */}
         <View style={styles.sectionHeaderRow}>
           <Text style={styles.sectionTitle}>Daily Challenge</Text>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.navigate('Challenges')}>
             <Text style={styles.viewAllText}>View All</Text>
           </TouchableOpacity>
         </View>
 
-        <ImageBackground
-          source={require('../image/banner2.jpg')}
-          style={styles.challengeCard}
-          imageStyle={styles.challengeImageCover}
+        <TouchableOpacity
+          activeOpacity={0.9}
+          onPress={() => navigation.navigate('Challenges')}
         >
-          <View style={styles.challengeOverlay}>
-            <View style={styles.liveBadge}>
-              <Text style={styles.liveBadgeText}>Live Now</Text>
-            </View>
-            <Text style={styles.challengeTitle}>Morning HIIT{'\n'}Blast</Text>
-            <View style={styles.challengeMetaRow}>
-              <View style={styles.challengeMetaItem}>
-                <Icon name="time-outline" size={16} color="rgba(255,255,255,0.9)" />
-                <Text style={styles.challengeMetaText}>25 min</Text>
+          <ImageBackground
+            source={require('../image/banner2.jpg')}
+            style={styles.challengeCard}
+            imageStyle={styles.challengeImageCover}
+          >
+            <View style={styles.challengeOverlay}>
+              <View style={styles.liveBadge}>
+                <Text style={styles.liveBadgeText}>Live Now</Text>
               </View>
-              <View style={styles.challengeMetaItem}>
-                <Icon name="medal-outline" size={16} color="rgba(255,255,255,0.9)" />
-                <Text style={styles.challengeMetaText}>Expert</Text>
+              <Text style={styles.challengeTitle}>Morning HIIT{'\n'}Blast</Text>
+              <View style={styles.challengeMetaRow}>
+                <View style={styles.challengeMetaItem}>
+                  <Icon name="time-outline" size={16} color="rgba(255,255,255,0.9)" />
+                  <Text style={styles.challengeMetaText}>25 min</Text>
+                </View>
+                <View style={styles.challengeMetaItem}>
+                  <Icon name="medal-outline" size={16} color="rgba(255,255,255,0.9)" />
+                  <Text style={styles.challengeMetaText}>Expert</Text>
+                </View>
               </View>
             </View>
-          </View>
-        </ImageBackground>
+          </ImageBackground>
+        </TouchableOpacity>
         {/* Recommendation Section */}
         <View style={styles.sectionHeaderRow}>
           <Text style={styles.sectionTitle}>Recommendation</Text>
@@ -308,13 +323,19 @@ const DashboardScreen = () => {
         {/* Biometrics Section */}
         <View style={styles.sectionHeaderRow}>
           <Text style={styles.sectionTitle}>Biometrics</Text>
-          <TouchableOpacity style={styles.biometricsAddCircle}>
+          {/* <TouchableOpacity 
+            style={styles.biometricsAddCircle}
+            onPress={() => navigation.navigate('Health')}
+          >
             <Icon name="add" size={24} color="#FFF" />
-          </TouchableOpacity>
+          </TouchableOpacity> */}
         </View>
 
         <View style={styles.biometricsGridRow}>
-          <View style={styles.bioCard}>
+          <TouchableOpacity
+            style={styles.bioCard}
+          //onPress={() => navigation.navigate('Statistics', { type: 'heart-rate' })}
+          >
             <View style={styles.bioCardHeaderRow}>
               <View style={[styles.bioIconCircle, { backgroundColor: '#FDECEB' }]}>
                 <Icon name="heart" size={22} color="#D92D20" />
@@ -326,9 +347,12 @@ const DashboardScreen = () => {
               <Text style={styles.bioValueNum}>{displayHR}</Text>
               <Text style={styles.bioValueUnit}>BPM</Text>
             </View>
-          </View>
+          </TouchableOpacity>
 
-          <View style={styles.bioCard}>
+          <TouchableOpacity
+            style={styles.bioCard}
+          //onPress={() => navigation.navigate('Statistics', { type: 'steps' })}
+          >
             <View style={styles.bioCardHeaderRow}>
               <View style={[styles.bioIconCircle, { backgroundColor: '#FFF0EA' }]}>
                 <Icon name="walk" size={24} color="#E76F51" />
@@ -342,10 +366,13 @@ const DashboardScreen = () => {
             <View style={styles.progressBarBg}>
               <View style={[styles.progressBarFill, { width: `${stepsProgress * 100}%` }]} />
             </View>
-          </View>
+          </TouchableOpacity>
         </View>
 
-        <View style={styles.bioFullCard}>
+        <TouchableOpacity
+          style={styles.bioFullCard}
+          onPress={() => navigation.navigate('WaterTracking')}
+        >
           <View style={[styles.bioIconCircle, { backgroundColor: '#F3E8FF' }]}>
             <Icon name="water" size={22} color="#9333EA" />
           </View>
@@ -356,10 +383,15 @@ const DashboardScreen = () => {
               <Text style={styles.bioValueUnit}>Liters</Text>
             </View>
           </View>
-          <TouchableOpacity style={styles.bioHydrationAddPill}>
+          <TouchableOpacity
+            style={styles.bioHydrationAddPill}
+            onPress={() => {
+              navigation.navigate('WaterTracking');
+            }}
+          >
             <Text style={styles.bioHydrationAddText}>ADD +</Text>
           </TouchableOpacity>
-        </View>
+        </TouchableOpacity>
 
       </ScrollView>
     </View>

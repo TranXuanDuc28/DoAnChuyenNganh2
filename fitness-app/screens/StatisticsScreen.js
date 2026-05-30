@@ -10,12 +10,29 @@ const StatisticsScreen = () => {
   const fetchStats = async () => {
     try {
       // Fetch some example stats: activity records and workout history
-      const [activityRes, workoutsRes] = await Promise.all([
-        healthAPI.getActivityRecords({ limit: 30 }),
-        workoutAPI.getWorkoutHistory({ limit: 30 })
-      ]);
+      // We use separate try-catch for each to allow partial data display
+      let activityData = [];
+      let workoutData = [];
 
-      setStats({ activities: activityRes.data, workouts: workoutsRes.data });
+      try {
+        const activityRes = await healthAPI.getActivityRecords({ limit: 30 });
+        if (activityRes.data && activityRes.data.success) {
+          activityData = activityRes.data.data;
+        }
+      } catch (err) {
+        console.error('Failed to fetch activity records:', err);
+      }
+
+      try {
+        const workoutsRes = await workoutAPI.getWorkoutHistory({ limit: 30 });
+        if (workoutsRes.data && workoutsRes.data.success) {
+          workoutData = workoutsRes.data.data;
+        }
+      } catch (err) {
+        console.error('Failed to fetch workout history:', err);
+      }
+
+      setStats({ activities: activityData, workouts: workoutData });
     } catch (error) {
       console.error('Failed to fetch statistics:', error);
     } finally {

@@ -5,10 +5,10 @@ import {
   ScrollView,
   TouchableOpacity,
   SafeAreaView,
-  ImageBackground,
   StatusBar,
   Alert
 } from 'react-native';
+import { Image } from 'expo-image';
 import { Ionicons as Icon, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { styles } from './styles/MealDetailScreen.styles';
@@ -17,7 +17,7 @@ import { aiAPI } from '../services/api';
 const MealDetailScreen = () => {
   const navigation = useNavigation();
   const route = useRoute();
-  
+
   // Get meal data from params or use default (from UIDL)
   const { meal = {
     name: 'Glazed Salmon Bowl',
@@ -37,17 +37,17 @@ const MealDetailScreen = () => {
       { name: 'Soy-Honey Glaze', amount: '15ml', calories: 45, icon: 'bottle-tonic-plus-outline' }
     ],
     preparation: [
-      { 
-        title: 'Prep the Base', 
-        desc: 'Rinse quinoa under cold water. Boil in salted water for 12-15 minutes until tender and fluffy. Let it cool slightly before plating.' 
+      {
+        title: 'Prep the Base',
+        desc: 'Rinse quinoa under cold water. Boil in salted water for 12-15 minutes until tender and fluffy. Let it cool slightly before plating.'
       },
-      { 
-        title: 'Sear the Protein', 
-        desc: 'Season the salmon with salt and pepper. Heat a pan over medium-high heat with olive oil. Sear for 4 minutes skin-side down until crispy.' 
+      {
+        title: 'Sear the Protein',
+        desc: 'Season the salmon with salt and pepper. Heat a pan over medium-high heat with olive oil. Sear for 4 minutes skin-side down until crispy.'
       },
-      { 
-        title: 'Assemble & Garnish', 
-        desc: 'Place quinoa as base. Slice avocado thinly and fan out. Add the salmon fillet and drizzle with lemon zest and fresh herbs.' 
+      {
+        title: 'Assemble & Garnish',
+        desc: 'Place quinoa as base. Slice avocado thinly and fan out. Add the salmon fillet and drizzle with lemon zest and fresh herbs.'
       }
     ]
   } } = route.params || {};
@@ -68,7 +68,10 @@ const MealDetailScreen = () => {
       const response = await aiAPI.addFoodLog(foodLogData);
       if (response.data.success) {
         Alert.alert('Success', `${meal.name} has been added to your log.`);
-        navigation.navigate('Nutrition', { refresh: true });
+        navigation.navigate('MainTabs', {
+          screen: 'Nutrition',
+          params: { refresh: true },
+        });
       }
     } catch (error) {
       console.error('Error logging meal:', error);
@@ -79,7 +82,7 @@ const MealDetailScreen = () => {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
-      
+
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
@@ -91,25 +94,25 @@ const MealDetailScreen = () => {
         </TouchableOpacity>
       </View>
 
-      <ScrollView 
+      <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.main}>
           {/* Hero Section */}
           <View style={styles.heroSection}>
-            <ImageBackground 
-              source={{ uri: 'https://images.unsplash.com/photo-1467003909585-2f8a72700288?q=80&w=1000&auto=format&fit=crop' }} 
+            <Image
+              source={{ uri: 'https://images.unsplash.com/photo-1467003909585-2f8a72700288?q=80&w=1000&auto=format&fit=crop' }}
               style={styles.heroImage}
-              resizeMode="cover"
-            >
-              <View style={styles.heroOverlay}>
-                <View style={styles.categoryBadge}>
-                  <Text style={styles.categoryText}>{meal.displayName || 'LUNCH'}</Text>
-                </View>
-                <Text style={styles.mealTitle}>{meal.name}</Text>
+              contentFit="cover"
+              transition={200}
+            />
+            <View style={[styles.heroOverlay, { position: 'absolute', bottom: 0, left: 0, right: 0, top: 0 }]}>
+              <View style={styles.categoryBadge}>
+                <Text style={styles.categoryText}>{meal.displayName || 'LUNCH'}</Text>
               </View>
-            </ImageBackground>
+              <Text style={styles.mealTitle}>{meal.name}</Text>
+            </View>
           </View>
 
           {/* Nutrition Summary */}
@@ -119,14 +122,14 @@ const MealDetailScreen = () => {
               <Text style={styles.caloriesLabel}>CALORIES</Text>
             </View>
             <View style={styles.macroCol}>
-               <View style={styles.macroCard}>
-                 <Text style={styles.macroLabel}>PROTEIN</Text>
-                 <Text style={styles.macroValue}>{meal.protein}g</Text>
-               </View>
-               <View style={styles.macroCard}>
-                 <Text style={styles.macroLabel}>FATS</Text>
-                 <Text style={styles.macroValue}>{meal.fat}g</Text>
-               </View>
+              <View style={styles.macroCard}>
+                <Text style={styles.macroLabel}>PROTEIN</Text>
+                <Text style={styles.macroValue}>{meal.protein}g</Text>
+              </View>
+              <View style={styles.macroCard}>
+                <Text style={styles.macroLabel}>FATS</Text>
+                <Text style={styles.macroValue}>{meal.fat}g</Text>
+              </View>
             </View>
           </View>
 
@@ -152,15 +155,15 @@ const MealDetailScreen = () => {
                 <Text style={styles.itemCountText}>{(meal.foods || []).length} Items</Text>
               </View>
             </View>
-            
+
             <View>
               {(meal.foods || []).map((food, idx) => (
                 <View key={idx} style={styles.ingredientRow}>
                   <View style={styles.ingredientIconBg}>
-                    <MaterialCommunityIcons 
-                      name={food.icon || 'food-variant'} 
-                      size={20} 
-                      color="#FF7A00" 
+                    <MaterialCommunityIcons
+                      name={food.icon || 'food-variant'}
+                      size={20}
+                      color="#FF7A00"
                     />
                   </View>
                   <Text style={styles.ingredientName}>{food.name}</Text>
@@ -191,7 +194,7 @@ const MealDetailScreen = () => {
 
         {/* Footer Action */}
         <View style={styles.footer}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.addLogButton}
             onPress={handleAddToLog}
           >

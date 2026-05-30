@@ -6,15 +6,18 @@ import {
   TouchableOpacity,
   FlatList,
   TextInput,
-  Image,
   ActivityIndicator,
   StatusBar,
+  RefreshControl,
 } from 'react-native';
 import { Ionicons as Icon } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { workoutAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { styles } from './styles/WorkoutScreen.styles';
+import { useQuery } from '@tanstack/react-query';
+import Skeleton from '../components/Skeleton';
+import { Image } from 'expo-image';
 
 const getCurrentDayNumber = (startDate, duration) => {
   if (!startDate) return null;
@@ -34,37 +37,21 @@ const WorkoutScreen = ({ navigation }) => {
   const { user } = useAuth();
   const [selectedTab, setSelectedTab] = useState('plans');
   const [searchQuery, setSearchQuery] = useState('');
-  const [exerciseCategories, setExerciseCategories] = useState([]);
-  const [categoriesLoading, setCategoriesLoading] = useState(true);
-  const [categoriesError, setCategoriesError] = useState('');
-
-  const [activeWorkoutPlan, setActiveWorkoutPlan] = useState(null);
-  const [workoutPlans, setWorkoutPlans] = useState([]);
-  const [plansLoading, setPlansLoading] = useState(false);
   const [generatingPlan, setGeneratingPlan] = useState(false);
-
-  const [recentWorkouts, setRecentWorkouts] = useState([]);
-  const [historyLoading, setHistoryLoading] = useState(false);
   const [historyFilter, setHistoryFilter] = useState('week');
 
   const [workoutAtGym, setWorkoutAtGym] = useState(true);
   const [workoutAtHome, setWorkoutAtHome] = useState(true);
 
-  useEffect(() => {
-    fetchCategories();
-  }, []);
-
-  useEffect(() => {
-    if (selectedTab === 'plans') fetchWorkoutPlans();
-    else if (selectedTab === 'history') fetchHistory();
-  }, [selectedTab]);
-
-  const fetchCategories = async () => {
-    setCategoriesLoading(true);
-    setCategoriesError('');
-    try {
+  const {
+    data: categoriesData,
+    isLoading: categoriesLoading,
+    isError: categoriesError
+  } = useQuery({
+    queryKey: ['exerciseCategories'],
+    queryFn: async () => {
       const { data } = await workoutAPI.getExerciseCategories();
-      const normalized = (data || []).map((item) => ({
+      return (data || []).map((item) => ({
         id: item.id,
         name: item.name,
         englishName: item.englishName || item.english_name,
@@ -72,82 +59,76 @@ const WorkoutScreen = ({ navigation }) => {
         backgroundColor: item.backgroundColor || item.background_color || '#f1f5f9',
         exerciseCount: Number(item.exerciseCount ?? 0),
       }));
-      setExerciseCategories(normalized);
-    } catch (error) {
-      console.error('Failed to load exercise categories', error);
-      setCategoriesError('Unable to load categories.');
-    } finally {
-      setCategoriesLoading(false);
     }
-  };
+  });
 
-  const fetchWorkoutPlans = async () => {
-    setPlansLoading(true);
-    try {
-      // Use Promise.allSettled to ensure one failure doesn't block everything
+  const {
+    data: plansData,
+    isLoading: plansLoading,
+    refetch: refetchPlans,
+    isRefetching: plansRefreshing
+  } = useQuery({
+    queryKey: ['workoutPlans'],
+    enabled: selectedTab === 'plans',
+    queryFn: async () => {
       const results = await Promise.allSettled([
         workoutAPI.getActiveWorkoutPlan(),
         workoutAPI.getAllWorkoutPlans()
       ]);
 
-      // Handle active plan response
-      if (results[0].status === 'fulfilled') {
-        const activeResponse = results[0].value;
-        if (activeResponse.data.success && activeResponse.data.data) {
-          setActiveWorkoutPlan(activeResponse.data.data);
-        } else {
-          setActiveWorkoutPlan(null);
-        }
-      } else {
-        console.warn('Active workout plan fetch failed:', results[0].reason);
-        setActiveWorkoutPlan(null);
+      let active = null;
+      let all = [];
+
+      if (results[0].status === 'fulfilled' && results[0].value.data?.success) {
+        active = results[0].value.data.data;
+      }
+      if (results[1].status === 'fulfilled' && results[1].value.data?.success) {
+        all = results[1].value.data.data || [];
       }
 
-      // Handle all plans response
-      if (results[1].status === 'fulfilled') {
-        const allPlansResponse = results[1].value;
-        if (allPlansResponse.data.success) {
-          setWorkoutPlans(allPlansResponse.data.data || []);
-        }
-      } else {
-        console.warn('All workout plans fetch failed:', results[1].reason);
-      }
-    } catch (error) {
-      console.error('Unified load plans error:', error);
-    } finally {
-      setPlansLoading(false);
+      return { active, all };
     }
-  };
+  });
 
-  const fetchHistory = async () => {
-    setHistoryLoading(true);
-    try {
+  const activeWorkoutPlan = plansData?.active;
+  const workoutPlans = plansData?.all || [];
+  const exerciseCategories = categoriesData || [];
+
+  const {
+    data: recentWorkouts = [],
+    isLoading: historyLoading,
+    refetch: refetchHistory,
+    isRefetching: historyRefreshing
+  } = useQuery({
+    queryKey: ['workoutHistory'],
+    enabled: selectedTab === 'history',
+    queryFn: async () => {
       const response = await workoutAPI.getWorkoutHistory();
-      if (response.data.success) {
-        setRecentWorkouts(response.data.data || []);
-      }
-    } catch (error) {
-      console.error('Failed to load history:', error);
-    } finally {
-      setHistoryLoading(false);
+      return response.data.success ? response.data.data : [];
     }
+  });
+
+  const onRefresh = () => {
+    refetchPlans();
+    refetchHistory();
   };
+
+  const refreshing = plansRefreshing || historyRefreshing; // Show spinner if either is refetching
 
   const handleGenerateWorkoutPlan = async () => {
     setGeneratingPlan(true);
     try {
-      const preferences = { 
-        duration: 4, 
-        frequency: 4, 
-        goal: 'general_fitness', 
-        focusAreas: [], 
-        workoutLocation: { atGym: workoutAtGym, atHome: workoutAtHome } 
+      const preferences = {
+        duration: 4,
+        frequency: 4,
+        goal: 'general_fitness',
+        focusAreas: [],
+        workoutLocation: { atGym: workoutAtGym, atHome: workoutAtHome }
       };
       const response = await workoutAPI.generateAIWorkoutPlan(preferences);
       if (response.data.success) {
         const plan = response.data.data;
-        setActiveWorkoutPlan(plan);
-        await fetchWorkoutPlans();
+        refetchPlans();
       }
     } catch (error) {
       console.error('Failed to generate plan:', error);
@@ -198,7 +179,7 @@ const WorkoutScreen = ({ navigation }) => {
 
   const chartData = useMemo(() => {
     const bars = groupedHistory.slice(0, 7).map(s => ({ duration: s.duration, id: s.id })).reverse();
-    while(bars.length < 7) bars.unshift({ duration: 0, id: `empty-${bars.length}` });
+    while (bars.length < 7) bars.unshift({ duration: 0, id: `empty-${bars.length}` });
     const maxDuration = Math.max(...bars.map(b => b.duration), 60);
     const totalVolume = filteredHistory.reduce((sum, s) => sum + s.duration, 0);
     return { bars, maxDuration, totalVolume };
@@ -211,12 +192,12 @@ const WorkoutScreen = ({ navigation }) => {
           <Icon name="sparkles-outline" size={80} color="#A8390D" style={{ opacity: 0.1, marginBottom: 20 }} />
           <Text style={styles.emptyStateText}>No active plan yet.{"\n"}Generate your unique AI-driven workout plan!</Text>
           <TouchableOpacity style={styles.generateButton} onPress={handleGenerateWorkoutPlan} disabled={generatingPlan}>
-             {generatingPlan ? <ActivityIndicator color="white" /> : (
-               <>
+            {generatingPlan ? <ActivityIndicator color="white" /> : (
+              <>
                 <Icon name="sparkles" size={20} color="white" />
                 <Text style={styles.generateButtonText}>Generate AI Plan</Text>
-               </>
-             )}
+              </>
+            )}
           </TouchableOpacity>
         </View>
       );
@@ -254,8 +235,8 @@ const WorkoutScreen = ({ navigation }) => {
           <Text style={styles.sectionTitle}>Today's Plan</Text>
           {!todayDay ? (
             <View style={styles.todayPlanCard}>
-               <Text style={styles.todayPlanTitle}>Rest Day</Text>
-               <Text style={styles.todayPlanDesc}>Enjoy your rest today to recover and build strength!</Text>
+              <Text style={styles.todayPlanTitle}>Rest Day</Text>
+              <Text style={styles.todayPlanDesc}>Enjoy your rest today to recover and build strength!</Text>
             </View>
           ) : (
             <TouchableOpacity style={styles.todayPlanCard} onPress={() => navigation.navigate('WorkoutPlanDetail', { plan: activeWorkoutPlan, startToday: true })}>
@@ -280,46 +261,56 @@ const WorkoutScreen = ({ navigation }) => {
   };
 
   const renderHistory = () => {
-    if (historyLoading) return <View style={styles.loadingContainer}><ActivityIndicator size="large" color="#A8390D" /></View>;
+    if (historyLoading) {
+      return (
+        <View style={{ padding: 24 }}>
+          <Skeleton width="100%" height={150} borderRadius={20} style={{ marginBottom: 20 }} />
+          <Skeleton width={150} height={20} style={{ marginBottom: 15 }} />
+          {[1, 2, 3, 4].map(i => (
+            <Skeleton key={i} width="100%" height={80} borderRadius={15} style={{ marginBottom: 10 }} />
+          ))}
+        </View>
+      );
+    }
     return (
       <View style={styles.historyMainContainer}>
         <View style={styles.performanceGallery}>
-            <Text style={styles.galleryLabel}>Performance Gallery</Text>
-            <Text style={styles.galleryTitle}>Movements <Text style={styles.titleAccent}>&</Text>{"\n"}Milestones.</Text>
-            <View style={styles.filterToggle}>
-                {['week', 'month', 'year'].map(filter => (
-                    <TouchableOpacity key={filter} style={[styles.filterBtn, historyFilter === filter && styles.filterBtnActive]} onPress={() => setHistoryFilter(filter)}>
-                        <Text style={[styles.filterBtnText, historyFilter === filter && styles.filterBtnTextActive]}>{filter.charAt(0).toUpperCase() + filter.slice(1)}</Text>
-                    </TouchableOpacity>
-                ))}
-            </View>
-            <View style={styles.chartCard}><View style={styles.chartInfoOverlay}><Text style={styles.weeklyVolumeLabel}>{historyFilter.charAt(0).toUpperCase() + historyFilter.slice(1)}ly Volume</Text><View style={styles.volumeRow}><Text style={styles.volumeValue}>{chartData.totalVolume}</Text><Text style={styles.volumeUnit}>MIN</Text></View></View><View style={styles.barsRow}>{chartData.bars.map((bar) => { const barHeight = bar.duration === 0 ? 0 : (bar.duration / chartData.maxDuration) * 64; return <View key={bar.id} style={[styles.barTrack, { height: Math.max(barHeight, 4) }, bar.duration > 0 && styles.barActive]} />; })}</View><LinearGradient colors={['rgba(255, 255, 255, 0)', 'rgba(255, 255, 255, 0.5)']} style={styles.chartFade} /></View>
+          <Text style={styles.galleryLabel}>Performance Gallery</Text>
+          <Text style={styles.galleryTitle}>Movements <Text style={styles.titleAccent}>&</Text>{"\n"}Milestones.</Text>
+          <View style={styles.filterToggle}>
+            {['week', 'month', 'year'].map(filter => (
+              <TouchableOpacity key={filter} style={[styles.filterBtn, historyFilter === filter && styles.filterBtnActive]} onPress={() => setHistoryFilter(filter)}>
+                <Text style={[styles.filterBtnText, historyFilter === filter && styles.filterBtnTextActive]}>{filter.charAt(0).toUpperCase() + filter.slice(1)}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+          <View style={styles.chartCard}><View style={styles.chartInfoOverlay}><Text style={styles.weeklyVolumeLabel}>{historyFilter.charAt(0).toUpperCase() + historyFilter.slice(1)}ly Volume</Text><View style={styles.volumeRow}><Text style={styles.volumeValue}>{chartData.totalVolume}</Text><Text style={styles.volumeUnit}>MIN</Text></View></View><View style={styles.barsRow}>{chartData.bars.map((bar) => { const barHeight = bar.duration === 0 ? 0 : (bar.duration / chartData.maxDuration) * 64; return <View key={bar.id} style={[styles.barTrack, { height: Math.max(barHeight, 4) }, bar.duration > 0 && styles.barActive]} />; })}</View><LinearGradient colors={['rgba(255, 255, 255, 0)', 'rgba(255, 255, 255, 0.5)']} style={styles.chartFade} /></View>
         </View>
         <View style={styles.recentSessions}>
-            <Text style={styles.sessionListTitle}>Recent Sessions</Text>
-            {filteredHistory.length > 0 ? (
-                filteredHistory.map((session) => (
-                    <TouchableOpacity 
-                        key={session.id} 
-                        style={styles.sessionCard} 
-                        activeOpacity={0.8}
-                        onPress={() => navigation.navigate('WorkoutHistoryDetail', { session })}
-                    >
-                        <View style={styles.sessionContent}>
-                            <Text style={styles.sessionDate}>{formatHistoryDate(session.date)}</Text>
-                            <Text style={styles.sessionTitle} numberOfLines={1}>{session.name}</Text>
-                            <View style={styles.sessionStats}>
-                                <View style={styles.statBit}><Icon name="time" size={14} color="rgba(104, 28, 0, 0.8)" /><Text style={styles.statBitText}>{session.duration} min</Text></View>
-                                <View style={styles.statBit}><Icon name="flame" size={14} color="rgba(104, 28, 0, 0.8)" /><Text style={styles.statBitText}>{Math.round(session.calories)} kcal</Text></View>
-                            </View>
-                        </View>
-                        <View style={styles.playIconCircle}><Icon name="play" size={24} color="#A8390D" style={{ marginLeft: 4 }} /></View>
-                    </TouchableOpacity>
-                ))
-            ) : (
-                <View style={styles.emptyState}><Text style={styles.emptyStateText}>No sessions found for this {historyFilter}.</Text></View>
-            )}
-            {filteredHistory.length > 0 && <View style={styles.endOfHistory}><View style={styles.horizontalLine} /><Text style={styles.endText}>End of History</Text><Text style={styles.endSubtext}>Keep moving to expand your kinetic gallery.</Text></View>}
+          <Text style={styles.sessionListTitle}>Recent Sessions</Text>
+          {filteredHistory.length > 0 ? (
+            filteredHistory.map((session) => (
+              <TouchableOpacity
+                key={session.id}
+                style={styles.sessionCard}
+                activeOpacity={0.8}
+                onPress={() => navigation.navigate('WorkoutHistoryDetail', { session })}
+              >
+                <View style={styles.sessionContent}>
+                  <Text style={styles.sessionDate}>{formatHistoryDate(session.date)}</Text>
+                  <Text style={styles.sessionTitle} numberOfLines={1}>{session.name}</Text>
+                  <View style={styles.sessionStats}>
+                    <View style={styles.statBit}><Icon name="time" size={14} color="rgba(104, 28, 0, 0.8)" /><Text style={styles.statBitText}>{session.duration} min</Text></View>
+                    <View style={styles.statBit}><Icon name="flame" size={14} color="rgba(104, 28, 0, 0.8)" /><Text style={styles.statBitText}>{Math.round(session.calories)} kcal</Text></View>
+                  </View>
+                </View>
+                <View style={styles.playIconCircle}><Icon name="play" size={24} color="#A8390D" style={{ marginLeft: 4 }} /></View>
+              </TouchableOpacity>
+            ))
+          ) : (
+            <View style={styles.emptyState}><Text style={styles.emptyStateText}>No sessions found for this {historyFilter}.</Text></View>
+          )}
+          {filteredHistory.length > 0 && <View style={styles.endOfHistory}><View style={styles.horizontalLine} /><Text style={styles.endText}>End of History</Text><Text style={styles.endSubtext}>Keep moving to expand your kinetic gallery.</Text></View>}
         </View>
       </View>
     );
@@ -381,8 +372,10 @@ const WorkoutScreen = ({ navigation }) => {
       </View>
 
       {categoriesLoading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#A8390D" />
+        <View style={{ paddingHorizontal: 24, paddingTop: 16 }}>
+          {[1, 2, 3, 4, 5].map(i => (
+            <Skeleton key={i} width="100%" height={100} borderRadius={32} style={{ marginBottom: 16 }} />
+          ))}
         </View>
       ) : categoriesError ? (
         <View style={{ paddingHorizontal: 24, paddingTop: 24 }}>
@@ -501,7 +494,7 @@ const WorkoutScreen = ({ navigation }) => {
             <Icon name="notifications-outline" size={18} color="#8D94A0" />
           </TouchableOpacity>
         </View>
-        <View style={[styles.tabContainer, { justifyContent: 'flex-start', paddingTop: 6 }]}>
+        <View style={[styles.tabContainer, { paddingTop: 6 }]}>
           {tabs.map((tab) => (
             <TouchableOpacity
               key={tab.id}
@@ -509,10 +502,6 @@ const WorkoutScreen = ({ navigation }) => {
                 styles.tab,
                 selectedTab === tab.id && styles.activeTab,
                 {
-                  flex: 0,
-                  width: tab.id === 'plans' ? 80 : tab.id === 'history' ? 111 : 120,
-                  height: 40,
-                  paddingHorizontal: 12,
                   backgroundColor: selectedTab === tab.id ? '#FFEFEB' : 'transparent',
                 }
               ]}
@@ -524,15 +513,27 @@ const WorkoutScreen = ({ navigation }) => {
           ))}
         </View>
       </View>
-      <ScrollView showsVerticalScrollIndicator={false} style={styles.content} contentContainerStyle={styles.scrollContent}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={['#A8390D']}
+            tintColor={'#A8390D'}
+          />
+        }
+        style={styles.content}
+        contentContainerStyle={styles.scrollContent}
+      >
         {selectedTab === 'plans' && (plansLoading ? <View style={styles.loadingContainer}><ActivityIndicator size="large" color="#A8390D" /></View> : renderActivePlanCard())}
         {selectedTab === 'history' && renderHistory()}
         {selectedTab === 'exercises' && renderExercisesLibrary()}
         {/* Persistent High-Fidelity Generate New Plan Button */}
         {selectedTab !== 'exercises' && (
           <View style={styles.generateNewPlanContainer}>
-            <TouchableOpacity 
-              style={styles.generateNewPlanButton} 
+            <TouchableOpacity
+              style={styles.generateNewPlanButton}
               activeOpacity={0.7}
               onPress={handleGenerateWorkoutPlan}
               disabled={generatingPlan}

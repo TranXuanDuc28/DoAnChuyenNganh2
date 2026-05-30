@@ -67,8 +67,8 @@ const CategoryExercisesScreen = ({ route, navigation }) => {
       activeOpacity={0.8}
     >
       <View style={styles.exerciseCardImageContainer}>
-        {item.imageUrl ? (
-          <Image source={{ uri: item.imageUrl }} style={styles.exerciseImage} resizeMode="cover" />
+        {(item.imageUrl || item.image_url) ? (
+          <Image source={{ uri: item.imageUrl || item.image_url }} style={styles.exerciseImage} resizeMode="cover" />
         ) : (
           <View style={[styles.exerciseImage, { backgroundColor: '#1E293B', justifyContent: 'center', alignItems: 'center' }]}>
             <Icon name="image-outline" size={48} color="#475569" />
