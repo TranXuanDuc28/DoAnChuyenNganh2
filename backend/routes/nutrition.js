@@ -301,6 +301,7 @@ router.post('/water', auth, async (req, res) => {
     const waterEntry = await WaterIntake.create(waterData);
 
     res.status(201).json({
+      success: true,
       message: 'Water intake logged successfully',
       entry: waterEntry
     });

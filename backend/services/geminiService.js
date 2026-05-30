@@ -82,8 +82,11 @@ Important:
     const response = await result.response;
     let text = response.text();
 
-    // Clean up the response - remove markdown code blocks if present
-    text = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+    // Enhanced cleanup: Extract only the JSON part using regex
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      text = jsonMatch[0];
+    }
 
     // Parse JSON
     const mealPlan = JSON.parse(text);
@@ -161,8 +164,11 @@ Return ONLY valid JSON, no additional text.
     const response = await result.response;
     let text = response.text();
 
-    // Clean up the response
-    text = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+    // Enhanced cleanup: Extract only the JSON part using regex
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      text = jsonMatch[0];
+    }
 
     const advice = JSON.parse(text);
 

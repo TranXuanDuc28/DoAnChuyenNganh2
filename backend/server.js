@@ -3,12 +3,17 @@ const cors = require('cors');
 const helmet = require('helmet');
 const path = require('path');
 const rateLimit = require('express-rate-limit');
+const compression = require('compression');
 const { createServer } = require('http');
 const { Server } = require('socket.io');
 const { sequelize, testConnection } = require('./config/database');
 require('dotenv').config();
 // build the express app according to the structure above
 const app = express();
+
+// Use compression middleware to reduce payload size
+app.use(compression());
+
 const httpServer = createServer(app);
 
 // ✅ Cho phép Express tin proxy như ngrok / Expo tunnel
@@ -123,6 +128,7 @@ app.use('/api/social', require('./routes/social'));
 app.use('/api/ai', require('./routes/ai'));
 app.use('/api/notifications', require('./routes/notifications'));
 app.use('/api/pose', require('./routes/pose'));
+app.use('/api/health', require('./routes/health'));
 app.use('/api/push', require('./routes/push'));
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/dashboard', require('./routes/dashboard'));

@@ -183,8 +183,12 @@ router.post('/day/:dayId/complete', auth, async (req, res) => {
   try {
     const { dayId } = req.params;
     const userId = req.user.id;
+    const { difficultyFeedback, userNotes } = req.body;
 
-    const result = await workoutPlanService.completeWorkoutDay(dayId, userId);
+    const result = await workoutPlanService.completeWorkoutDay(dayId, userId, {
+      difficultyFeedback,
+      userNotes
+    });
 
     res.json({
       success: true,
@@ -251,6 +255,33 @@ router.put('/:planId/deactivate', auth, async (req, res) => {
     res.status(500).json({
       success: false,
       message: error.message || 'Failed to deactivate workout plan'
+    });
+  }
+});
+
+/**
+ * @route   POST /api/workout-plans/:planId/adapt
+ * @desc    Adapt workout plan for the next week based on performance
+ * @access  Private
+ */
+router.post('/:planId/adapt', auth, async (req, res) => {
+  try {
+    const { planId } = req.params;
+    const userId = req.user.id;
+
+    const result = await workoutPlanService.adaptPlanForNextWeek(userId, planId);
+
+    if (!result.success) {
+      return res.status(400).json(result);
+    }
+
+    res.json(result);
+
+  } catch (error) {
+    console.error('Adapt Workout Plan Error:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Failed to adapt workout plan'
     });
   }
 });

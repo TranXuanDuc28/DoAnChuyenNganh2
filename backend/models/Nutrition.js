@@ -79,7 +79,12 @@ const MealPlan = sequelize.define('MealPlan', {
     comment: 'AI prompt used to generate this plan'
   }
 }, {
-  tableName: 'meal_plans'
+  tableName: 'meal_plans',
+  indexes: [
+    { fields: ['user_id'] },
+    { fields: ['is_active'] },
+    { fields: ['start_date'] }
+  ]
 });
 
 // Food Model
@@ -146,7 +151,11 @@ const Food = sequelize.define('Food', {
     allowNull: true
   }
 }, {
-  tableName: 'foods'
+  tableName: 'foods',
+  indexes: [
+    { fields: ['name'] },
+    { fields: ['category'] }
+  ]
 });
 
 // Nutrition Entry Model (Records of consumed food)
@@ -185,7 +194,12 @@ const NutritionEntry = sequelize.define('NutritionEntry', {
     defaultValue: DataTypes.NOW
   }
 }, {
-  tableName: 'nutrition_entries'
+  tableName: 'nutrition_entries',
+  indexes: [
+    { fields: ['user_id'] },
+    { fields: ['date'] },
+    { fields: ['meal_type'] }
+  ]
 });
 
 // Food Log Model (More flexible, flat log for scans and plans)
@@ -272,7 +286,11 @@ const FoodLog = sequelize.define('FoodLog', {
     allowNull: true
   }
 }, {
-  tableName: 'food_logs'
+  tableName: 'food_logs',
+  indexes: [
+    { fields: ['user_id'] },
+    { fields: ['log_date'] }
+  ]
 });
 
 // Nutrition Goal Model
@@ -308,7 +326,10 @@ const NutritionGoal = sequelize.define('NutritionGoal', {
     defaultValue: true
   }
 }, {
-  tableName: 'nutrition_goals'
+  tableName: 'nutrition_goals',
+  indexes: [
+    { fields: ['user_id'] }
+  ]
 });
 
 // Water Intake Model
@@ -336,7 +357,11 @@ const WaterIntake = sequelize.define('WaterIntake', {
     defaultValue: DataTypes.NOW
   }
 }, {
-  tableName: 'water_intake'
+  tableName: 'water_intake',
+  indexes: [
+    { fields: ['user_id'] },
+    { fields: ['date'] }
+  ]
 });
 
 // Associations

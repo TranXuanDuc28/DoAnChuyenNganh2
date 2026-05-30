@@ -576,8 +576,13 @@ Day 3: Breakfast 380 + Lunch 620 + Dinner 680 + Snack 320 = ${targetCalories} kc
 
     console.log('✅ Gemini AI response received successfully');
 
-    // Step 7: Parse AI response
-    text = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+    // Enhanced cleanup: Extract only the JSON part using regex
+    // This handles cases where Gemini adds conversational text before/after the JSON
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      text = jsonMatch[0];
+    }
+    
     const aiMealPlan = JSON.parse(text);
 
     console.log('✅ AI response parsed successfully');

@@ -170,11 +170,13 @@ const Exercise = sequelize.define('Exercise', {
   },
   videoUrl: {
     type: DataTypes.STRING,
-    allowNull: true
+    allowNull: true,
+    field: 'video_url'
   },
   imageUrl: {
     type: DataTypes.STRING,
-    allowNull: true
+    allowNull: true,
+    field: 'image_url'
   },
   duration: {
     type: DataTypes.INTEGER,
@@ -183,22 +185,30 @@ const Exercise = sequelize.define('Exercise', {
   },
   caloriesPerMinute: {
     type: DataTypes.FLOAT,
-    allowNull: true
+    allowNull: true,
+    field: 'calories_per_minute'
   },
   isCustom: {
     type: DataTypes.BOOLEAN,
-    defaultValue: false
+    defaultValue: false,
+    field: 'is_custom'
   },
   createdBy: {
     type: DataTypes.INTEGER,
     allowNull: true,
+    field: 'created_by',
     references: {
       model: 'users',
       key: 'id'
     }
   }
 }, {
-  tableName: 'exercises'
+  tableName: 'exercises',
+  indexes: [
+    { fields: ['name'] },
+    { fields: ['category'] },
+    { fields: ['difficulty'] }
+  ]
 });
 
 // Workout Plan Model
@@ -278,7 +288,12 @@ const WorkoutPlan = sequelize.define('WorkoutPlan', {
     comment: 'AI prompt used to generate this plan'
   }
 }, {
-  tableName: 'workout_plans'
+  tableName: 'workout_plans',
+  indexes: [
+    { fields: ['user_id'] },
+    { fields: ['is_active'] },
+    { fields: ['goal'] }
+  ]
 });
 
 // Workout Plan Day Model - Chi tiết từng ngày tập trong kế hoạch
@@ -346,13 +361,30 @@ const WorkoutPlanDay = sequelize.define('WorkoutPlanDay', {
     defaultValue: false,
     field: 'is_completed'
   },
+  difficultyFeedback: {
+    type: DataTypes.ENUM('easy', 'moderate', 'hard'),
+    allowNull: true,
+    field: 'difficulty_feedback',
+    comment: 'User feedback on workout difficulty'
+  },
+  userNotes: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+    field: 'user_notes',
+    comment: 'User notes about their performance'
+  },
   completedAt: {
     type: DataTypes.DATE,
     allowNull: true,
     field: 'completed_at'
   }
 }, {
-  tableName: 'workout_plan_days'
+  tableName: 'workout_plan_days',
+  indexes: [
+    { fields: ['workout_plan_id'] },
+    { fields: ['day_number'] },
+    { fields: ['is_completed'] }
+  ]
 });
 
 // Workout Plan Day Exercise Model - Bảng trung gian liên kết days với exercises

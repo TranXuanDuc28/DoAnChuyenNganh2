@@ -294,7 +294,7 @@ CRITICAL INSTRUCTIONS:
     - Total calories per workout should be realistic (typically 200-600 kcal for ${workoutDuration} min)
     - Higher intensity = more calories (HIIT > Strength > Yoga)
 
-Return ONLY valid JSON in this exact format:
+Return ONLY valid JSON in this exact format (Create only the FIRST WEEK - 7 DAYS):
 {
   "planName": "Descriptive plan name",
   "planDescription": "Brief description of the plan",
@@ -308,39 +308,34 @@ Return ONLY valid JSON in this exact format:
       "isRestDay": false,
       "totalDuration": 45,
       "estimatedCalories": 300,
-      "calorieCalculation": "Sum of all exercise calories using MET formula",
       "exercises": [
         {
           "exerciseId": 123,
           "exerciseName": "Push-ups",
           "sets": 3,
-          "reps": 12,
+          "reps": "12",
           "duration": null,
           "restSeconds": 30,
-          "estimatedCalories": ${Math.round(8.0 * userWeight * (3 * 12 * 3 / 3600))},
-          "calorieFormula": "8.0 MET × ${userWeight} kg × (3 sets × 12 reps × 3 sec / 3600) hours",
+          "estimatedCalories": 60,
           "notes": "Keep core tight"
         }
       ],
-      "notes": "Warm up for 5-10 minutes before starting. Focus on form over speed."
+      "notes": "Warm up for 5-10 minutes"
     }
+    // ... repeat for DAYS 1 to 7 ONLY
   ],
-  "weeklyStructure": "Brief description of the weekly pattern",
-  "progressionNotes": "How to progress through the weeks",
+  "weeklyStructure": "Description of the weekly pattern",
+  "progressionNotes": "How to increase intensity each week",
   "tips": ["Tip 1", "Tip 2", "Tip 3"]
 }
 
 VALIDATION CHECKLIST:
-✓ For cardio exercises, use "duration" in minutes instead of "sets" and "reps"
-✓ For strength exercises, use "sets" and "reps"  
-✓ Include rest days strategically (typically 2-3 per week)
-✓ Total days array should have ${duration * 7} entries
-✓ **CALORIE ACCURACY**: Use MET formula for EVERY exercise with user weight ${userWeight} kg
-✓ **TOTAL CALORIES**: Sum all exercise calories for "estimatedCalories" field
-✓ **DURATION LIMIT**: Each workout day's totalDuration MUST NOT exceed ${workoutDuration} minutes
-✓ If you cannot fit enough exercises in ${workoutDuration} minutes, reduce sets/reps or number of exercises
-✓ Calories should be realistic: 200-600 kcal per session depending on intensity
-✓ HIIT/Cardio burns more calories than strength training
+✓ Create exactly 7 days for the first week cycle
+✓ For cardio, use "duration" (min). For strength, use "sets" and "reps"
+✓ Include rest days strategically (2-3 per week)
+✓ **CALORIE ACCURACY**: Use MET formula: Calories = MET × ${userWeight}kg × Duration(hrs)
+✓ **DURATION LIMIT**: Each day's totalDuration MUST NOT exceed ${workoutDuration} minutes
+✓ Calories should be realistic: 200-600 kcal per session
 
 EXAMPLE OF CORRECT DAY STRUCTURE:
 {
@@ -349,28 +344,20 @@ EXAMPLE OF CORRECT DAY STRUCTURE:
   "focusArea": "Upper Body",
   "isRestDay": false,
   "totalDuration": 45,
-  "estimatedCalories": 320,  // ← SUM of all exercises below
+  "estimatedCalories": 320,
   "exercises": [
     {
       "exerciseId": 1,
       "exerciseName": "Push-ups",
       "sets": 3,
-      "reps": 15,
-      "estimatedCalories": 60,  // ← MET × ${userWeight} × time
+      "reps": "15",
+      "estimatedCalories": 60,
       "restSeconds": 30
-    },
-    {
-      "exerciseId": 2,
-      "exerciseName": "Dumbbell Rows",
-      "sets": 3,
-      "reps": 12,
-      "estimatedCalories": 55,
-      "restSeconds": 30
-    },
-    // ... more exercises
-    // Total: 60 + 55 + ... = 320 kcal ✓
+    }
   ]
 }
+
+IMPORTANT: Provide exactly 7 days. The system will automatically replicate this for weeks 2 to ${duration} based on your progression notes.
 `;
 
     console.log(`Generating workout plan with Gemini AI (Model: ${modelName})...`);
@@ -398,8 +385,12 @@ EXAMPLE OF CORRECT DAY STRUCTURE:
     const response = await generateWithRetry();
     let text = response.text();
 
-    // Clean up the response - remove markdown code blocks if present
-    text = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+    // Enhanced cleanup: Extract only the JSON part using regex
+    // This handles cases where Gemini adds conversational text before/after the JSON
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      text = jsonMatch[0];
+    }
 
     // Parse JSON
     const aiPlan = JSON.parse(text);
@@ -455,15 +446,14 @@ EXAMPLE OF CORRECT DAY STRUCTURE:
       aiPrompt: `Goal: ${goal}, Duration: ${duration} weeks, Frequency: ${frequency}/week, Location: ${locationText}`
     });
 
-    // Create workout plan days and their exercises
+    // Create workout plan days and their exercises (Week 1 Only)
     for (const day of aiPlan.days) {
-      // Create the day
       const workoutPlanDay = await WorkoutPlanDay.create({
         workoutPlanId: workoutPlan.id,
         dayNumber: day.dayNumber,
         dayName: day.dayName,
         focusArea: day.focusArea,
-        exercises: day.exercises, // Keep JSON for backward compatibility
+        exercises: day.exercises,
         totalDuration: day.totalDuration,
         estimatedCalories: day.estimatedCalories,
         notes: day.notes,
@@ -471,17 +461,8 @@ EXAMPLE OF CORRECT DAY STRUCTURE:
         isCompleted: false
       });
 
-      // Create exercise associations if not a rest day
       if (!day.isRestDay && day.exercises && day.exercises.length > 0) {
         const exercisePromises = day.exercises.map((exercise, index) => {
-          // Determine rest time based on exercise type
-          // If exercise has sets (strength training) -> 30 seconds
-          // If no sets (cardio, yoga, etc.) -> 60 seconds
-          let restTime = 60; // Default for cardio/no-sets exercises
-          if (exercise.sets && exercise.sets > 0) {
-            restTime = 30; // Strength training with sets
-          }
-
           return WorkoutPlanDayExercise.create({
             workoutPlanDayId: workoutPlanDay.id,
             exerciseId: exercise.exerciseId,
@@ -489,7 +470,7 @@ EXAMPLE OF CORRECT DAY STRUCTURE:
             sets: exercise.sets || null,
             reps: exercise.reps ? String(exercise.reps) : null,
             duration: exercise.duration || null,
-            restSeconds: exercise.restSeconds || restTime,
+            restSeconds: exercise.restSeconds || 30,
             weight: exercise.weight || null,
             notes: exercise.notes || null
           });
@@ -503,20 +484,20 @@ EXAMPLE OF CORRECT DAY STRUCTURE:
       include: [{
         model: WorkoutPlanDay,
         as: 'days',
+        separate: true,
+        order: [['dayNumber', 'ASC']],
         include: [{
           model: WorkoutPlanDayExercise,
           as: 'dayExercises',
+          separate: true,
+          order: [['orderIndex', 'ASC']],
           include: [{
             model: Exercise,
             as: 'exercise',
             attributes: ['id', 'name', 'category', 'muscleGroups', 'equipment', 'difficulty', 'description', 'videoUrl', 'imageUrl']
           }]
         }]
-      }],
-      order: [
-        [{ model: WorkoutPlanDay, as: 'days' }, 'dayNumber', 'ASC'],
-        [{ model: WorkoutPlanDay, as: 'days' }, { model: WorkoutPlanDayExercise, as: 'dayExercises' }, 'orderIndex', 'ASC']
-      ]
+      }]
     });
 
     return {
@@ -525,7 +506,12 @@ EXAMPLE OF CORRECT DAY STRUCTURE:
     };
 
   } catch (error) {
-    console.error('Workout Plan Generation Error:', error.message);
+    console.error('Workout Plan Generation Error:', error);
+
+    if (error.name === 'SequelizeValidationError' || error.name === 'SequelizeUniqueConstraintError') {
+      const messages = error.errors.map(err => `${err.path}: ${err.message}`);
+      throw new Error(`Validation Error: ${messages.join(', ')}`);
+    }
 
     if (error.message.includes('API key')) {
       throw new Error('Gemini API key is not configured properly');
@@ -546,7 +532,7 @@ EXAMPLE OF CORRECT DAY STRUCTURE:
  */
 const getActiveWorkoutPlan = async (userId) => {
   try {
-    const workoutPlan = await WorkoutPlan.findOne({
+    const plans = await WorkoutPlan.findAll({
       where: {
         userId: userId,
         isActive: true
@@ -554,29 +540,31 @@ const getActiveWorkoutPlan = async (userId) => {
       include: [{
         model: WorkoutPlanDay,
         as: 'days',
+        separate: true, 
+        order: [['dayNumber', 'ASC']],
         include: [{
           model: WorkoutPlanDayExercise,
           as: 'dayExercises',
+          separate: true, 
+          order: [['orderIndex', 'ASC']],
           include: [{
             model: Exercise,
             as: 'exercise',
             attributes: ['id', 'name', 'category', 'muscleGroups', 'equipment', 'difficulty', 'description', 'videoUrl', 'imageUrl']
           }]
         }]
-      }],
-      order: [
-        ['createdAt', 'DESC'],
-        [{ model: WorkoutPlanDay, as: 'days' }, 'dayNumber', 'ASC'],
-        [{ model: WorkoutPlanDay, as: 'days' }, { model: WorkoutPlanDayExercise, as: 'dayExercises' }, 'orderIndex', 'ASC']
-      ]
+      }]
     });
 
-    if (!workoutPlan) {
+    if (!plans || plans.length === 0) {
       return {
         success: false,
         message: 'No active workout plan found'
       };
     }
+
+    // Sort in Node.js instead of MySQL to avoid "Out of sort memory"
+    const workoutPlan = plans.sort((a, b) => b.createdAt - a.createdAt)[0];
 
     // Calculate progress
     const totalDays = workoutPlan.days.length;
@@ -610,29 +598,31 @@ const getActiveWorkoutPlan = async (userId) => {
  */
 const getUserWorkoutPlans = async (userId) => {
   try {
-    const plans = await WorkoutPlan.findAll({
+    let plans = await WorkoutPlan.findAll({
       where: { userId },
       include: [{
         model: WorkoutPlanDay,
         as: 'days',
+        separate: true,
         attributes: ['id', 'dayNumber', 'isCompleted', 'isRestDay'],
+        order: [['dayNumber', 'ASC']],
         include: [{
           model: WorkoutPlanDayExercise,
           as: 'dayExercises',
+          separate: true,
           attributes: ['id', 'exerciseId'],
+          order: [['orderIndex', 'ASC']],
           include: [{
             model: Exercise,
             as: 'exercise',
             attributes: ['id', 'name']
           }]
         }]
-      }],
-      order: [
-        ['createdAt', 'DESC'],
-        [{ model: WorkoutPlanDay, as: 'days' }, 'dayNumber', 'ASC'],
-        [{ model: WorkoutPlanDay, as: 'days' }, { model: WorkoutPlanDayExercise, as: 'dayExercises' }, 'orderIndex', 'ASC']
-      ]
+      }]
     });
+
+    // Sort in Node.js
+    plans = plans.sort((a, b) => b.createdAt - a.createdAt);
 
     // Calculate progress for each plan
     const plansWithProgress = plans.map(plan => {
@@ -725,28 +715,29 @@ const getWorkoutPlanDayDetails = async (dayId) => {
 };
 
 /**
- * Mark workout day as completed
+ * Mark a workout day as completed
  * @param {number} dayId - Workout plan day ID
- * @param {number} userId - User ID (for verification)
- * @returns {Promise<Object>} Updated day
+ * @param {number} userId - User ID
+ * @param {Object} feedbackData - Feedback data (difficultyFeedback, userNotes)
+ * @returns {Promise<Object>} Update result
  */
-const completeWorkoutDay = async (dayId, userId) => {
+const completeWorkoutDay = async (dayId, userId, feedbackData = {}) => {
   try {
-    const day = await WorkoutPlanDay.findByPk(dayId, {
-      include: [{
-        model: WorkoutPlan,
-        as: 'workoutPlan',
-        where: { userId }
-      }]
+    const day = await WorkoutPlanDay.findOne({
+      where: { id: dayId },
+      include: [{ model: WorkoutPlan, as: 'workoutPlan', where: { userId } }]
     });
 
-    if (!day) {
-      throw new Error('Workout day not found or does not belong to user');
-    }
+    if (!day) throw new Error('Workout day not found or not owned by user');
 
-    day.isCompleted = true;
-    day.completedAt = new Date();
-    await day.save();
+    const { difficultyFeedback, userNotes } = feedbackData;
+
+    await day.update({
+      isCompleted: true,
+      completedAt: new Date(),
+      difficultyFeedback: difficultyFeedback || null,
+      userNotes: userNotes || null
+    });
 
     // Update workout plan progress
     const plan = day.workoutPlan;
@@ -1049,6 +1040,126 @@ const getTodayCalories = async (userId) => {
   }
 };
 
+/**
+ * Adapt a workout plan for the next week based on performance
+ * @param {number} userId - User ID
+ * @param {number} planId - Current workout plan ID
+ * @returns {Promise<Object>} Updated plan with next week days
+ */
+const adaptPlanForNextWeek = async (userId, planId) => {
+  try {
+    const plan = await WorkoutPlan.findOne({
+      where: { id: planId, userId },
+      include: [{
+        model: WorkoutPlanDay,
+        as: 'days',
+        separate: true,
+        order: [['dayNumber', 'ASC']],
+        include: [{
+          model: WorkoutPlanDayExercise,
+          as: 'dayExercises'
+        }]
+      }]
+    });
+
+    if (!plan) throw new Error('Workout plan not found');
+
+    const totalWeeks = plan.duration;
+    const currentDaysCount = plan.days.length;
+    const currentWeek = Math.floor(currentDaysCount / 7) + 1;
+
+    if (currentWeek >= totalWeeks) {
+      return { success: false, message: 'Plan already completed for all weeks' };
+    }
+
+    // 1. Analyze last week's performance and feedback
+    const lastWeekDays = plan.days.slice(-7);
+    const completedCount = lastWeekDays.filter(d => d.isCompleted).length;
+    const completionRate = (completedCount / 7) * 100;
+    
+    // Aggregate feedback
+    const feedbackSummary = lastWeekDays
+      .filter(d => d.isCompleted && d.difficultyFeedback)
+      .map(d => `Day ${d.dayNumber}: ${d.difficultyFeedback}${d.userNotes ? ` (${d.userNotes})` : ''}`)
+      .join('\n');
+
+    // 2. Prepare context for AI
+    const performanceSummary = `
+      User just finished Week ${currentWeek - 1}.
+      Completion Rate: ${completionRate}% (${completedCount}/7 days completed).
+      
+      User Feedback on Difficulty:
+      ${feedbackSummary || 'No specific feedback provided.'}
+
+      Current Goal: ${plan.goal}.
+      Last week structure: ${lastWeekDays.map(d => d.focusArea).join(', ')}.
+    `;
+
+    // 3. Call Gemini to generate NEXT week
+    const modelName = process.env.GEMINI_MODEL || 'gemini-1.5-flash';
+    const model = genAI.getGenerativeModel({ model: modelName });
+
+    const prompt = `
+      You are an adaptive AI Fitness Coach. Based on the user's performance in Week ${currentWeek - 1}, generate Week ${currentWeek} of their ${totalWeeks}-week plan.
+      
+      User Performance Summary:
+      ${performanceSummary}
+
+      Guidelines:
+      - If completion rate > 80%: Increase intensity (more reps, sets, or shorter rest).
+      - If completion rate < 50%: Keep intensity same or slightly decrease to improve consistency.
+      - Maintain the same frequency: ${plan.frequency} days/week.
+      
+      Return ONLY valid JSON for the NEXT 7 DAYS (Days ${currentDaysCount + 1} to ${currentDaysCount + 7}) in the same format as the initial plan.
+    `;
+
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    let text = response.text();
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (jsonMatch) text = jsonMatch[0];
+    const nextWeekPlan = JSON.parse(text);
+
+    // 4. Save next week days to DB
+    for (const day of nextWeekPlan.days) {
+      const newDay = await WorkoutPlanDay.create({
+        workoutPlanId: plan.id,
+        dayNumber: day.dayNumber,
+        dayName: `Week ${currentWeek} - ${day.dayName}`,
+        focusArea: day.focusArea,
+        exercises: day.exercises,
+        totalDuration: day.totalDuration,
+        estimatedCalories: day.estimatedCalories,
+        notes: day.notes,
+        isRestDay: day.isRestDay || false,
+        isCompleted: false
+      });
+
+      if (!day.isRestDay && day.exercises) {
+        for (const [index, ex] of day.exercises.entries()) {
+          await WorkoutPlanDayExercise.create({
+            workoutPlanDayId: newDay.id,
+            exerciseId: ex.exerciseId,
+            orderIndex: index,
+            sets: ex.sets || null,
+            reps: ex.reps ? String(ex.reps) : null,
+            duration: ex.duration || null,
+            restSeconds: ex.restSeconds || 30,
+            weight: ex.weight || null,
+            notes: ex.notes || null
+          });
+        }
+      }
+    }
+
+    return { success: true, message: `Week ${currentWeek} generated successfully` };
+
+  } catch (error) {
+    console.error('Adapt Plan Error:', error);
+    throw error;
+  }
+};
+
 module.exports = {
   generateWorkoutPlan,
   getActiveWorkoutPlan,
@@ -1060,6 +1171,7 @@ module.exports = {
   getCompletedWorkoutDays,
   getTodayCalories,
   calculateExerciseCalories,
+  adaptPlanForNextWeek, // New function
   MET_VALUES
 };
 
