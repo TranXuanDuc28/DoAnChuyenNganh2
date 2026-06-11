@@ -288,7 +288,7 @@ IMPORTANT:
     // Configure Gemini model with timeout settings
     // Set timeout to 3 minutes (180 seconds) to allow sufficient time for plan generation
     const model = genAI.getGenerativeModel({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-2.0-flash',
       generationConfig: {
         temperature: 0.7,
         topK: 40,
