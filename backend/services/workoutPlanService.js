@@ -64,11 +64,20 @@ const generateWorkoutPlan = async (userId, preferences = {}) => {
     }
     // If both are true, no equipment filter (all exercises)
 
+    // Build progressive difficulty levels based on user level
+    const userLevel = user.fitnessLevel || 'beginner';
+    let difficultyLevels = ['beginner'];
+    if (userLevel === 'intermediate') {
+      difficultyLevels = ['beginner', 'intermediate'];
+    } else if (userLevel === 'advanced') {
+      difficultyLevels = ['beginner', 'intermediate', 'advanced'];
+    }
+
     // Get available exercises from database
     const exercises = await Exercise.findAll({
       where: {
         difficulty: {
-          [Op.in]: [user.fitnessLevel, 'beginner'] // Include beginner exercises for all levels
+          [Op.in]: difficultyLevels
         },
         ...equipmentFilter
       },
@@ -101,30 +110,30 @@ const generateWorkoutPlan = async (userId, preferences = {}) => {
     });
 
     const prompt = `
-You are a professional fitness trainer and workout program designer. Create a personalized ${duration}-week workout plan for this user.
+    You are a professional fitness trainer and workout program designer. Create a personalized ${duration}-week workout plan for this user.
 
-User Profile:
-- Gender: ${user.gender}
-- Age: ${user.age} years
-- Height: ${user.height} cm
-- Current Weight: ${user.weight} kg
-${user.targetWeight ? `- Target Weight: ${user.targetWeight} kg` : ''}
-- BMI: ${bmi.toFixed(1)}
-- Fitness Level: ${user.fitnessLevel}
-- Activity Level: ${user.activityLevel}
-- Fitness Goals: ${Array.isArray(user.fitnessGoals) ? user.fitnessGoals.join(', ') : goal}
-- Primary Goal: ${goal}
-${focusAreas.length > 0 ? `- Focus Areas: ${focusAreas.join(', ')}` : ''}
+    User Profile:
+    - Gender: ${user.gender}
+    - Age: ${user.age} years
+    - Height: ${user.height} cm
+    - Current Weight: ${user.weight} kg
+    ${user.targetWeight ? `- Target Weight: ${user.targetWeight} kg` : ''}
+    - BMI: ${bmi.toFixed(1)}
+    - Fitness Level: ${user.fitnessLevel}
+    - Activity Level: ${user.activityLevel}
+    - Fitness Goals: ${Array.isArray(user.fitnessGoals) ? user.fitnessGoals.join(', ') : goal}
+    - Primary Goal: ${goal}
+    ${focusAreas.length > 0 ? `- Focus Areas: ${focusAreas.join(', ')}` : ''}
 
-Plan Requirements:
-- Duration: ${duration} weeks
-- Frequency: ${frequency} workouts per week
-- Total Days: ${duration * 7} days
-- Workout Location: ${locationText}
-- Maximum Workout Duration per Session: ${workoutDuration} minutes (STRICTLY ENFORCE THIS LIMIT)
+    Plan Requirements:
+    - Duration: ${duration} weeks
+    - Frequency: ${frequency} workouts per week
+    - Total Days: ${duration * 7} days
+    - Workout Location: ${locationText}
+    - Maximum Workout Duration per Session: ${workoutDuration} minutes (STRICTLY ENFORCE THIS LIMIT)
 
-Available Exercises (use ONLY these exercise IDs):
-${exercises.map(ex => {
+    Available Exercises (use ONLY these exercise IDs):
+    ${exercises.map(ex => {
       // Handle muscleGroups - it might be a string, array, or null
       let muscles = 'N/A';
       if (ex.muscleGroups) {
@@ -142,85 +151,85 @@ ${exercises.map(ex => {
       return `- ID: ${ex.id}, Name: "${ex.name}", Category: ${ex.category}, Muscles: ${muscles}, Difficulty: ${ex.difficulty}`;
     }).join('\n')}
 
-Instructions:
-1. Create a progressive workout plan that matches the user's fitness level
-2. Include rest days (mark as isRestDay: true)
-3. For each workout day, select 4-8 exercises from the available exercises list above
-4. Use ONLY the exercise IDs provided above - these exercises are already filtered for the user's workout location preference
-5. Vary the exercises throughout the week to target different muscle groups
-6. Include warm-up and cool-down recommendations in notes
-7. Provide specific sets, reps, duration (in SECONDS), rest periods, and CALORIES BURNED for each exercise
-8. Make the plan progressive - increase intensity over weeks
-9. Consider the workout location (${locationText}) when designing the plan structure
-10. Rest time guidelines:
-    - For exercises WITH sets (strength training): use 30 seconds rest between sets
-    - For exercises WITHOUT sets (cardio, yoga, stretching): use 60 seconds rest between exercises
-11. **CRITICAL: Total workout duration per day MUST NOT EXCEED ${workoutDuration} minutes**
-    - Calculate total time including: exercise duration + (sets × rest time) + warm-up/cool-down
-    - Adjust number of exercises, sets, or reps to fit within ${workoutDuration} minutes
-    - The "totalDuration" field for each day MUST be ≤ ${workoutDuration} minutes
-12. **CALORIES: Calculate realistic calories burned for each exercise**
-    - Base calories on exercise type, intensity, duration, and user's weight (${user.weight} kg)
-    - Strength training: ~5-8 calories per minute
-    - Cardio (moderate): ~8-12 calories per minute
-    - Cardio (high intensity): ~12-15 calories per minute
-    - Flexibility/Yoga: ~3-5 calories per minute
+    Instructions:
+    1. Create a progressive workout plan that matches the user's fitness level
+    2. Include rest days (mark as isRestDay: true)
+    3. For each workout day, select 4-8 exercises from the available exercises list above
+    4. Use ONLY the exercise IDs provided above - these exercises are already filtered for the user's workout location preference
+    5. Vary the exercises throughout the week to target different muscle groups
+    6. Include warm-up and cool-down recommendations in notes
+    7. Provide specific sets, reps, duration (in SECONDS), rest periods, and CALORIES BURNED for each exercise
+    8. Make the plan progressive - increase intensity over weeks
+    9. Consider the workout location (${locationText}) when designing the plan structure
+    10. Rest time guidelines:
+        - For exercises WITH sets (strength training): use 30 seconds rest between sets
+        - For exercises WITHOUT sets (cardio, yoga, stretching): use 60 seconds rest between exercises
+    11. **CRITICAL: Total workout duration per day MUST NOT EXCEED ${workoutDuration} minutes**
+        - Calculate total time including: exercise duration + (sets × rest time) + warm-up/cool-down
+        - Adjust number of exercises, sets, or reps to fit within ${workoutDuration} minutes
+        - The "totalDuration" field for each day MUST be ≤ ${workoutDuration} minutes
+    12. **CALORIES: Calculate realistic calories burned for each exercise**
+        - Base calories on exercise type, intensity, duration, and user's weight (${user.weight} kg)
+        - Strength training: ~5-8 calories per minute
+        - Cardio (moderate): ~8-12 calories per minute
+        - Cardio (high intensity): ~12-15 calories per minute
+        - Flexibility/Yoga: ~3-5 calories per minute
 
-Return ONLY valid JSON in this exact format:
-{
-  "planName": "Descriptive plan name",
-  "planDescription": "Brief description of the plan",
-  "totalWeeks": ${duration},
-  "workoutsPerWeek": ${frequency},
-  "days": [
+    Return ONLY valid JSON in this exact format:
     {
-      "dayNumber": 1,
-      "dayName": "Day 1 - Upper Body Strength",
-      "focusArea": "Upper Body",
-      "isRestDay": false,
-      "totalDuration": 45,
-      "note": "totalDuration MUST be ≤ ${workoutDuration} minutes",
-      "exercises": [
+      "planName": "Descriptive plan name",
+      "planDescription": "Brief description of the plan",
+      "totalWeeks": ${duration},
+      "workoutsPerWeek": ${frequency},
+      "days": [
         {
-          "exerciseId": 123,
-          "exerciseName": "Push-ups",
-          "sets": 3,
-          "reps": 12,
-          "duration": null,
-          "caloriesBurned": 25,
-          "restSeconds": 30,
-          "notes": "Keep core tight"
-        },
-        {
-          "exerciseId": 456,
-          "exerciseName": "Running",
-          "sets": null,
-          "reps": null,
-          "duration": 600,
-          "caloriesBurned": 100,
-          "restSeconds": 60,
-          "notes": "Moderate pace"
+          "dayNumber": 1,
+          "dayName": "Day 1 - Upper Body Strength",
+          "focusArea": "Upper Body",
+          "isRestDay": false,
+          "totalDuration": 45,
+          "note": "totalDuration MUST be ≤ ${workoutDuration} minutes",
+          "exercises": [
+            {
+              "exerciseId": 123,
+              "exerciseName": "Push-ups",
+              "sets": 3,
+              "reps": 12,
+              "duration": null,
+              "caloriesBurned": 25,
+              "restSeconds": 30,
+              "notes": "Keep core tight"
+            },
+            {
+              "exerciseId": 456,
+              "exerciseName": "Running",
+              "sets": null,
+              "reps": null,
+              "duration": 600,
+              "caloriesBurned": 100,
+              "restSeconds": 60,
+              "notes": "Moderate pace"
+            }
+          ],
+          "notes": "Warm up for 5-10 minutes before starting. Focus on form over speed."
         }
       ],
-      "notes": "Warm up for 5-10 minutes before starting. Focus on form over speed."
+      "weeklyStructure": "Brief description of the weekly pattern",
+      "progressionNotes": "How to progress through the weeks",
+      "tips": ["Tip 1", "Tip 2", "Tip 3"]
     }
-  ],
-  "weeklyStructure": "Brief description of the weekly pattern",
-  "progressionNotes": "How to progress through the weeks",
-  "tips": ["Tip 1", "Tip 2", "Tip 3"]
-}
 
-Important:
-- For cardio exercises, use "duration" in SECONDS instead of "sets" and "reps"
-- For strength exercises, use "sets" and "reps", duration should be null
-- Include rest days strategically (typically 2-3 per week)
-- Total days array should have ${duration * 7} entries
-- **CRITICAL: "duration" field MUST be in SECONDS, not minutes**
-- **CRITICAL: Every exercise MUST have "caloriesBurned" field with realistic calorie estimate**
-- **ENFORCE: Each workout day's totalDuration MUST NOT exceed ${workoutDuration} minutes**
-- If you cannot fit enough exercises in ${workoutDuration} minutes, reduce sets/reps or number of exercises
-- The "estimatedCalories" field for each day will be calculated automatically from exercise calories, DO NOT include it
-`;
+    Important:
+    - For cardio exercises, use "duration" in SECONDS instead of "sets" and "reps"
+    - For strength exercises, use "sets" and "reps", duration should be null
+    - Include rest days strategically (typically 2-3 per week)
+    - Total days array should have ${duration * 7} entries
+    - **CRITICAL: "duration" field MUST be in SECONDS, not minutes**
+    - **CRITICAL: Every exercise MUST have "caloriesBurned" field with realistic calorie estimate**
+    - **ENFORCE: Each workout day's totalDuration MUST NOT exceed ${workoutDuration} minutes**
+    - If you cannot fit enough exercises in ${workoutDuration} minutes, reduce sets/reps or number of exercises
+    - The "estimatedCalories" field for each day will be calculated automatically from exercise calories, DO NOT include it
+    `;
 
     console.log('Generating workout plan with Gemini AI...');
     console.log('⏱️ Timeout set to 3 minutes for AI generation');
