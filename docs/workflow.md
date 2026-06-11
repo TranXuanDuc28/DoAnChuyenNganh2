@@ -226,3 +226,98 @@ sequenceDiagram
         Web-->>Admin: Hiển thị bài tập mới trên bảng danh sách quản lý
     end
 ```
+
+---
+
+## 📊 III. Nhóm Nghiệp vụ Phụ & Tiện ích (Secondary & Background Workflows)
+
+### 1. Ghi nhận lịch sử và Tiến độ tập luyện (Workout Progress Tracking & Exercise Completion)
+Mô tả quy trình ghi nhận khi người dùng hoàn thành từng bài tập (Exercise) hoặc hoàn thành cả ngày tập luyện (Workout Day), cập nhật tỷ lệ phần trăm tiến độ tổng thể của kế hoạch.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as "Người dùng"
+    participant App as "Mobile App"
+    participant Backend as "Node.js Backend"
+    participant DB as "MySQL Database"
+
+    %% Hoàn thành bài tập riêng lẻ
+    Note over User, DB: Quy trình Hoàn thành Bài tập riêng lẻ (Complete Exercise)
+    User->>App: Nhấn hoàn thành một bài tập trong ngày
+    App->>Backend: Gửi POST /api/workout-plan/exercise/:id/complete (JWT)
+    Backend->>DB: Cập nhật WorkoutPlanDayExercise (isCompleted = true, completedAt)
+    DB-->>Backend: Thành công
+    Backend-->>App: Trả về trạng thái hoàn thành (200 OK)
+
+    %% Hoàn thành toàn bộ ngày tập
+    Note over User, DB: Quy trình Hoàn thành Ngày tập luyện (Complete Workout Day)
+    User->>App: Nhấn hoàn thành toàn bộ ngày tập luyện
+    App->>Backend: Gửi POST /api/workout-plan/day/:id/complete (JWT)
+    Backend->>DB: 1. Cập nhật WorkoutPlanDay (isCompleted = true, completedAt)
+    Backend->>DB: 2. Cập nhật toàn bộ các bài tập trong ngày đó sang completed
+    Backend->>DB: 3. Đếm số ngày đã hoàn thành và số ngày tập thực tế của Plan
+    Backend->>DB: 4. Cập nhật tiến độ (completedWorkouts, totalWorkouts) vào bảng WorkoutPlan
+    DB-->>Backend: Thành công
+    Backend-->>App: Trả về JSON { success: true, planProgress: { completedWorkouts, totalWorkouts, percentage } }
+    App-->>User: Hiển thị hiệu ứng chúc mừng và cập nhật thanh tiến độ mới
+```
+
+---
+
+### 2. Dịch vụ tự động nhắc nhở tập luyện (Automated Inactivity Reminders via Expo Push Notification)
+Mô tả luồng quét định kỳ chạy ngầm (background cron worker) để tìm các tài khoản không phát sinh lịch sử tập luyện trong 2+ ngày gần nhất và tự động bắn thông báo đẩy (push notification) nhắc nhở qua Expo Gateway.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant Cron as "Node.js Cron / Worker"
+    participant Service as "reminderService"
+    participant DB as "MySQL Database"
+    participant Expo as "Expo Push Notification Service"
+    participant App as "Mobile App"
+
+    Note over Cron: Kích hoạt định kỳ<br/>(mỗi 2 phút ở chế độ Test / hàng ngày)
+    Cron->>Service: Gọi scheduleReminders()
+    Service->>DB: Truy vấn danh sách User có pushToken
+    DB-->>Service: Trả về danh sách Users
+    
+    loop Duyệt qua từng User
+        Service->>DB: Lấy lịch sử WorkoutPlanDayExercise hoàn thành gần nhất (sắp xếp giảm dần completedAt)
+        DB-->>Service: Trả về bài tập hoàn thành cuối cùng (lastWorkoutDate)
+        Service->>Service: Tính số ngày không hoạt động: daysSinceLastWorkout = hiện tại - lastWorkoutDate
+        
+        alt daysSinceLastWorkout >= 2 ngày
+            Service->>DB: Lưu bản ghi thông báo mới vào bảng `Notifications` (type: 'workout_reminder')
+            DB-->>Service: Thành công
+            Service->>Expo: Gửi yêu cầu đẩy notification (Expo Push Token, Title, Body, Screen: 'Workout')
+            Expo-->>Service: Trả về kết quả gửi (Tickets)
+            Expo->>App: Gửi Push Notification tới thiết bị điện thoại của người dùng
+            Note over App: Hiển thị Banner nhắc nhở trên màn hình khóa: "Time to workout! 🏋️"
+        end
+    end
+```
+
+---
+
+### 3. Trò chuyện với Trợ lý ảo AI (AI Fitness Assistant Chat Flow)
+Mô tả quy trình người dùng gửi câu hỏi tư vấn sức khỏe, tập luyện hoặc dinh dưỡng lên trợ lý ảo. Node.js backend ràng buộc prompt hệ thống và gọi Gemini AI xử lý trả về kết quả nhanh chóng.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as "Người dùng"
+    participant App as "Mobile App"
+    participant Backend as "Node.js Backend"
+    participant Gemini as "Gemini AI Service"
+
+    User->>App: Nhập tin nhắn câu hỏi tư vấn (VD: "Làm sao để tập Squat đúng cách?")
+    App->>Backend: Gửi POST /api/ai/chat (JWT, message)
+    Backend->>Backend: Xây dựng Prompt hệ thống (Ràng buộc trợ lý chỉ trả lời các chủ đề về Fitness, Health, Nutrition,...)
+    Backend->>Gemini: Gửi Prompt đã chuẩn hóa và câu hỏi của người dùng
+    Gemini-->>Backend: Trả về câu trả lời dạng text
+    Backend-->>App: Trả về JSON { success: true, response }
+    App-->>User: Hiển thị tin nhắn trả lời từ trợ lý ảo lên giao diện chat
+```
+
+
