@@ -380,19 +380,19 @@ const PoseScreen = () => {
     if (typeof result.repCount === 'number' && currentRep > lastSpokenRepRef.current) {
       lastSpokenRepRef.current = currentRep;
       Speech.stop(); // Stop any pending feedback to count immediately
-      Speech.speak(currentRep.toString(), { language: 'vi-VN', pitch: 1.0, rate: 1.1 });
+      Speech.speak(currentRep.toString(), { language: 'vi-VN', pitch: 1.0, rate: 1.25 });
       lastSpokenTimeRef.current = now; // Reset timer to allow spacing
       return;
     }
 
-    // 2. Speak correction feedback (at most once every 3.5 seconds to avoid clutter/stutter)
+    // 2. Speak correction feedback (at most once every 3 seconds to avoid clutter/stutter)
     if (result.feedback && result.feedback.length > 0) {
       const firstFeedback = result.feedback[0];
       
-      // Do not repeat "Tư thế tốt, duy trì nhé!" too often, only read if it transitioned from incorrect
-      if (firstFeedback.includes("Tư thế tốt") || firstFeedback.includes("Động tác chuẩn") || firstFeedback.includes("nhịp nhàng")) {
-        if (lastSpokenTextRef.current !== firstFeedback && now - lastSpokenTimeRef.current > 5000) {
-          Speech.speak(firstFeedback, { language: 'vi-VN', pitch: 1.0, rate: 1.0 });
+      // Do not repeat positive feedbacks too often
+      if (firstFeedback === "Tốt!" || firstFeedback === "Chuẩn!") {
+        if (lastSpokenTextRef.current !== firstFeedback && now - lastSpokenTimeRef.current > 4500) {
+          Speech.speak(firstFeedback, { language: 'vi-VN', pitch: 1.0, rate: 1.2 });
           lastSpokenTextRef.current = firstFeedback;
           lastSpokenTimeRef.current = now;
         }
@@ -400,10 +400,10 @@ const PoseScreen = () => {
       }
 
       // For correction advices
-      if (now - lastSpokenTimeRef.current > 3500 || lastSpokenTextRef.current !== firstFeedback) {
+      if (now - lastSpokenTimeRef.current > 3000 || lastSpokenTextRef.current !== firstFeedback) {
         // Stop previous speech and say the new advice
         Speech.stop();
-        Speech.speak(firstFeedback, { language: 'vi-VN', pitch: 1.0, rate: 0.95 });
+        Speech.speak(firstFeedback, { language: 'vi-VN', pitch: 1.0, rate: 1.2 });
         lastSpokenTextRef.current = firstFeedback;
         lastSpokenTimeRef.current = now;
       }

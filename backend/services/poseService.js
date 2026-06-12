@@ -132,18 +132,18 @@ const POSE_TEMPLATES = {
     const feedback = [];
     if (!isCorrect) {
       if (phase === 'down' && avgKnee > 120) {
-        feedback.push("Hãy hạ thấp hông hơn để hoàn thành Squat.");
+        feedback.push("Hạ sâu thêm!");
       } else if (phase === 'up' && avgKnee < 150) {
-        feedback.push("Hãy đứng thẳng lưng và thẳng chân lên.");
+        feedback.push("Đứng thẳng lên!");
       }
       if (lKnee !== null && rKnee !== null && Math.abs(lKnee - rKnee) > 20) {
-        feedback.push("Hai bên đầu gối không đều nhau, giữ thăng bằng.");
+        feedback.push("Cân bằng gối!");
       }
       if (feedback.length === 0) {
-        feedback.push("Hãy điều chỉnh tư thế Squat theo đúng tư thế mẫu.");
+        feedback.push("Sai tư thế!");
       }
     } else {
-      feedback.push("Tư thế tốt, duy trì nhé!");
+      feedback.push("Tốt!");
     }
 
     return { isCorrect, score, angles: { leftKnee: lKnee, rightKnee: rKnee, avgKnee }, phase, feedback };
@@ -289,18 +289,18 @@ const POSE_TEMPLATES = {
     const feedback = [];
     if (!isCorrect) {
       if (phase === 'down' && avgElbow > 115) {
-        feedback.push("Hãy hạ người thấp hơn để ép cơ ngực.");
+        feedback.push("Hạ người thấp hơn!");
       } else if (phase === 'up' && avgElbow < 145) {
-        feedback.push("Hãy đẩy thẳng tay hết cỡ khi đi lên.");
+        feedback.push("Thẳng tay lên!");
       }
       if (leftElbow !== null && rightElbow !== null && Math.abs(leftElbow - rightElbow) > 20) {
-        feedback.push("Độ gập hai khuỷu tay không đều, giữ thăng bằng.");
+        feedback.push("Cân bằng hai tay!");
       }
       if (feedback.length === 0) {
-        feedback.push("Hãy giữ thẳng lưng và hạ người đều hai bên.");
+        feedback.push("Thẳng lưng lên!");
       }
     } else {
-      feedback.push("Động tác chuẩn, tiếp tục duy trì!");
+      feedback.push("Chuẩn!");
     }
 
     return {
@@ -479,15 +479,15 @@ const POSE_TEMPLATES = {
     const feedback = [];
     if (!isCorrect) {
       if (phase === 'spread' && normalizedWristDistance < 1.2) {
-        feedback.push("Hãy bật dang rộng tay và chân ra nữa.");
+        feedback.push("Dang rộng ra!");
       } else if (phase === 'closed' && normalizedWristDistance > 1.2) {
-        feedback.push("Hãy khép tay và chân sát về vị trí ban đầu.");
+        feedback.push("Khép tay chân!");
       }
       if (feedback.length === 0) {
-        feedback.push("Nhảy dang chân bật tay đồng thời và nhịp nhàng.");
+        feedback.push("Bật đều tay chân!");
       }
     } else {
-      feedback.push("Động tác nhảy rất nhịp nhàng, tốt lắm!");
+      feedback.push("Tốt!");
     }
 
     return {
