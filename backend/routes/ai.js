@@ -1,13 +1,14 @@
 const express = require('express');
 const router = express.Router();
 const { auth } = require('../middleware/auth');
+const { validate, generateWorkoutPlanSchema, chatSchema } = require('../middleware/validator');
 const aiController = require('../controllers/aiController');
 
 // @route   GET api/ai/daily-summary
 router.get('/daily-summary', auth, aiController.getDailySummary);
 
 // @route   POST api/ai/generate-workout-plan
-router.post('/generate-workout-plan', auth, aiController.generateWorkoutPlan);
+router.post('/generate-workout-plan', auth, validate(generateWorkoutPlanSchema), aiController.generateWorkoutPlan);
 
 // @route   POST api/ai/generate-meal-plan
 router.post('/generate-meal-plan', auth, aiController.generateMealPlan);
@@ -22,6 +23,6 @@ router.get('/meal-plans/:id', auth, aiController.getMealPlanById);
 router.delete('/meal-plans/:id', auth, aiController.deleteMealPlan);
 
 // @route   POST api/ai/chat
-router.post('/chat', auth, aiController.chat);
+router.post('/chat', auth, validate(chatSchema), aiController.chat);
 
 module.exports = router;

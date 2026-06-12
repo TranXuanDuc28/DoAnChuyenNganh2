@@ -1,10 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const { auth } = require('../middleware/auth');
+const { validate, generateWorkoutPlanSchema } = require('../middleware/validator');
 const workoutPlanController = require('../controllers/workoutPlanController');
 
 // POST /api/workout-plans/generate
-router.post('/generate', auth, workoutPlanController.generate);
+router.post('/generate', auth, validate(generateWorkoutPlanSchema), workoutPlanController.generate);
 
 // GET /api/workout-plans/history
 router.get('/history', auth, workoutPlanController.getHistory);

@@ -164,6 +164,79 @@ const shareAchievementSchema = Joi.object({
   unit: Joi.string().optional()
 });
 
+// Update User Profile Schema
+const updateUserProfileSchema = Joi.object({
+  firstName: Joi.string().optional(),
+  lastName: Joi.string().optional(),
+  age: Joi.number().integer().positive().optional(),
+  gender: Joi.string().optional(),
+  height: Joi.number().positive().optional(),
+  weight: Joi.number().positive().optional(),
+  fitnessLevel: Joi.string().optional(),
+  fitnessGoals: Joi.any().optional(),
+  activityLevel: Joi.string().optional(),
+  workoutDuration: Joi.number().positive().allow(null).optional(),
+  targetWeight: Joi.number().positive().allow(null).optional(),
+  waistCircumference: Joi.number().positive().allow(null).optional(),
+  hipCircumference: Joi.number().positive().allow(null).optional(),
+  bodyFatPercentage: Joi.number().positive().allow(null).optional()
+});
+
+// Generate Workout Plan Schema
+const generateWorkoutPlanSchema = Joi.object({
+  duration: Joi.number().integer().positive().optional(),
+  frequency: Joi.number().integer().positive().optional(),
+  goal: Joi.string().optional(),
+  focusAreas: Joi.array().items(Joi.string()).optional()
+});
+
+// Complete Workout Session Schema
+const completeWorkoutSessionSchema = Joi.object({
+  rating: Joi.number().integer().min(1).max(5).optional(),
+  mood: Joi.string().optional(),
+  difficulty: Joi.string().optional(),
+  notes: Joi.string().allow('').optional()
+});
+
+// AI Chat Schema
+const chatSchema = Joi.object({
+  message: Joi.string().required().messages({
+    'any.required': 'Message is required'
+  }),
+  history: Joi.array().items(Joi.object()).optional()
+});
+
+// Register Push Token Schema
+const registerPushTokenSchema = Joi.object({
+  token: Joi.string().required().messages({
+    'any.required': 'Push token is required'
+  })
+});
+
+// Evaluate Pose (Manual/Hybrid) Schema
+const evaluatePoseSchema = Joi.object({
+  exerciseName: Joi.string().required().messages({
+    'any.required': 'exerciseName is required'
+  }),
+  keypoints: Joi.array().optional(),
+  imageBase64: Joi.string().optional(),
+  user_id: Joi.any().optional()
+});
+
+// Evaluate Pose Python Schema
+const evaluatePosePythonSchema = Joi.object({
+  imageBase64: Joi.string().required().messages({
+    'any.required': 'imageBase64 is required'
+  })
+});
+
+// Mark Notifications Read Schema
+const markNotificationsReadSchema = Joi.object({
+  notificationIds: Joi.array().items(Joi.any()).required().messages({
+    'any.required': 'notificationIds array is required'
+  })
+});
+
 module.exports = {
   validate,
   loginSchema,
@@ -174,6 +247,16 @@ module.exports = {
   addWaterIntakeSchema,
   markMealCompletionSchema,
   createCommentSchema,
-  shareAchievementSchema
+  shareAchievementSchema,
+  updateUserProfileSchema,
+  generateWorkoutPlanSchema,
+  completeWorkoutSessionSchema,
+  chatSchema,
+  registerPushTokenSchema,
+  evaluatePoseSchema,
+  evaluatePosePythonSchema,
+  markNotificationsReadSchema
 };
+
+
 

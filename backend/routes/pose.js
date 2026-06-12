@@ -1,13 +1,14 @@
 const express = require('express');
 const router = express.Router();
 const { auth } = require('../middleware/auth');
+const { validate, evaluatePoseSchema, evaluatePosePythonSchema } = require('../middleware/validator');
 const poseController = require('../controllers/poseController');
 
 // POST /api/pose/evaluate
-router.post('/evaluate', poseController.evaluate);
+router.post('/evaluate', validate(evaluatePoseSchema), poseController.evaluate);
 
 // POST /api/pose/evaluate-pose (Python-based automated scoring)
-router.post('/evaluate-pose', auth, poseController.evaluatePose);
+router.post('/evaluate-pose', auth, validate(evaluatePosePythonSchema), poseController.evaluatePose);
 
 // GET /api/pose/history
 router.get('/history', poseController.getHistory);
