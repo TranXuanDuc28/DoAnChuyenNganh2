@@ -3,6 +3,7 @@ import { ScrollView, View, Text, StyleSheet, TouchableOpacity, Image, ActivityIn
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { WebView } from 'react-native-webview';
 import * as ImagePicker from 'expo-image-picker';
+import * as Speech from 'expo-speech';
 import { Ionicons as Icon } from '@expo/vector-icons';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { poseAPI, videoAnalysisAPI } from '../services/api';
@@ -366,6 +367,49 @@ const PoseScreen = () => {
   const isProcessingFrameRef = useRef(false);
   const lastCaptureTimeRef = useRef(0);
 
+  const lastSpokenTextRef = useRef('');
+  const lastSpokenTimeRef = useRef(0);
+  const lastSpokenRepRef = useRef(0);
+
+  const speakFeedback = useCallback((result) => {
+    if (!result) return;
+    const now = Date.now();
+
+    // 1. Speak rep count if it increases
+    const currentRep = result.repCount || 0;
+    if (typeof result.repCount === 'number' && currentRep > lastSpokenRepRef.current) {
+      lastSpokenRepRef.current = currentRep;
+      Speech.stop(); // Stop any pending feedback to count immediately
+      Speech.speak(currentRep.toString(), { language: 'vi-VN', pitch: 1.0, rate: 1.1 });
+      lastSpokenTimeRef.current = now; // Reset timer to allow spacing
+      return;
+    }
+
+    // 2. Speak correction feedback (at most once every 3.5 seconds to avoid clutter/stutter)
+    if (result.feedback && result.feedback.length > 0) {
+      const firstFeedback = result.feedback[0];
+      
+      // Do not repeat "Tư thế tốt, duy trì nhé!" too often, only read if it transitioned from incorrect
+      if (firstFeedback.includes("Tư thế tốt") || firstFeedback.includes("Động tác chuẩn") || firstFeedback.includes("nhịp nhàng")) {
+        if (lastSpokenTextRef.current !== firstFeedback && now - lastSpokenTimeRef.current > 5000) {
+          Speech.speak(firstFeedback, { language: 'vi-VN', pitch: 1.0, rate: 1.0 });
+          lastSpokenTextRef.current = firstFeedback;
+          lastSpokenTimeRef.current = now;
+        }
+        return;
+      }
+
+      // For correction advices
+      if (now - lastSpokenTimeRef.current > 3500 || lastSpokenTextRef.current !== firstFeedback) {
+        // Stop previous speech and say the new advice
+        Speech.stop();
+        Speech.speak(firstFeedback, { language: 'vi-VN', pitch: 1.0, rate: 0.95 });
+        lastSpokenTextRef.current = firstFeedback;
+        lastSpokenTimeRef.current = now;
+      }
+    }
+  }, []);
+
   const webViewRef = useRef(null);
 
   const facingMode = facing === 'front' ? 'user' : 'environment';
@@ -548,6 +592,7 @@ const PoseScreen = () => {
 
           if (isRealTimeModeRef.current) {
             updateRepCount(wsResult);
+            speakFeedback(wsResult);
           }
         } catch (err) {
           console.log('[onMessageFromWebView] evaluation error:', err?.message || err);
@@ -657,6 +702,9 @@ const PoseScreen = () => {
 
   useEffect(() => {
     return () => {
+      try {
+        Speech.stop();
+      } catch (e) {}
       try {
         PoseWebSocket.stopSession(currentExercise);
       } catch (e) {}
@@ -1146,6 +1194,14 @@ const PoseScreen = () => {
     lastPreviewUpdateRef.current = 0;
     isProcessingFrameRef.current = false;
     lastCaptureTimeRef.current = 0;
+    
+    // Stop and reset Speech audio feedback
+    try {
+      Speech.stop();
+    } catch (e) {}
+    lastSpokenTextRef.current = '';
+    lastSpokenTimeRef.current = 0;
+    lastSpokenRepRef.current = 0;
     // Dừng session và ngắt kết nối socket
     try {
       PoseWebSocket.stopSession(currentExercise);
