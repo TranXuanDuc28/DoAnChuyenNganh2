@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { auth } = require('../middleware/auth');
+const { validate, addMetricsSchema } = require('../middleware/validator');
 const bodyMetricsController = require('../controllers/bodyMetricsController');
 
 // Get user's body metrics history
@@ -10,10 +11,10 @@ router.get('/history', auth, bodyMetricsController.getHistory);
 router.get('/latest', auth, bodyMetricsController.getLatest);
 
 // Add new body metrics entry
-router.post('/add', auth, bodyMetricsController.addMetrics);
+router.post('/add', auth, validate(addMetricsSchema), bodyMetricsController.addMetrics);
 
 // Update body metrics entry
-router.put('/:id', auth, bodyMetricsController.updateMetrics);
+router.put('/:id', auth, validate(addMetricsSchema), bodyMetricsController.updateMetrics);
 
 // Delete body metrics entry
 router.delete('/:id', auth, bodyMetricsController.deleteMetrics);

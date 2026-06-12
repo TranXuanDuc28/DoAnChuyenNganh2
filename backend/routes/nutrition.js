@@ -1,5 +1,11 @@
 const express = require('express');
 const { auth } = require('../middleware/auth');
+const { 
+  validate, 
+  addFoodLogSchema, 
+  addWaterIntakeSchema, 
+  markMealCompletionSchema 
+} = require('../middleware/validator');
 const nutritionController = require('../controllers/nutritionController');
 const router = express.Router();
 
@@ -37,7 +43,7 @@ router.put('/goals', auth, nutritionController.updateGoals);
 router.get('/water', auth, nutritionController.getWaterIntake);
 
 // Add water intake
-router.post('/water', auth, nutritionController.addWaterIntake);
+router.post('/water', auth, validate(addWaterIntakeSchema), nutritionController.addWaterIntake);
 
 // Get all meal plans
 router.get('/meal-plans', auth, nutritionController.getMealPlans);
@@ -52,13 +58,13 @@ router.post('/meal-plans/generate', auth, nutritionController.generateMealPlan);
 router.put('/meal-plans/:id/deactivate', auth, nutritionController.deactivateMealPlan);
 
 // Food Log (Nutrition Diary)
-router.post('/food-log', auth, nutritionController.addFoodLog);
+router.post('/food-log', auth, validate(addFoodLogSchema), nutritionController.addFoodLog);
 router.get('/food-log', auth, nutritionController.getFoodLogs);
 router.delete('/food-log/:id', auth, nutritionController.deleteFoodLog);
-router.put('/food-log/:id', auth, nutritionController.updateFoodLog);
+router.put('/food-log/:id', auth, validate(addFoodLogSchema), nutritionController.updateFoodLog);
 
 // Meal Completion
-router.post('/meal-completions', auth, nutritionController.markMealCompletion);
+router.post('/meal-completions', auth, validate(markMealCompletionSchema), nutritionController.markMealCompletion);
 router.get('/meal-completions', auth, nutritionController.getMealCompletions);
 router.delete('/meal-completions/:mealPlanId/:mealId', auth, nutritionController.deleteMealCompletion);
 

@@ -1,6 +1,11 @@
 const express = require('express');
 const { auth } = require('../middleware/auth');
 const { createUploadMiddleware } = require('../utils/cloudinary');
+const { 
+  validate, 
+  createCommentSchema, 
+  shareAchievementSchema 
+} = require('../middleware/validator');
 const socialController = require('../controllers/socialController');
 const router = express.Router();
 
@@ -16,7 +21,7 @@ router.post('/posts', auth, upload.single('image'), socialController.createPost)
 router.post('/posts/:postId/like', auth, socialController.likePost);
 
 // Comment on post
-router.post('/posts/:postId/comments', auth, socialController.commentPost);
+router.post('/posts/:postId/comments', auth, validate(createCommentSchema), socialController.commentPost);
 
 // Get challenges
 router.get('/challenges', auth, socialController.getChallenges);
@@ -28,6 +33,6 @@ router.post('/challenges/:challengeId/join', auth, socialController.joinChalleng
 router.get('/leaderboard/:type', auth, socialController.getLeaderboard);
 
 // Share achievement
-router.post('/achievements', auth, socialController.shareAchievement);
+router.post('/achievements', auth, validate(shareAchievementSchema), socialController.shareAchievement);
 
 module.exports = router;

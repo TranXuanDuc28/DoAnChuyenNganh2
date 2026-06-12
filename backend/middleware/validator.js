@@ -94,9 +94,86 @@ const changePasswordSchema = Joi.object({
   })
 });
 
+// Body Metrics Validation Schema
+const addMetricsSchema = Joi.object({
+  weight: Joi.number().positive().required().messages({
+    'number.base': 'Weight must be a number',
+    'number.positive': 'Weight must be a positive number',
+    'any.required': 'Weight is required'
+  }),
+  bodyFatPercentage: Joi.number().min(0).max(100).optional(),
+  muscleMass: Joi.number().positive().optional(),
+  waistCircumference: Joi.number().positive().optional(),
+  hipCircumference: Joi.number().positive().optional()
+});
+
+// Food Log Validation Schema
+const addFoodLogSchema = Joi.object({
+  foodName: Joi.string().required().messages({
+    'any.required': 'Food name is required'
+  }),
+  mealType: Joi.string().valid('breakfast', 'lunch', 'dinner', 'snack').required().messages({
+    'any.required': 'Meal type is required',
+    'any.only': 'Meal type must be breakfast, lunch, dinner, or snack'
+  }),
+  servingSize: Joi.string().optional(),
+  servingAmount: Joi.number().positive().optional(),
+  calories: Joi.number().min(0).optional(),
+  protein: Joi.number().min(0).optional(),
+  carbs: Joi.number().min(0).optional(),
+  fat: Joi.number().min(0).optional(),
+  logDate: Joi.string().optional()
+});
+
+// Water Intake Schema
+const addWaterIntakeSchema = Joi.object({
+  amount: Joi.number().positive().required().messages({
+    'number.base': 'Water amount must be a number',
+    'number.positive': 'Water amount must be a positive number',
+    'any.required': 'Water amount is required'
+  }),
+  date: Joi.string().optional()
+});
+
+// Meal Completion Schema
+const markMealCompletionSchema = Joi.object({
+  mealPlanId: Joi.number().integer().required().messages({
+    'any.required': 'Meal plan ID is required'
+  }),
+  mealId: Joi.required().messages({
+    'any.required': 'Meal ID is required'
+  })
+});
+
+// Social Comment Schema
+const createCommentSchema = Joi.object({
+  comment: Joi.string().required().messages({
+    'any.required': 'Comment is required'
+  })
+});
+
+// Share Achievement Schema
+const shareAchievementSchema = Joi.object({
+  type: Joi.string().required().messages({
+    'any.required': 'Achievement type is required'
+  }),
+  description: Joi.string().required().messages({
+    'any.required': 'Achievement description is required'
+  }),
+  value: Joi.any().optional(),
+  unit: Joi.string().optional()
+});
+
 module.exports = {
   validate,
   loginSchema,
   registerSchema,
-  changePasswordSchema
+  changePasswordSchema,
+  addMetricsSchema,
+  addFoodLogSchema,
+  addWaterIntakeSchema,
+  markMealCompletionSchema,
+  createCommentSchema,
+  shareAchievementSchema
 };
+
