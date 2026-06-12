@@ -129,7 +129,24 @@ const POSE_TEMPLATES = {
     // More lenient: accept if score >= 0.8 (80% accuracy) OR angle in reasonable range
     const isCorrect = score >= 0.6;
 
-    return { isCorrect, score, angles: { leftKnee: lKnee, rightKnee: rKnee, avgKnee }, phase };
+    const feedback = [];
+    if (!isCorrect) {
+      if (phase === 'down' && avgKnee > 120) {
+        feedback.push("Hãy hạ thấp hông hơn để hoàn thành Squat.");
+      } else if (phase === 'up' && avgKnee < 150) {
+        feedback.push("Hãy đứng thẳng lưng và thẳng chân lên.");
+      }
+      if (lKnee !== null && rKnee !== null && Math.abs(lKnee - rKnee) > 20) {
+        feedback.push("Hai bên đầu gối không đều nhau, giữ thăng bằng.");
+      }
+      if (feedback.length === 0) {
+        feedback.push("Hãy điều chỉnh tư thế Squat theo đúng tư thế mẫu.");
+      }
+    } else {
+      feedback.push("Tư thế tốt, duy trì nhé!");
+    }
+
+    return { isCorrect, score, angles: { leftKnee: lKnee, rightKnee: rKnee, avgKnee }, phase, feedback };
   },
   squats: ({ keypointsMap }) => {
     // Alias for squat
@@ -269,11 +286,29 @@ const POSE_TEMPLATES = {
       isCorrect = avgElbow >= minAcceptableAngle && avgElbow <= maxAcceptableAngle;
     }
 
+    const feedback = [];
+    if (!isCorrect) {
+      if (phase === 'down' && avgElbow > 115) {
+        feedback.push("Hãy hạ người thấp hơn để ép cơ ngực.");
+      } else if (phase === 'up' && avgElbow < 145) {
+        feedback.push("Hãy đẩy thẳng tay hết cỡ khi đi lên.");
+      }
+      if (leftElbow !== null && rightElbow !== null && Math.abs(leftElbow - rightElbow) > 20) {
+        feedback.push("Độ gập hai khuỷu tay không đều, giữ thăng bằng.");
+      }
+      if (feedback.length === 0) {
+        feedback.push("Hãy giữ thẳng lưng và hạ người đều hai bên.");
+      }
+    } else {
+      feedback.push("Động tác chuẩn, tiếp tục duy trì!");
+    }
+
     return {
       isCorrect,
       score,
       angles: { leftElbow, rightElbow, avgElbow },
-      phase
+      phase,
+      feedback
     };
   },
   'push-ups': ({ keypointsMap }) => {
@@ -441,6 +476,20 @@ const POSE_TEMPLATES = {
       isCorrect = avgNormalizedSpread >= minAcceptableSpread && avgNormalizedSpread <= maxAcceptableSpread;
     }
 
+    const feedback = [];
+    if (!isCorrect) {
+      if (phase === 'spread' && normalizedWristDistance < 1.2) {
+        feedback.push("Hãy bật dang rộng tay và chân ra nữa.");
+      } else if (phase === 'closed' && normalizedWristDistance > 1.2) {
+        feedback.push("Hãy khép tay và chân sát về vị trí ban đầu.");
+      }
+      if (feedback.length === 0) {
+        feedback.push("Nhảy dang chân bật tay đồng thời và nhịp nhàng.");
+      }
+    } else {
+      feedback.push("Động tác nhảy rất nhịp nhàng, tốt lắm!");
+    }
+
     return {
       isCorrect,
       score,
@@ -451,7 +500,8 @@ const POSE_TEMPLATES = {
         normalizedWristDistance: normalizedWristDistance,
         normalizedAnkleDistance: normalizedAnkleDistance
       },
-      phase
+      phase,
+      feedback
     };
   }
 };
@@ -665,7 +715,7 @@ async function evaluatePose({ user_id, exerciseName = 'squat', imageBase64, sess
   }
 
   const templateResult = template({ keypointsMap });
-  const { isCorrect, score, angles, phase } = templateResult;
+  const { isCorrect, score, angles, phase, feedback } = templateResult;
   console.log(`[PoseService] Evaluate: ${exerciseName} | Correct: ${isCorrect} | Score: ${score.toFixed(2)} | Phase: ${phase} | Angles: ${JSON.stringify(angles)}`);
 
   // Update rep count in server-side state machine if a sessionKey is provided
@@ -688,7 +738,7 @@ async function evaluatePose({ user_id, exerciseName = 'squat', imageBase64, sess
     keypoints: usedKeypoints,
     rawImageStored: false
   });
-  return { isCorrect, score, keypoints: usedKeypoints, angles, phase: phase || 'middle', repCount };
+  return { isCorrect, score, keypoints: usedKeypoints, angles, phase: phase || 'middle', repCount, feedback: feedback || [] };
 }
 
 async function getHistory(user_id, limit = 50) {

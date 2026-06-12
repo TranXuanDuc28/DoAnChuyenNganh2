@@ -1344,6 +1344,17 @@ const PoseScreen = () => {
                 )}
               </View>
             )}
+
+            {/* Real-time Posture Correction Feedback Overlay */}
+            {isRealTimeMode && lastResult && lastResult.feedback && lastResult.feedback.length > 0 && (
+              <View style={styles.realtimeFeedbackOverlay}>
+                {lastResult.feedback.map((fb, idx) => (
+                  <Text key={idx} style={styles.realtimeFeedbackText}>
+                    💡 {fb}
+                  </Text>
+                ))}
+              </View>
+            )}
           </View>
 
           <View style={styles.actions}>
@@ -1663,6 +1674,25 @@ const styles = StyleSheet.create({
   },
   statusIconPulse: {
     opacity: 0.8,
+  },
+  realtimeFeedbackOverlay: {
+    position: 'absolute',
+    bottom: 12,
+    left: 12,
+    right: 120,
+    backgroundColor: 'rgba(0, 0, 0, 0.75)',
+    borderRadius: 8,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    zIndex: 10,
+    flexDirection: 'column',
+    justifyContent: 'center',
+  },
+  realtimeFeedbackText: {
+    color: '#FBBF24',
+    fontSize: 11,
+    fontWeight: '600',
+    lineHeight: 14,
   },
   switchBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: colors.card, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20, borderWidth: 1, borderColor: colors.border },
   switchText: { color: colors.text, fontWeight: '600', marginLeft: 6 },

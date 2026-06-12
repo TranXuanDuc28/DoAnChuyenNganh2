@@ -105,7 +105,8 @@ module.exports = (io) => {
             isCorrect: traditionalResult.isCorrect,
             score: traditionalResult.score,
             phase: traditionalResult.phase,
-            repCount: typeof traditionalResult?.repCount === 'number' ? traditionalResult.repCount : 0
+            repCount: typeof traditionalResult?.repCount === 'number' ? traditionalResult.repCount : 0,
+            feedback: traditionalResult.feedback || []
           });
 
           //console.log(`[PoseSocket] Sent pose:result for frame ${frameId}`);
