@@ -2,17 +2,23 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const path = require('path');
-const rateLimit = require('express-rate-limit');
 const { createServer } = require('http');
 const { Server } = require('socket.io');
 const { sequelize, testConnection } = require('./config/database');
+const { limiter } = require('./middleware/rateLimiter');
+const { requestLogger } = require('./middleware/logger');
 require('dotenv').config();
+
 // build the express app according to the structure above
 const app = express();
 const httpServer = createServer(app);
 
 // ✅ Cho phép Express tin proxy như ngrok / Expo tunnel
 app.set('trust proxy', 1);
+
+// Custom Request Logger Middleware
+app.use(requestLogger);
+
 // Security middleware
 app.use(helmet());
 app.use(cors({
@@ -28,11 +34,7 @@ app.use(cors({
   credentials: true
 }));
 
-// Rate limiting
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100 // limit each IP to 100 requests per windowMs
-});
+// Rate limiting middleware
 app.use(limiter);
 
 // Body parsing middleware - increased limit for base64 images
@@ -139,19 +141,13 @@ app.use('/static/category-images', express.static(categoryImagesDir));
 
 app.use('/api/video-analysis', require('./routes/videoAnalysis'));
 
+const { errorHandler, notFoundHandler } = require('./middleware/errorHandler');
+
 // Error handling middleware
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({
-    message: 'Something went wrong!',
-    error: process.env.NODE_ENV === 'development' ? err.message : {}
-  });
-});
+app.use(errorHandler);
 
 // 404 handler
-app.use('*', (req, res) => {
-  res.status(404).json({ message: 'Route not found' });
-});
+app.use('*', notFoundHandler);
 
 // Initialize Socket.IO
 const io = new Server(httpServer, {
