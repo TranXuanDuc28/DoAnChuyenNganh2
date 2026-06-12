@@ -96,24 +96,24 @@ sequenceDiagram
     participant Backend as "Node.js Backend (Socket.IO)"
     participant Service as "poseService / repCounter"
 
-    User->>App: Mở Camera & Chọn bài tập (VD: Squat, Push-up)
+    User->>App: Mở WebView Camera & Chọn bài tập (VD: Squat, Push-up)
     App->>Backend: Kết nối Socket.IO & Emit event "pose:start" { exerciseName }
     Backend->>Service: Khởi tạo/Reset bộ đếm reps (repCounter.resetSession)
     Backend-->>App: Emit event "pose:started" { exerciseName }
     
-    loop Stream Frames (3-5 fps)
-        App->>App: Lấy frame ảnh hiện tại từ Camera
-        App->>App: Chuyển đổi sang định dạng Base64
-        App->>Backend: Emit event "pose:evaluate" { user_id, exerciseName, imageBase64, frameId }
+    loop Real-time Extraction & Stream (~15 fps)
+        App->>App: MediaPipe chạy trong WebView nhận dạng 33 landmarks cục bộ
+        App->>App: Nhân tỷ lệ video tái cấu trúc tọa độ pixel & gán nhãn
+        App->>Backend: Emit event "pose:evaluate" { user_id, exerciseName, keypoints, frameId }
         
         alt Frame cũ hoặc trễ hơn Frame đang xử lý
             Backend->>Backend: Bỏ qua frame (Skip old frames)
         else Frame mới hợp lệ
-            Backend->>Service: Gọi evaluatePose(imageBase64, sessionKey)
-            Note over Service: 1. Phân tích Keypoints & Tính các góc khớp<br/>2. Đánh giá tính chuẩn xác của động tác (isCorrect)<br/>3. repCounter theo dõi sự thay đổi góc khớp qua các frame để xác định chu trình (Enter/Exit threshold) và tăng biến đếm Reps
+            Backend->>Service: Gọi evaluatePose({ keypoints, sessionKey })
+            Note over Service: 1. Bỏ qua model TensorFlow trên Server, dùng trực tiếp keypoints<br/>2. Tính toán các góc khớp xương chính<br/>3. Đánh giá tính chuẩn xác của động tác (isCorrect)<br/>4. repCounter theo dõi thay đổi góc qua các frame (bỏ qua 'middle') để đếm Reps
             Service-->>Backend: Trả về kết quả (isCorrect, angles, repCount, phase)
             Backend-->>App: Emit event "pose:result" { frameId, isCorrect, score, repCount, phase }
-            App-->>User: Hiển thị HUD overlays (đường nối xương), nhịp đếm và nhắc nhở sửa tư thế
+            App-->>User: Vẽ skeleton cục bộ trên canvas WebView & Hiển thị nhịp đếm, nhắc nhở tư thế
         end
     end
 

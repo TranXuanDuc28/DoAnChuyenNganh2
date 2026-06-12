@@ -9,6 +9,7 @@ import * as Asset from 'expo-asset';
 import { useAuth } from '../context/AuthContext';
 import VideoPlayer from '../components/VideoPlayer';
 import { colors } from '../theme/colors';
+import { LinearGradient } from 'expo-linear-gradient';
 import * as jpeg from 'jpeg-js';
 import { Buffer } from 'buffer';
 import * as ImageManipulator from 'expo-image-manipulator';
@@ -329,7 +330,39 @@ const PoseHistory = () => {
       {!showHistory ? (
         <HistoryTabs user={user} exerciseMode={exerciseMode} exerciseName={currentExercise} />
       ) : (
-        <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 40 }}>
+        <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 100 }}>
+          {/* Start AI Workout Card */}
+          <TouchableOpacity
+            style={styles.startWorkoutCard}
+            onPress={() => {
+              navigation.navigate('Pose', {
+                exerciseName: currentExercise,
+                exerciseTitle: exerciseTitle,
+                exerciseMode: exerciseMode,
+              });
+            }}
+            activeOpacity={0.9}
+          >
+            <LinearGradient
+              colors={route.params?.exerciseGradient || colors.gradients.primary}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.startWorkoutGradient}
+            >
+              <View style={styles.startWorkoutContent}>
+                <View style={styles.startWorkoutTextContainer}>
+                  <Text style={styles.startWorkoutTitle}>Tập luyện cùng AI</Text>
+                  <Text style={styles.startWorkoutDesc}>
+                    Bật camera để AI hướng dẫn và chấm điểm động tác {exerciseTitle} của bạn
+                  </Text>
+                </View>
+                <View style={styles.startWorkoutButton}>
+                  <Icon name="play" size={24} color={colors.primary} />
+                </View>
+              </View>
+            </LinearGradient>
+          </TouchableOpacity>
+
           {/* Rep Counter - Only show in real-time mode or when rep count > 0 */}
           {(isRealTimeMode || repCount > 0) && (
             <View style={styles.repCounterContainer}>
@@ -589,6 +622,54 @@ const PoseHistory = () => {
 
 
 const styles = StyleSheet.create({
+  startWorkoutCard: {
+    marginHorizontal: 16,
+    marginTop: 16,
+    borderRadius: 16,
+    overflow: 'hidden',
+    shadowColor: colors.black,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 8,
+  },
+  startWorkoutGradient: {
+    padding: 20,
+  },
+  startWorkoutContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  startWorkoutTextContainer: {
+    flex: 1,
+    marginRight: 16,
+  },
+  startWorkoutTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: colors.white,
+    marginBottom: 6,
+  },
+  startWorkoutDesc: {
+    fontSize: 13,
+    color: colors.white,
+    opacity: 0.9,
+    lineHeight: 18,
+  },
+  startWorkoutButton: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: colors.white,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: colors.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 4,
+  },
   container: { flex: 1, backgroundColor: colors.background },
   cameraWrap: { height: 360, backgroundColor: colors.black, position: 'relative' },
   camera: { flex: 1 },

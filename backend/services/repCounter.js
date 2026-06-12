@@ -79,9 +79,14 @@ function processFrame(sessionKey, exerciseName, templateResult) {
   // For squats/push-ups and generic up/down exercises
   if (ex.includes('squat') || ex.includes('push') || ex.includes('situp') || ex.includes('sit-up')) {
     const newPhase = phase;
-    // Count when transition down -> up occurs
-    if (newPhase === 'up' && state.lastPhase === 'down') {
-      if (now - state.lastRepTime >= 200) {
+    
+    // Ignore 'middle' for state transitions to avoid intermediate frame pollution
+    let stablePhase = newPhase === 'middle' ? state.lastStablePhase : newPhase;
+    if (newPhase !== 'middle') state.lastStablePhase = newPhase;
+
+    // Count when transition down -> up occurs in stable phases
+    if (stablePhase === 'up' && state.lastPhase === 'down') {
+      if (now - state.lastRepTime >= 600) {
         state.repCount += 1;
         state.lastRepTime = now;
       }
@@ -94,7 +99,9 @@ function processFrame(sessionKey, exerciseName, templateResult) {
       state.consecutiveCorrectFrames = 0;
     }
 
-    state.lastPhase = newPhase;
+    if (newPhase !== 'middle' && stablePhase) {
+      state.lastPhase = stablePhase;
+    }
     state.lastCorrectState = isCorrect;
     return state.repCount;
   }

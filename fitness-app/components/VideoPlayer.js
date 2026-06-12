@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions, ActivityIndicator, SafeAreaView, Platform, StatusBar } from 'react-native';
 import { VideoView, useVideoPlayer } from 'expo-video';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import * as ScreenOrientation from 'expo-screen-orientation';
@@ -623,15 +623,17 @@ const VideoPlayer = ({ videoUri, exerciseName, user_id, onRepCountUpdate, onClos
     <View style={styles.container}>
       {/* Hide internal header when landscape to provide true fullscreen */}
       {!isLandscape && (
-        <View style={styles.header}>
-          <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-            <Ionicons name="close" size={24} color={colors.text} />
-          </TouchableOpacity>
-          <Text style={styles.title}>Video Player</Text>
-          <View style={styles.repContainer}>
-            <Text style={styles.repText}>Reps: {repCount}</Text>
+        <SafeAreaView style={styles.safeHeader}>
+          <View style={styles.header}>
+            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+              <Ionicons name="close" size={24} color={colors.text} />
+            </TouchableOpacity>
+            <Text style={styles.title}>Video Player</Text>
+            <View style={styles.repContainer}>
+              <Text style={styles.repText}>Reps: {repCount}</Text>
+            </View>
           </View>
-        </View>
+        </SafeAreaView>
       )}
 
       <View
@@ -649,7 +651,7 @@ const VideoPlayer = ({ videoUri, exerciseName, user_id, onRepCountUpdate, onClos
             styles.videoInner,
             imageDimensions.width > 0 && imageDimensions.height > 0
               ? { width: imageDimensions.width, height: imageDimensions.height }
-              : { width: containerSize.width, height: containerSize.height }
+              : { width: '100%', height: '100%' }
           ]}
         >
           <VideoView
@@ -789,13 +791,17 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
+  safeHeader: {
+    backgroundColor: colors.card,
+    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.card,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
@@ -868,7 +874,7 @@ const styles = StyleSheet.create({
     zIndex: 1000,
   },
   errorBox: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.card,
     borderRadius: 12,
     padding: 24,
     marginHorizontal: 20,
@@ -938,7 +944,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingVertical: 20,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.card,
   },
   playButton: {
     padding: 16,

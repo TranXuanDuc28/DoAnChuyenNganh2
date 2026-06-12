@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ScrollView, View, Text, StyleSheet, TouchableOpacity, Image, ActivityIndicator, Alert, Modal, Dimensions, StatusBar } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
+import { WebView } from 'react-native-webview';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons as Icon } from '@expo/vector-icons';
 import { useRoute, useNavigation } from '@react-navigation/native';
@@ -342,7 +343,7 @@ const PoseScreen = () => {
   const [facing, setFacing] = useState('back');
   const [imageDimensions, setImageDimensions] = useState({ width: 0, height: 0 });
   const [originalImageDimensions, setOriginalImageDimensions] = useState({ width: 0, height: 0 });
-  const [currentExercise, setCurrentExercise] = useState("squat");
+  const [currentExercise, setCurrentExercise] = useState(route.params?.exerciseName || "squat");
   const [exerciseTitle, setExerciseTitle] = useState(route.params?.exerciseTitle || 'squat');
   const [isZoomed, setIsZoomed] = useState(false);
   const [zoomImageDimensions, setZoomImageDimensions] = useState({ width: 0, height: 0 });
@@ -364,6 +365,204 @@ const PoseScreen = () => {
   const lastPreviewUpdateRef = useRef(0);
   const isProcessingFrameRef = useRef(false);
   const lastCaptureTimeRef = useRef(0);
+
+  const webViewRef = useRef(null);
+
+  const facingMode = facing === 'front' ? 'user' : 'environment';
+  const transformStyle = facing === 'front' ? 'scaleX(-1)' : 'scaleX(1)';
+
+  const htmlContent = `
+  <!DOCTYPE html>
+  <html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+    <style>
+      body { margin: 0; padding: 0; overflow: hidden; background: black; width: 100vw; height: 100vh; }
+      #video { width: 100vw; height: 100vh; object-fit: cover; transform: ${transformStyle}; position: absolute; top:0; left:0; }
+      #canvas { width: 100vw; height: 100vh; object-fit: cover; transform: ${transformStyle}; position: absolute; top:0; left:0; z-index: 10; }
+    </style>
+  </head>
+  <body>
+    <video id="video" playsinline autoplay muted></video>
+    <canvas id="canvas"></canvas>
+    <script>
+      const videoElement = document.getElementById('video');
+      const canvasElement = document.getElementById('canvas');
+      const canvasCtx = canvasElement.getContext('2d');
+
+      let stream;
+      const pose = new Pose({locateFile: (file) => {
+        return "https://cdn.jsdelivr.net/npm/@mediapipe/pose/" + file;
+      }});
+      
+      pose.setOptions({
+        modelComplexity: 0,
+        smoothLandmarks: true,
+        minDetectionConfidence: 0.5,
+        minTrackingConfidence: 0.5
+      });
+      
+      pose.onResults((results) => {
+        canvasElement.width = videoElement.videoWidth;
+        canvasElement.height = videoElement.videoHeight;
+        canvasCtx.save();
+        canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+        
+        if (results.poseLandmarks) {
+          // Draw Pose connections (joints)
+          drawConnectors(canvasCtx, results.poseLandmarks, POSE_CONNECTIONS, {color: '#FF6B35', lineWidth: 4});
+          drawLandmarks(canvasCtx, results.poseLandmarks, {color: '#FFFFFF', lineWidth: 1, radius: 3});
+          
+          // Map to keypoints format for backend
+          const mpJointNames = {
+            11: 'left_shoulder', 12: 'right_shoulder',
+            13: 'left_elbow', 14: 'right_elbow',
+            15: 'left_wrist', 16: 'right_wrist',
+            23: 'left_hip', 24: 'right_hip',
+            25: 'left_knee', 26: 'right_knee',
+            27: 'left_ankle', 28: 'right_ankle',
+          };
+          
+          const videoWidth = videoElement.videoWidth || 640;
+          const videoHeight = videoElement.videoHeight || 480;
+          
+          const keypoints = [];
+          results.poseLandmarks.forEach((lm, index) => {
+            const name = mpJointNames[index];
+            if (name) {
+              keypoints.push({
+                name: name,
+                x: lm.x * videoWidth,
+                y: lm.y * videoHeight,
+                score: lm.visibility || 0
+              });
+            }
+          });
+          
+          // Send back to React Native
+          window.ReactNativeWebView.postMessage(JSON.stringify({
+            event: 'pose_detected',
+            keypoints: keypoints
+          }));
+        }
+        canvasCtx.restore();
+      });
+
+      window.stopCamera = function() {
+        if (stream) {
+          try {
+            stream.getTracks().forEach(track => track.stop());
+          } catch(e) {}
+          stream = null;
+        }
+        if (videoElement) {
+          videoElement.srcObject = null;
+        }
+      };
+
+      async function startCamera() {
+        window.stopCamera();
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: {
+              facingMode: '${facingMode}',
+              width: { ideal: 640 },
+              height: { ideal: 480 }
+            }
+          });
+          videoElement.srcObject = stream;
+          
+          async function processFrame() {
+            if (videoElement.paused || videoElement.ended) return;
+            try {
+              await pose.send({image: videoElement});
+            } catch(e) {
+              window.ReactNativeWebView.postMessage(JSON.stringify({error: 'pose.send error: ' + e.message}));
+            }
+            setTimeout(() => {
+              requestAnimationFrame(processFrame);
+            }, 60); // Limit to ~15 FPS
+          }
+          
+          videoElement.onloadedmetadata = () => {
+            videoElement.play();
+            processFrame();
+          };
+        } catch (err) {
+          window.ReactNativeWebView.postMessage(JSON.stringify({error: err.name + ": " + err.message}));
+        }
+      }
+      window.startCamera = startCamera;
+      startCamera();
+    </script>
+  </body>
+  </html>
+  `;
+
+  const onMessageFromWebView = useCallback(async (event) => {
+    try {
+      const msg = JSON.parse(event.nativeEvent.data);
+      if (msg.error) {
+        console.warn('[PoseScreen] WebView error:', msg.error);
+        return;
+      }
+      if (msg.event === 'pose_detected' && msg.keypoints) {
+        if (!isRealTimeModeRef.current) return;
+        if (isProcessingFrameRef.current) return; // Skip if a frame is already being evaluated
+
+        isProcessingFrameRef.current = true;
+        setDetectionStatus('scanning');
+
+        try {
+          const wsResult = await PoseWebSocket.evaluateFrame({
+            user_id: user?.id,
+            exerciseName: currentExercise,
+            keypoints: msg.keypoints
+          });
+
+          // Handle server response
+          if (!wsResult || wsResult.success === false) {
+            if (isRealTimeModeRef.current) {
+              setDetectionStatus('no_person');
+              setCurrentPose(null);
+            }
+            return;
+          }
+
+          if (isRealTimeModeRef.current) {
+            if (wsResult.keypoints?.length) {
+              setDetectionStatus(wsResult.isCorrect ? 'correct' : 'incorrect');
+            } else {
+              setDetectionStatus('no_person');
+            }
+          }
+
+          const poseForOverlay = wsResult.keypoints?.length
+            ? { keypoints: wsResult.keypoints, imageWidth: 640, imageHeight: 480 }
+            : null;
+          setCurrentPose(poseForOverlay);
+          setLastResult(wsResult);
+
+          if (isRealTimeModeRef.current) {
+            updateRepCount(wsResult);
+          }
+        } catch (err) {
+          console.log('[onMessageFromWebView] evaluation error:', err?.message || err);
+          if (isRealTimeModeRef.current) {
+            setDetectionStatus('no_person');
+            setCurrentPose(null);
+          }
+        } finally {
+          isProcessingFrameRef.current = false;
+        }
+      }
+    } catch (e) {
+      console.warn('[PoseScreen] WebView message parse error:', e);
+    }
+  }, [user?.id, currentExercise]);
   const [isFrameVisible, setIsFrameVisible] = useState(false);
   const [usePythonScoring, setUsePythonScoring] = useState(false);
   const [showHistory, setShowHistory] = useState(false); // Tab switching: camera or history
@@ -394,6 +593,10 @@ const PoseScreen = () => {
     // Set navigation title
     if (route.params?.exerciseTitle) {
       navigation.setOptions({ title: route.params.exerciseTitle });
+      setExerciseTitle(route.params.exerciseTitle);
+    }
+    if (route.params?.exerciseName) {
+      setCurrentExercise(route.params.exerciseName);
     }
 
     // Reset rep count when exercise changes
@@ -454,6 +657,12 @@ const PoseScreen = () => {
 
   useEffect(() => {
     return () => {
+      try {
+        PoseWebSocket.stopSession(currentExercise);
+      } catch (e) {}
+      try {
+        PoseWebSocket.disconnect();
+      } catch (e) {}
       if (detectorRef.current?.dispose) {
         try {
           detectorRef.current.dispose();
@@ -898,11 +1107,6 @@ const PoseScreen = () => {
   };
   // Nhấn icon play để bắt đầu nhận diện tư thế thời gian thực
   const startRealTimeEvaluation = async (exerciseOverride = null) => {
-    if (!cameraRef.current) {
-      Alert.alert('Lỗi', 'Camera chưa sẵn sàng');
-      return;
-    }
-
     const activeExercise = exerciseOverride || currentExercise;
 
     try {
@@ -927,117 +1131,6 @@ const PoseScreen = () => {
     setCurrentPose(null);
     isProcessingFrameRef.current = false;
     lastCaptureTimeRef.current = 0;
-
-    // Hàm capture frame và gửi lên server
-    const captureFrame = async () => {
-      if (isProcessingFrameRef.current || !cameraRef.current || !isRealTimeModeRef.current) return;
-
-      isProcessingFrameRef.current = true;
-      setDetectionStatus('scanning');
-
-      try {
-        const photo = await cameraRef.current.takePictureAsync({
-          base64: true,
-          quality: 0.3,
-          imageType: 'jpg',
-          skipProcessing: false
-        });
-
-        if (!photo?.base64) {
-          if (isRealTimeModeRef.current) {
-            setDetectionStatus('no_person');
-            setCurrentPose(null);
-          }
-          return;
-        }
-
-        let detectedMime = detectMimeFromBase64(photo.base64);
-        let uploadBase64 = photo.base64;
-
-        if (detectedMime === 'image/png') {
-          try {
-            const converted = await convertBase64PngToJpeg(photo.base64);
-            uploadBase64 = converted;
-            detectedMime = 'image/jpeg';
-          } catch (convErr) {
-            console.warn('[captureFrame] PNG->JPEG conversion failed:', convErr.message || convErr);
-          }
-        }
-
-        const imageBase64 = `data:${detectedMime};base64,${uploadBase64}`;
-
-        // Decide whether to use Python scorer (HTTP) or WebSocket evaluator
-        let wsResult = null;
-        // if (usePythonScoring) {
-
-        // } else {
-        wsResult = await PoseWebSocket.evaluateFrame({
-          user_id: user?.id,
-          exerciseName: activeExercise,
-          imageBase64,
-        });
-        // }
-
-        // Xử lý kết quả server
-        if (!wsResult || wsResult.success === false) {
-          if (isRealTimeModeRef.current) {
-            setDetectionStatus('no_person');
-            setCurrentPose(null);
-          }
-          return;
-        }
-
-        if (isRealTimeModeRef.current) {
-          if (wsResult.keypoints?.length) {
-            setDetectionStatus(wsResult.isCorrect ? 'correct' : 'incorrect');
-          } else {
-            setDetectionStatus('no_person');
-          }
-        }
-
-        const poseForOverlay = wsResult.keypoints?.length
-          ? { keypoints: wsResult.keypoints, imageWidth: 600, imageHeight: 900 }
-          : null;
-        setCurrentPose(poseForOverlay);
-        setLastResult(wsResult);
-
-        // Giới hạn cập nhật preview
-        const now = Date.now();
-        if (now - lastPreviewUpdateRef.current > 800) {
-          setPreviewUri(photo.uri);
-          Image.getSize(photo.uri, (width, height) => {
-            setOriginalImageDimensions({ width, height });
-          }, () => { });
-          lastPreviewUpdateRef.current = now;
-        }
-
-        // Cập nhật số rep nếu cần
-        if (isRealTimeModeRef.current) {
-          updateRepCount(wsResult);
-        }
-
-      } catch (e) {
-        console.log('Real-time capture error:', e?.message || e);
-        if (isRealTimeModeRef.current) {
-          setDetectionStatus('no_person');
-          setCurrentPose(null);
-        }
-      } finally {
-        isProcessingFrameRef.current = false;
-      }
-    };
-
-    // Bắt đầu vòng lặp frame
-    captureFrame();
-    const interval = setInterval(() => {
-      if (!isRealTimeModeRef.current) {
-        clearInterval(interval);
-        return;
-      }
-      captureFrame();
-    }, 100);
-
-    setRealTimeInterval(interval);
   };
 
   // Nhấn icon stop để dừng nhận diện tư thế thời gian thực
@@ -1053,7 +1146,7 @@ const PoseScreen = () => {
     lastPreviewUpdateRef.current = 0;
     isProcessingFrameRef.current = false;
     lastCaptureTimeRef.current = 0;
-    // 停止后端会话并断开 socket
+    // Dừng session và ngắt kết nối socket
     try {
       PoseWebSocket.stopSession(currentExercise);
     } catch { }
@@ -1180,20 +1273,36 @@ const PoseScreen = () => {
               // Store camera wrap height for overlay
             }
           }}>
-            <CameraView
-              ref={cameraRef}
-              style={styles.camera}
-              facing={facing}
-              onCameraReady={() => {
-                console.log('📷 Camera is ready');
-                setIsCameraReady(true);
-                // ✅ Đợi thêm để UI render xong
-                setTimeout(() => {
-                  setIsFrameVisible(true);
-                  console.log('✅ Camera frame visible');
-                }, 2500); // Tăng từ 1000ms lên 2500ms
-              }}
-            />
+            {isRealTimeMode ? (
+              <WebView
+                ref={webViewRef}
+                originWhitelist={['*']}
+                source={{ html: htmlContent, baseUrl: 'https://localhost' }}
+                style={styles.camera}
+                onMessage={onMessageFromWebView}
+                javaScriptEnabled={true}
+                domStorageEnabled={true}
+                mediaPlaybackRequiresUserAction={false}
+                allowsInlineMediaPlayback={true}
+                scrollEnabled={false}
+                mediaCapturePermissionGrantType="grant"
+              />
+            ) : (
+              <CameraView
+                ref={cameraRef}
+                style={styles.camera}
+                facing={facing}
+                onCameraReady={() => {
+                  console.log('📷 Camera is ready');
+                  setIsCameraReady(true);
+                  // ✅ Đợi thêm để UI render xong
+                  setTimeout(() => {
+                    setIsFrameVisible(true);
+                    console.log('✅ Camera frame visible');
+                  }, 2500); // Tăng từ 1000ms lên 2500ms
+                }}
+              />
+            )}
 
             {/* {isRealTimeMode && currentPose?.keypoints?.length > 0 && (
               <PoseOverlay
@@ -1253,7 +1362,7 @@ const PoseScreen = () => {
 
                 <TouchableOpacity
                   style={[styles.captureBtn, styles.realTimeBtn, { marginTop: 10 }]}
-                  onPress={() => setExerciseModalVisible(true)}
+                  onPress={() => startRealTimeEvaluation()}
                   disabled={isProcessing || !permission?.granted}
                 >
                   <Icon name="videocam" size={22} color={colors.textOnPrimary} />

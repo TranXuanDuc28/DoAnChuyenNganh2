@@ -185,7 +185,7 @@ class PoseWebSocketService {
    * @param {number} params.exit_threshold - Exit threshold for Python evaluation (default: 0.4)
    * @returns {Promise} Promise that resolves when frame is sent
    */
-  async evaluateFrame({ user_id, exerciseName, imageBase64 }) {
+  async evaluateFrame({ user_id, exerciseName, imageBase64 = null, keypoints = null }) {
     if (!this.isConnected) {
       throw new Error('WebSocket not connected. Call connect() first.');
     }
@@ -230,6 +230,7 @@ class PoseWebSocketService {
         user_id,
         exerciseName,
         imageBase64,
+        keypoints,
         frameId,
       };
 

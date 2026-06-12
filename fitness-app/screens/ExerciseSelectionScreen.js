@@ -27,7 +27,9 @@ const ExerciseSelectionScreen = () => {
       setError(null);
       const response = await poseAPI.getExercises();
       if (response.data.success) {
-        setExercises(response.data.exercises);
+        // Filter out system features like 'start-pose' from the list
+        const filtered = response.data.exercises.filter(ex => ex.id !== 'start-pose');
+        setExercises(filtered);
       } else {
         setError('Không thể tải danh sách bài tập');
       }
@@ -59,6 +61,7 @@ const ExerciseSelectionScreen = () => {
         exerciseName: exercise.id,
         exerciseTitle: exercise.name,
         exerciseMode: exercise.mode,
+        exerciseGradient: exercise.gradient,
       });
     }
   };

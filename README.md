@@ -81,13 +81,13 @@ graph TD
     Start([Bắt đầu tập luyện]) --> ChooseEx[Chọn bài tập trong Thư viện]
     ChooseEx --> ChooseMode{Chọn chế độ tập}
     
-    %% Real-time Mode Branch
-    ChooseMode -->|Real-time Camera| RT_Start[Khởi động Camera & Kết nối Socket.IO]
-    RT_Start --> RT_Stream[Stream frames ảnh camera lên Server]
-    RT_Stream --> RT_Process[Server + Python phân tích khung xương & đếm rep]
+    ChooseMode -->|Real-time Camera| RT_Start[Khởi động WebView & Kết nối Socket.IO]
+    RT_Start --> RT_Local[Tải MediaPipe chạy cục bộ trên Client WebView]
+    RT_Local --> RT_Stream[Stream tọa độ khớp xương JSON lên Server]
+    RT_Stream --> RT_Process[Server phân tích tư thế & đếm rep]
     RT_Process --> RT_HUD[Phản hồi HUD thực tế ảo overlay & nhịp đếm lập tức]
     RT_HUD --> RT_Check{Hoàn thành bài tập?}
-    RT_Check -->|Chưa| RT_Stream
+    RT_Check -->|Chưa| RT_Local
     RT_Check -->|Rồi| SaveDB[Lưu kết quả tập luyện vào Cơ sở dữ liệu]
     
     %% Upload Video Mode Branch

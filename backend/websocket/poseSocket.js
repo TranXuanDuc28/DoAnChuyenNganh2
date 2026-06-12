@@ -18,7 +18,7 @@ module.exports = (io) => {
     // Handle pose evaluation stream
     socket.on('pose:evaluate', async (data) => {
       try {
-        const { user_id, exerciseName, imageBase64, frameId } = data;
+        const { user_id, exerciseName, imageBase64, frameId, keypoints } = data;
         //console.log(`[PoseSocket] Received pose:evaluate frame!!! ${frameId} for exercise ${exerciseName} from user ${user_id}`);
         //console.log('user_id -------------------', user_id);
 
@@ -42,7 +42,7 @@ module.exports = (io) => {
           return;
         }
 
-        if (!imageBase64) {
+        if (!imageBase64 && !keypoints) {
           //console.error(`[PoseSocket] Missing both keypoints and imageBase64 for frame ${frameId}`);
           socket.emit('pose:error', {
             frameId,
@@ -67,7 +67,7 @@ module.exports = (io) => {
 
         let result;
 
-        if (imageBase64) {
+        if (imageBase64 || keypoints) {
           // Use Python-based PoseRAC evaluation
           let traditionalResult = null;
           const sessionKey = `${socket.id}:${exerciseName}`;
@@ -75,7 +75,8 @@ module.exports = (io) => {
             user_id,
             exerciseName,
             imageBase64,
-            sessionKey
+            sessionKey,
+            keypoints
           });
           //console.log("Duc", traditionalResult);
 

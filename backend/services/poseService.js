@@ -540,7 +540,7 @@ async function detectKeypointsFromImageBase64(imageBase64) {
       const validKeypoints = keypoints.filter(k => k.score > 0.3);
       console.log(`[PoseService] tfjs-node: found ${validKeypoints.length} valid keypoints (total: ${keypoints.length})`);
       if (validKeypoints.length <= 5) {
-        console.warn(`[PoseService] Not enough keypoints (${validKeypoints.length} <= 5). Image saved at ${savedImagePath}`);
+        console.warn(`[PoseService] Not enough keypoints (${validKeypoints.length} <= 5).`);
       }
       return validKeypoints.length > 5 ? validKeypoints : null; // Need at least 6 keypoints for pose evaluation
     } finally {
@@ -615,7 +615,7 @@ async function detectKeypointsFromImageBase64(imageBase64) {
     const validKeypoints = keypoints.filter(k => k.score > 0.3);
     //console.log(`[PoseService] WASM backend: found ${validKeypoints.length} valid keypoints (total: ${keypoints.length})`);
     if (validKeypoints.length <= 5) {
-      console.warn(`[PoseService] Not enough keypoints (${validKeypoints.length} <= 5). Image saved at ${savedImagePath}`);
+      console.warn(`[PoseService] Not enough keypoints (${validKeypoints.length} <= 5).`);
     }
     return validKeypoints.length > 5 ? validKeypoints : null; // Need at least 6 keypoints for pose evaluation
   } finally {
@@ -625,8 +625,8 @@ async function detectKeypointsFromImageBase64(imageBase64) {
 
 const repCounter = require('./repCounter');
 
-async function evaluatePose({ user_id, exerciseName = 'squat', imageBase64, sessionKey = null }) {
-  let usedKeypoints = null;
+async function evaluatePose({ user_id, exerciseName = 'squat', imageBase64, sessionKey = null, keypoints = null }) {
+  let usedKeypoints = keypoints;
   if (!usedKeypoints && imageBase64) {
     // console.log('[PoseService] Starting keypoint detection from imageBase64...');
     try {
@@ -666,7 +666,7 @@ async function evaluatePose({ user_id, exerciseName = 'squat', imageBase64, sess
 
   const templateResult = template({ keypointsMap });
   const { isCorrect, score, angles, phase } = templateResult;
-  //console.log("Duc", templateResult)
+  console.log(`[PoseService] Evaluate: ${exerciseName} | Correct: ${isCorrect} | Score: ${score.toFixed(2)} | Phase: ${phase} | Angles: ${JSON.stringify(angles)}`);
 
   // Update rep count in server-side state machine if a sessionKey is provided
   let repCount = null;

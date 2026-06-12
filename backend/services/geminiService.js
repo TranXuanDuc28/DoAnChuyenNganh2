@@ -14,7 +14,7 @@ const generateMealPlan = async ({ dietRecommendation, userInfo, bmi, level }) =>
       throw new Error('GEMINI_API_KEY is not configured');
     }
 
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
     const prompt = `
 You are a professional nutritionist. Based on the following information, create a detailed 1-day meal plan with 4 meals (Breakfast, Lunch, Dinner, and 1 Snack).
@@ -93,15 +93,15 @@ Important:
     };
   } catch (error) {
     console.error('Gemini Service Error:', error.message);
-    
+
     if (error.message.includes('API key')) {
       throw new Error('Gemini API key is not configured properly');
     }
-    
+
     if (error instanceof SyntaxError) {
       throw new Error('Failed to parse meal plan from AI response');
     }
-    
+
     throw new Error(`Failed to generate meal plan: ${error.message}`);
   }
 };
@@ -117,7 +117,7 @@ const generateNutritionAdvice = async ({ userInfo, bmi, level, dietRecommendatio
       throw new Error('GEMINI_API_KEY is not configured');
     }
 
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
     const prompt = `
 As a professional nutritionist, provide personalized nutrition advice for this user:
@@ -185,7 +185,7 @@ const chatWithAssistant = async (message) => {
       throw new Error('GEMINI_API_KEY is not configured');
     }
 
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
 
     const prompt = `You are a professional fitness and health AI assistant. You ONLY answer questions related to:
 - Fitness and exercise
