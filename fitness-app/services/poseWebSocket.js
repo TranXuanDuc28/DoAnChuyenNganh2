@@ -47,25 +47,48 @@ class PoseWebSocketService {
       return;
     }
 
-    try {
-      // Get auth token if available
-      const token = await AsyncStorage.getItem('authToken');
+    return new Promise(async (resolve, reject) => {
+      try {
+        // Get auth token if available
+        const token = await AsyncStorage.getItem('authToken');
 
-      this.socket = io(WS_BASE_URL, {
-        transports: ['websocket', 'polling'],
-        reconnection: true,
-        reconnectionAttempts: this.maxReconnectAttempts,
-        reconnectionDelay: this.reconnectDelay,
-        forceNew: true,
-        auth: token ? { token } : undefined,
-      });
+        this.socket = io(WS_BASE_URL, {
+          transports: ['websocket', 'polling'],
+          reconnection: true,
+          reconnectionAttempts: this.maxReconnectAttempts,
+          reconnectionDelay: this.reconnectDelay,
+          forceNew: true,
+          auth: token ? { token } : undefined,
+        });
 
-      this.setupEventHandlers();
+        this.setupEventHandlers();
 
-    } catch (error) {
-      console.error('[PoseWebSocket] Connection error:', error);
-      throw error;
-    }
+        // Temporary listeners to resolve/reject the connect promise
+        const onConnect = () => {
+          cleanup();
+          resolve();
+        };
+
+        const onConnectError = (err) => {
+          cleanup();
+          reject(err);
+        };
+
+        const cleanup = () => {
+          if (this.socket) {
+            this.socket.off('connect', onConnect);
+            this.socket.off('connect_error', onConnectError);
+          }
+        };
+
+        this.socket.on('connect', onConnect);
+        this.socket.on('connect_error', onConnectError);
+
+      } catch (error) {
+        console.error('[PoseWebSocket] Connection error:', error);
+        reject(error);
+      }
+    });
   }
 
   /**
